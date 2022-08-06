@@ -1,0 +1,41 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "ueGear",
+	"Description": "Unreal Engine Gear Plugin",
+	"Category": "Other",
+	"CreatedBy": "ueGear Dev Team",
+	"CreatedByURL": "http://www.mgear-framework.com/",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EnabledByDefault" : false,
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "ueGear",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"PlatformAllowList":
+			[
+				"Win64",
+				"Linux"
+			]
+		}
+	],
+	"Plugins":
+	[
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true
+		},
+		{
+			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		}
+	]
+}
