@@ -11,6 +11,11 @@ import json
 import pprint
 from urllib.request import urlopen, Request
 
+import pymel.core as pm
+import maya.cmds as cmds
+
+from ueGear import utils
+
 
 class UeGearClient(object):
     """
@@ -125,3 +130,32 @@ class UeGearClient(object):
         self._is_executing = False
 
         return response
+
+    # =================================================================================================================
+    # TRANSFORM COMMANDS
+    # =================================================================================================================
+
+    def transform_selected_objects(self):
+        """
+        Updates matching Unreal objects within current level with the tranforms of the currently selected
+        objects in Maya scene.
+        """
+
+        selected_nodes = pm.selected()
+        old_rotation_orders = list()
+        for selected_node in selected_nodes:
+            old_rotation_orders.append(selected_node.getRotationOrder())
+            selected_node.setRotationOrder('XZY', True)
+        try:
+            objects = cmds.ls(sl=True, sn=True)
+            for obj in objects:
+                ue_world_transform = utils.get_unreal_engine_transform_for_maya_node(obj)
+                result =self.execute('set_actor_world_transform', parameters={
+                'actor_name': obj,
+                'translation': str(ue_world_transform['rotatePivot']),
+                'rotation': str(ue_world_transform['rotation']),
+                'scale': str(ue_world_transform['scale']),
+                })
+        finally:
+            for i, selected_node in enumerate(selected_nodes):
+                selected_node.setRotationOrder(old_rotation_orders[i], True)
