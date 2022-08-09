@@ -8,9 +8,6 @@ void FueGearModule::StartupModule()
 {
 	FString fs = FPaths::ConvertRelativePathToFull(FPaths::GetPath("../"));
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *fs);
-
-	PluginSettings
-	
 }
 
 void FueGearModule::ShutdownModule()
