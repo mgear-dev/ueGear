@@ -6,15 +6,10 @@
 
 void FueGearModule::StartupModule()
 {
-	FString fs = FPaths::ConvertRelativePathToFull(FPaths::GetPath("../"));
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *fs);
 }
 
 void FueGearModule::ShutdownModule()
 {
-	FString fs = FPaths::GetPath("../");
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *fs);
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *FPaths::ConvertRelativePathToFull(fs));
 }
 
 #undef LOCTEXT_NAMESPACE
