@@ -8,21 +8,76 @@ Module that contains ueGear Commands
 from __future__ import print_function, division, absolute_import
 
 import ast
-from importlib import reload
+import importlib
 
 import unreal
 
-from ueGear import helpers
-reload(helpers)
+from . import helpers, mayaio
+importlib.reload(helpers)
+importlib.reload(mayaio)
 
+
+# TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
+# TODO: with the correct number of elements within the list. As a temporal workaround, we convert them
+# TODO: to strings in the client side and we parse them here.
+# TODO: Update this once fix is done in Remote Control plugin.
 
 @unreal.uclass()
-class UeGearCommands(unreal.BlueprintFunctionLibrary):
+class PyUeGearCommands(unreal.UeGearCommands):
 
-    # TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
-    # TODO: with the correct number of elements within the list. As a temporal workaround, we convert them
-    # TODO: to strings in the client side and we parse them here.
-    # TODO: Update this once fix is done in Remote Control plugin.
+    # ==================================================================================================================
+    # OVERRIDES
+    # ==================================================================================================================
+
+    @unreal.ufunction(override=True, meta=dict(Category='ueGear Commands'))
+    def import_maya_data(self):
+        """
+        Opens a file window that allow users to choose a JSON file that contains all the info needed to import asset or
+        layout data.
+        """
+
+        mayaio.import_data()
+
+    @unreal.ufunction(override=True, meta=dict(Category='ueGear Commands'))
+    def import_maya_layout(self):
+        """
+        Opens a file window that allow users to choose a JSON file that contains layout data to load.
+        """
+
+        mayaio.load_layout()
+
+    @unreal.ufunction(override=True, meta=dict(Category='ueGear Commands'))
+    def export_unreal_layout(self):
+        """
+        Exports a layout JSON file based on the objects on the current Unreal level.
+        """
+
+        mayaio.export_layout()
+
+    # ==================================================================================================================
+    # BASE
+    # ==================================================================================================================
+
+    @unreal.ufunction(params=[str], ret=bool, static=True, meta=dict(Category='ueGear Commands'))
+    def does_asset_exist(asset_path=''):
+        """
+        Returns whether asset exists at given path.
+
+        :return: True if asset exists; False otherwise.
+        :rtype: bool
+        """
+
+        return helpers.asset_exists(asset_path)
+
+    @unreal.ufunction(params=[str, str], static=True, meta=dict(Category='ueGear Commands'))
+    def rename_asset(asset_path, new_name):
+        """
+        Renames asset with new given name.
+        """
+
+        new_name = helpers.rename_asset(asset_path, new_name)
+        unreal.log('Renamed to {}'.format(new_name))
+        return new_name
 
     @unreal.ufunction(params=[str, str, str, str], static=True, meta=dict(Category='ueGear Commands'))
     def set_actor_world_transform(actor_name, translation, rotation, scale):
@@ -49,3 +104,74 @@ class UeGearCommands(unreal.BlueprintFunctionLibrary):
         ue_transform.scale3d = unreal.Vector(*ast.literal_eval(scale))
 
         found_actor.set_actor_transform(ue_transform, False, False)
+
+    # @unreal.ufunction(params=[str, str, str, str, str], static=True, meta=dict(Category='ueGear Commmands'))
+    # def update_camera(self, camera_name, translation, rotation, scale, camera_settings):
+    #     """
+    # 
+    #     :param camera_name:
+    #     :param translation:
+    #     :param rotation:
+    #     :param scale:
+    #     :param camera_settings:
+    #     :return:
+    #     """
+
+    @unreal.ufunction(params=[str, str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def import_skeletal_mesh(fbx_file, import_path, import_options):
+        """
+        Imports skeletal mesh from FBX file.
+
+        :param str import_path: skeletal mesh FBX file path.
+        :param str import_options: FBX import options as a string.
+        :return: imported skeletal mesh asset path.
+        :rtype: str
+        """
+
+        try:
+            import_options = ast.literal_eval(import_options)
+        except SyntaxError:
+            import_options = dict()
+        import_options['import_as_skeletal'] = True
+        import_asset_path = helpers.import_fbx_asset(fbx_file, import_path, import_options=import_options)
+
+        return import_asset_path
+
+    @unreal.ufunction(params=[str, str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def import_texture(texture_file, import_path, import_options):
+        """
+        Imports texture from disk into Unreal Asset.
+
+        :param str import_path: texture file path.
+        :param str import_options: texture import options as a string.
+        :return: imported texture asset path.
+        :rtype: str
+        """
+
+        try:
+            import_options = ast.literal_eval(import_options)
+        except SyntaxError:
+            import_options = dict()
+        import_asset_path = helpers.import_texture_asset(texture_file, import_path, import_options=import_options)
+
+        return import_asset_path
+
+    @unreal.ufunction(params=[str], static=True, meta=dict(Category='ueGear Commands'))
+    def import_maya_data_from_file(data_file):
+        """
+        Imports ueGear data from the given file.
+
+        :param str data_file: ueGear data file path.
+        """
+
+        mayaio.import_data(data_file)
+
+    @unreal.ufunction(params=[str], static=True, meta=dict(Category='ueGear Commands'))
+    def import_maya_layout_from_file(layout_file):
+        """
+        Imports ueGear layout from the given file.
+
+        :param str layout_file: layout file path.
+        """
+
+        mayaio.load_layout(layout_file)
