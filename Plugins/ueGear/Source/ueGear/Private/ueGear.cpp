@@ -22,6 +22,11 @@ void FueGearModule::StartupModule()
 	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
 }
 
+void FueGearModule::ShutdownModule()
+{
+	IModuleInterface::ShutdownModule();
+}
+
 void FueGearModule::AddMenuEntry(FMenuBarBuilder& MenuBarBuilder)
 {
 	MenuBarBuilder.AddPullDownMenu(
