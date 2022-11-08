@@ -8,7 +8,7 @@
 	"CreatedBy": "ueGear Dev Team",
 	"CreatedByURL": "http://www.mgear-framework.com/",
 	"DocsURL": "",
-	"MarketplaceURL": "",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/",
 	"SupportURL": "",
 	"EnabledByDefault" : false,
 	"CanContainContent": true,
@@ -20,11 +20,8 @@
 			"Name": "ueGear",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
-			"PlatformAllowList":
-			[
-				"Win64",
-				"Linux"
-			]
+			"PlatformAllowList": [ "Win64" ],
+			"WhitelistPlatforms": [ "Win64" ]
 		}
 	],
 	"Plugins":
@@ -35,6 +32,10 @@
 		},
 		{
 			"Name": "EditorScriptingUtilities",
+			"Enabled": true
+		},
+		{
+			"Name": "RemoteControl",
 			"Enabled": true
 		}
 	]

@@ -7,13 +7,17 @@
 		{
 			"Name": "ueGearPlugin",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"CoreUObject"
+			]
 		}
 	],
 	"Plugins": [
 		{
 			"Name": "ueGear",
-			"Enabled": true
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/"
 		},
 		{
 			"Name": "RemoteControl",
