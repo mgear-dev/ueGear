@@ -353,6 +353,27 @@ def delete_actor(actor):
 	unreal.EditorLevelLibrary.destroy_actor(actor)
 
 
+def create_folder(root, name):
+	"""
+	Creates new folder.
+
+	:param str root: root path.
+	:param str name: folder name.
+	:return: newly created folder.
+	:rtype: str
+	"""
+
+	index = 1
+	while True:
+		if not unreal.EditorAssetLibrary.does_directory_exist('{}/{}'.format(root, name)):
+			unreal.EditorAssetLibrary.make_directory('{}/{}'.format(root, name))
+			break
+		name = '{}{}'.format(name, index)
+		index += 1
+
+	return '{}/{}'.format(root, name)
+
+
 def list_asset_paths(directory='/Game', recursive=True, include_folder=False):
 	"""
 	Returns a list of all asset paths within Content Browser.
@@ -408,6 +429,26 @@ def rename_asset(asset_path, new_name):
 	new_name = dirname + '/' + new_name
 	unreal.EditorAssetLibrary.rename_asset(asset_path, new_name)
 	return new_name
+
+
+def move_assets_to_path(root, name, asset_paths):
+	"""
+	Moves/Rename the given list of assets to given destination directory.
+
+	:param str root: root of the path (eg. '/Game')
+	:param str name: name of the destination directory (eg. 'Target')
+	:param list(str) asset_paths: list of asset paths.
+	:return: new assets directory.
+	:rtype: str
+	"""
+
+	created_folder = create_folder(root, name)
+
+	for asset_path in asset_paths:
+		loaded = unreal.EditorAssetLibrary.load_asset(asset_path)
+		unreal.EditorAssetLibrary.rename_asset(asset_path, '{}/{}'.format(created_folder, loaded.get_name()))
+
+	return created_folder
 
 
 def get_assets(assets_path, recursive=False, only_on_disk=False):
@@ -792,6 +833,14 @@ def convert_maya_transforms_into_unreal_transforms(translation, rotation, scale)
 
 
 def remove_sequence_camera(level_sequence_name='', camera_name=''):
+	"""
+	Removes the camera from the given sequence with given name.
+
+	:param str level_sequence_name: name of the sequence that contains the camera.
+	:param str camera_name: name of the camera to remove.
+	:return: True if the camera was removed successfully; False otherwise.
+	:rtype: bool
+	"""
 
 	level_sequence_asset = unreal.load_asset(level_sequence_name)
 	if not level_sequence_asset:
@@ -819,3 +868,26 @@ def remove_sequence_camera(level_sequence_name='', camera_name=''):
 	unreal.EditorAssetLibrary.save_loaded_asset(level_sequence_asset)
 
 	return True
+
+
+def get_subsequences(level_sequence_name):
+	"""
+	Returns a list of sequences from the given sequence name.
+
+	:param str level_sequence_name: name of the sequence whose subsequences we want to retrieve.
+	:return: list of sequence subsequences.
+	:rtype: list(unreal.LevelSequence)
+	"""
+
+	level_sequence_asset = unreal.load_asset(level_sequence_name)
+	if not level_sequence_asset:
+		return list()
+
+	found_subscene_track = None
+	tracks = level_sequence_asset.get_master_tracks()
+	for track in tracks:
+		if track.get_class() == unreal.MovieSceneSubTrack.static_class():
+			found_subscene_track = track
+			break
+
+	return found_subscene_track.get_sections() if found_subscene_track else list()
