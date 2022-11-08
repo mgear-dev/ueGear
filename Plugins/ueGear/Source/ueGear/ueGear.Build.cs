@@ -39,7 +39,8 @@ public class ueGear : ModuleRules
 				"Slate",
 				"SlateCore",
 				"PythonScriptPlugin",
-				"RemoteControl"
+				"RemoteControl",
+				"UnrealEd",
 			}
 			);
 		
