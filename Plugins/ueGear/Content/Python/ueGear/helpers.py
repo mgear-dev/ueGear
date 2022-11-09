@@ -1045,3 +1045,21 @@ def get_subsequences(level_sequence_name):
 			break
 
 	return found_subscene_track.get_sections() if found_subscene_track else list()
+
+
+def clear_level_selection():
+	"""
+	Clears the selection of the current opened level.
+	"""
+
+	unreal.EditorLevelLibrary().select_nothing()
+
+
+def select_actors_in_current_level(actors):
+	"""
+	Set the given actors as selected ones witihn current level.
+
+	:param unreal.Actor or list(unreal.Actor) actors: list of actors to select.
+	"""
+
+	unreal.EditorLevelLibrary().set_selected_level_actors(force_list(actors))
