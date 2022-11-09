@@ -20,20 +20,6 @@ from . import helpers
 # BASE
 # ======================================================================================================================
 
-def get_export_instances():
-
-	export_containers_data = helpers.find_all_blueprints_data_assets_of_type('UeGearExportInstance')
-
-	print(export_containers_data)
-
-	for export_container_data in export_containers_data:
-		asset = export_container_data.get_asset()
-		data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
-		data['objectName'] = export_container_data.asset_name
-		data = {str(key): str(value) for (key, value) in data.items()}
-		print(data)
-
-
 def import_data(source_files=None, destination_path='', start_frame=1, end_frame=1):
 
 	root = tk.Tk()
@@ -76,10 +62,57 @@ def import_data(source_files=None, destination_path='', start_frame=1, end_frame
 
 
 # ======================================================================================================================
+# ASSETS
+# ======================================================================================================================
+
+def export_assets(export_directory, assets=None):
+	"""
+	Exports Unreal assets into FBX in the given directory.
+
+	:param str export_directory: absolute path export directory where asset FBX files will be located.
+	:param list(unreal.Object) or None assets: list of assets to export. If not given, current Content Browser selected
+		assets will be exported.
+	:return: list of export asset files.
+	:rtype: list(dict)
+	"""
+
+	asset_export_files = list()
+
+	assets = helpers.force_list(assets or list(helpers.get_selected_assets()))
+	if not assets:
+		unreal.log_warning('No assets to export')
+		return asset_export_files
+
+	for asset in assets:
+
+		print(asset)
+
+		asset_fbx_file = helpers.export_fbx_asset(asset, export_directory)
+		if not asset_fbx_file or not os.path.isfile(asset_fbx_file):
+			continue
+		asset_name = asset.get_name()
+		asset_data = {
+			'name': asset_name,
+			'path': asset.get_path_name()
+		}
+		json_file_path = os.path.join(export_directory, '{}.json'.format(asset_name))
+		result = helpers.write_to_json_file(asset_data, json_file_path)
+		if not result:
+			unreal.log_error('Wa not possible to save ueGear export asset file')
+			continue
+		asset_export_files.append({
+			'fbx': asset_fbx_file,
+			'json': json_file_path
+		})
+
+	return asset_export_files
+
+
+# ======================================================================================================================
 # LAYOUT
 # ======================================================================================================================
 
-def load_layout(layout_file_path=''):
+def import_layout(layout_file_path=''):
 
 	if not layout_file_path:
 		root = tk.Tk()
@@ -221,6 +254,11 @@ def import_camera(destination_path='', level_sequence_name='', camera_name='', f
 	actors, actor_labels = helpers.get_all_actors_and_labels_in_current_level()
 	level_sequence_name = destination_path + level_sequence_name
 	level_sequence_asset = unreal.load_asset(level_sequence_name)
+	if not level_sequence_asset:
+		unreal.log_warning('Impossible to import camera because no level sequence asset found with name: "{}"'.format(
+			level_sequence_name))
+		return False
+
 	bindings = level_sequence_asset.get_bindings()
 
 	if camera_name in actor_labels:
@@ -253,6 +291,10 @@ def import_camera(destination_path='', level_sequence_name='', camera_name='', f
 	unreal.LevelSequenceEditorBlueprintLibrary.refresh_current_level_sequence()
 	unreal.EditorAssetLibrary.save_asset(level_sequence_name)
 
+	return True
+
+
+# importlib.reload(mayaio); mayaio.import_camera('/Game/Assets/Cinematics', 'shot0050_01', 'camera1', 'E:/assets/warehouse/scenes/output/camera1.fbx')
 
 def export_camera(camera_name):
 	"""

@@ -7,6 +7,7 @@ Module that contains ueGear Commands
 
 from __future__ import print_function, division, absolute_import
 
+import os
 import ast
 import importlib
 
@@ -44,7 +45,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         Opens a file window that allow users to choose a JSON file that contains layout data to load.
         """
 
-        mayaio.load_layout()
+        mayaio.import_layout()
 
     @unreal.ufunction(override=True, meta=dict(Category='ueGear Commands'))
     def export_unreal_layout(self):
@@ -55,7 +56,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         mayaio.export_layout()
 
     # ==================================================================================================================
-    # BASE
+    # ASSETS
     # ==================================================================================================================
 
     @unreal.ufunction(params=[str], ret=bool, static=True, meta=dict(Category='ueGear Commands'))
@@ -69,7 +70,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         return helpers.asset_exists(asset_path)
 
-    @unreal.ufunction(params=[str, str], static=True, meta=dict(Category='ueGear Commands'))
+    @unreal.ufunction(params=[str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
     def rename_asset(asset_path, new_name):
         """
         Renames asset with new given name.
@@ -78,6 +79,25 @@ class PyUeGearCommands(unreal.UeGearCommands):
         new_name = helpers.rename_asset(asset_path, new_name)
         unreal.log('Renamed to {}'.format(new_name))
         return new_name
+
+    @unreal.ufunction(params=[str], ret=unreal.Array(str), static=True, meta=dict(Category='ueGear Commands'))
+    def export_selected_assets(directory):
+        """
+        Export into given directory current Content Browser selected assets.
+
+        :param str directory: directory where assets will be exported.
+        """
+
+        export_files = list()
+        result = mayaio.export_assets(directory)
+        for export_data in result:
+            export_files.append('{};{}'.format(export_data['fbx'], export_data['json']))
+
+        return export_files
+
+    # ==================================================================================================================
+    # ACTORS
+    # ==================================================================================================================
 
     @unreal.ufunction(params=[str, str, str, str], static=True, meta=dict(Category='ueGear Commands'))
     def set_actor_world_transform(actor_name, translation, rotation, scale):
@@ -105,17 +125,9 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         found_actor.set_actor_transform(ue_transform, False, False)
 
-    # @unreal.ufunction(params=[str, str, str, str, str], static=True, meta=dict(Category='ueGear Commmands'))
-    # def update_camera(self, camera_name, translation, rotation, scale, camera_settings):
-    #     """
-    # 
-    #     :param camera_name:
-    #     :param translation:
-    #     :param rotation:
-    #     :param scale:
-    #     :param camera_settings:
-    #     :return:
-    #     """
+    # ==================================================================================================================
+    # SKELETAL MESHES
+    # ==================================================================================================================
 
     @unreal.ufunction(params=[str, str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
     def import_skeletal_mesh(fbx_file, import_path, import_options):
@@ -137,6 +149,10 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         return import_asset_path
 
+    # ==================================================================================================================
+    # TEXTURES
+    # ==================================================================================================================
+
     @unreal.ufunction(params=[str, str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
     def import_texture(texture_file, import_path, import_options):
         """
@@ -156,6 +172,10 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         return import_asset_path
 
+    # ==================================================================================================================
+    # MAYA
+    # ==================================================================================================================
+
     @unreal.ufunction(params=[str], static=True, meta=dict(Category='ueGear Commands'))
     def import_maya_data_from_file(data_file):
         """
@@ -174,4 +194,4 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :param str layout_file: layout file path.
         """
 
-        mayaio.load_layout(layout_file)
+        mayaio.import_layout(layout_file)
