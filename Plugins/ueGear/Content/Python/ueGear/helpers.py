@@ -22,6 +22,14 @@ else:
 	string_types = str,
 	text_type = str
 
+SEPARATOR = '/'
+BAD_SEPARATOR = '\\'
+PATH_SEPARATOR = '//'
+SERVER_PREFIX = '\\'
+RELATIVE_PATH_PREFIX = './'
+BAD_RELATIVE_PATH_PREFIX = '../'
+WEB_PREFIX = 'https://'
+
 # Dictionary containing all the default material sample types
 MATERIAL_SAMPLER_TYPES = {
 	'Color': unreal.MaterialSamplerType.SAMPLERTYPE_COLOR,
@@ -49,6 +57,34 @@ DEFAULT_FBX_IMPORT_OPTIONS = {
 	'import_textures': True,
 	'import_as_skeletal': False
 }
+
+# Dictionary containing default FBX export options
+DEFAULT_FBX_EXPORT_OPTIONS = {
+	'ascii': False,
+	'collision': False,
+	'level_of_detail': False,
+	'vertex_color': True
+}
+
+
+def is_python2():
+	"""
+	Returns whether current version is Python 2
+
+	:return: bool
+	"""
+
+	return sys.version_info[0] == 2
+
+
+def is_python3():
+	"""
+	Returns whether current version is Python 3
+
+	:return: bool
+	"""
+
+	return sys.version_info[0] == 3
 
 
 def is_string(s):
@@ -107,6 +143,63 @@ def get_first_in_list(list_arg, default=None):
 	"""
 
 	return get_index_in_list(list_arg, 0, default=default)
+
+
+def normalize_path(path):
+	"""
+	Normalizes a path to make sure that path only contains forward slashes.
+
+	:param str path: path to normalize.
+	:return: normalized path
+	:rtype: str
+	"""
+
+	path = path.replace(BAD_SEPARATOR, SEPARATOR).replace(PATH_SEPARATOR, SEPARATOR)
+
+	if is_python2():
+		try:
+			path = unicode(path.replace(r'\\', r'\\\\'), 'unicode_escape').encode('utf-8')
+		except TypeError:
+			path = path.replace(r'\\', r'\\\\').encode('utf-8')
+
+	return path.rstrip('/')
+
+
+def clean_path(path):
+	"""
+	Cleans a path. Useful to resolve problems with slashes
+
+	:param str path: path we want to clean
+	:return: clean path
+	:rtype: str
+	"""
+
+	if not path:
+		return ''
+
+	# convert '~' Unix character to user's home directory
+	path = os.path.expanduser(str(path))
+
+	# Remove spaces from path and fixed bad slashes
+	path = normalize_path(path.strip())
+
+	# fix server paths
+	is_server_path = path.startswith(SERVER_PREFIX)
+	while SERVER_PREFIX in path:
+		path = path.replace(SERVER_PREFIX, PATH_SEPARATOR)
+	if is_server_path:
+		path = PATH_SEPARATOR + path
+
+	# fix web paths
+	if not path.find(WEB_PREFIX) > -1:
+		path = path.replace(PATH_SEPARATOR, SEPARATOR)
+
+	# make sure drive letter is capitalized
+	drive, tail = os.path.splitdrive(path)
+	if drive:
+		path = path[0].upper() + path[1:]
+
+	return path
 
 
 def create_temporary_directory(prefix='ueGear'):
@@ -601,9 +694,9 @@ def generate_fbx_import_task(
 	:param str destination_path: Content Browser path where the asset will be placed.
 	:param str or None destination_name: optional name of the imported asset. If not given, the name will be the
 		filename without the extension.
-	:param bool replace_existing:
-	:param bool automated:
-	:param bool save:
+	:param bool replace_existing: whether to replace existing assets.
+	:param bool automated: unattended import.
+	:param bool save: whether to save the file after importing it.
 	:param dict fbx_options: dictionary containing all the FBX settings to use.
 	:return: Unreal AssetImportTask that handles the import of the FBX file.
 	:rtype: unreal.AssetImportTask
@@ -651,6 +744,47 @@ def generate_fbx_import_task(
 	return task
 
 
+def generate_fbx_export_task(asset, filename, replace_identical=True, automated=True, fbx_options=None):
+	"""
+	Creates and configures an Unreal AssetExportTask to export a FBX file.
+
+	:param str asset_type: asset type we want to export with the task.
+	:param str filename: FBX file to export.
+	:param bool replace_identical: whether to replace identical files.
+	:param bool automated: unattended export.
+	:param fbx_options: dictionary containing all the FBX settings to use.
+	:return: Unreal AssetExportTask that handles the export of the FBX file.
+	:rtype: unreal.AssetExportTask
+	"""
+
+	task = unreal.AssetExportTask()
+	task.filename = filename
+	task.replace_identical = replace_identical
+	task.automated = automated
+	task.object = asset
+
+	task.options = unreal.FbxExportOption()
+	fbx_options = fbx_options or DEFAULT_FBX_EXPORT_OPTIONS
+	for name, value in fbx_options.items():
+		try:
+			task.options.set_editor_property(name, value)
+		except Exception:
+			unreal.log_warning('Was not possible to set FBX Export property: {}: {}'.format(name, value))
+
+	asset_class = asset.get_class()
+	exporter = None
+	if asset_class == unreal.StaticMesh.static_class():
+		exporter = unreal.StaticMeshExporterFBX()
+	elif asset_class == unreal.SkeletalMesh.static_class():
+		exporter = unreal.SkeletalMeshExporterFBX()
+	if not exporter:
+		unreal.log_warning('Asset Type "{}" has not a compatible exporter!'.format(asset_class))
+		return None
+	task.exporter = exporter
+
+	return task
+
+
 def import_fbx_asset(filename, destination_path, destination_name=None, import_options=None):
 	"""
 	Imports a FBX into Unreal Content Browser.
@@ -669,6 +803,26 @@ def import_fbx_asset(filename, destination_path, destination_name=None, import_o
 		filename, destination_path, destination_name=destination_name, fbx_options=import_options))
 
 	return get_first_in_list(import_assets(tasks), default='')
+
+
+def export_fbx_asset(asset, directory, export_options=None):
+	"""
+	Exports a FBX from Unreal Content Browser.
+
+	:param unreal.Object asset: asset to export.
+	:param str directory: directory where FBX asset will be exported.
+	:param dict export_options: dictionary containing all the FBX export settings to use.
+	"""
+
+	fbx_filename = clean_path(os.path.join(directory, '{}.fbx'.format(asset.get_name())))
+	export_task = generate_fbx_export_task(asset, fbx_filename, fbx_options=export_options)
+	if not export_task:
+		unreal.log_warning('Was not possible to generate asset FBX export task')
+		return None
+
+	result = unreal.ExporterFBX.run_asset_export_task(export_task)
+
+	return fbx_filename if result else ''
 
 
 def generate_texture_import_task(
