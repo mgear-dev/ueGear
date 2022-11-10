@@ -11,6 +11,8 @@ import os
 import sys
 import json
 import tempfile
+import subprocess
+import pkg_resources
 from collections import OrderedDict
 
 import unreal
@@ -1063,3 +1065,48 @@ def select_actors_in_current_level(actors):
 	"""
 
 	unreal.EditorLevelLibrary().set_selected_level_actors(force_list(actors))
+
+
+def get_unreal_python_interpreter_path():
+	"""
+	Returns path where Unreal Python interpreter is located.
+
+	:return: Unreal Python intrpreter absolute path.
+	:rtype: str
+	"""
+
+	return unreal.get_interpreter_executable_path()
+
+
+def pip_install(packages):
+
+	packages = set(packages)
+	installed_packages = {pkg.key for pkg in pkg_resources.working_set}
+	missing = packages - installed_packages
+
+	if not missing:
+		unreal.log('All Python requirements already satisfied!')
+		return
+
+	python_interpreter_path = get_unreal_python_interpreter_path()
+	if not python_interpreter_path or os.path.exists(python_interpreter_path):
+		unreal.log_warning(
+			'Impossible to install packages ({}) using pip because Unreal Python interpreter was not found: {}!'.format(
+				packages, python_interpreter_path))
+		return
+
+	info = subprocess.STARTUPINFO()
+	info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+	proc = subprocess.Popen([
+		python_interpreter_path, '-m', 'pip', 'install', '--no-warn-script-location', *packages],
+		startupinfo=info,
+		stdout=subprocess.PIPE,
+		stderr=subprocess.PIPE,
+		encoding='utf-8'
+	)
+	while proc.poll() is None:
+		unreal.log(proc.stdout.readline().strip())
+		unreal.log_warning(proc.stderr.readline().strip())
+
+	return proc.poll()
