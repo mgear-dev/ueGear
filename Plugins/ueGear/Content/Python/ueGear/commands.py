@@ -13,9 +13,10 @@ import importlib
 
 import unreal
 
-from . import helpers, mayaio
+from . import helpers, mayaio, structs
 importlib.reload(helpers)
 importlib.reload(mayaio)
+importlib.reload(structs)
 
 
 # TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
@@ -80,20 +81,17 @@ class PyUeGearCommands(unreal.UeGearCommands):
         unreal.log('Renamed to {}'.format(new_name))
         return new_name
 
-    @unreal.ufunction(params=[str], ret=unreal.Array(str), static=True, meta=dict(Category='ueGear Commands'))
+    @unreal.ufunction(params=[str], ret=unreal.Array(structs.AssetExportData), static=True, meta=dict(Category='ueGear Commands'))
     def export_selected_assets(directory):
         """
         Export into given directory current Content Browser selected assets.
 
         :param str directory: directory where assets will be exported.
+        :return: list of asset export data struct instances.
+        :rtype: list(structs.AssetExportData)
         """
 
-        export_files = list()
-        result = mayaio.export_assets(directory)
-        for export_data in result:
-            export_files.append('{};{}'.format(export_data['fbx'], export_data['json']))
-
-        return export_files
+        return mayaio.export_assets(directory)
 
     # ==================================================================================================================
     # ACTORS

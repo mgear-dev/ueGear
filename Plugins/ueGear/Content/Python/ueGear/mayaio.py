@@ -13,7 +13,7 @@ from tkinter import filedialog
 
 import unreal
 
-from . import helpers
+from . import helpers, structs, tag
 
 
 # ======================================================================================================================
@@ -72,41 +72,62 @@ def export_assets(export_directory, assets=None):
 	:param str export_directory: absolute path export directory where asset FBX files will be located.
 	:param list(unreal.Object) or None assets: list of assets to export. If not given, current Content Browser selected
 		assets will be exported.
-	:return: list of export asset files.
-	:rtype: list(dict)
+	:return: list of asset export data struct instances.
+	:rtype: list(structs.AssetExportData)
 	"""
 
-	asset_export_files = list()
+	asset_export_datas = list()
 
 	assets = helpers.force_list(assets or list(helpers.get_selected_assets()))
 	if not assets:
 		unreal.log_warning('No assets to export')
-		return asset_export_files
+		return asset_export_datas
 
 	for asset in assets:
-
-		print(asset)
-
 		asset_fbx_file = helpers.export_fbx_asset(asset, export_directory)
 		if not asset_fbx_file or not os.path.isfile(asset_fbx_file):
 			continue
-		asset_name = asset.get_name()
-		asset_data = {
-			'name': asset_name,
-			'path': asset.get_path_name()
-		}
-		json_file_path = os.path.join(export_directory, '{}.json'.format(asset_name))
-		result = helpers.write_to_json_file(asset_data, json_file_path)
-		if not result:
-			unreal.log_error('Wa not possible to save ueGear export asset file')
-			continue
-		asset_export_files.append({
-			'fbx': asset_fbx_file,
-			'json': json_file_path
-		})
+		asset_export_data = structs.AssetExportData()
+		asset_export_data.name = asset.get_name()
+		asset_export_data.path = asset.get_path_name()
+		asset_export_data.asset_type = unreal.EditorAssetLibrary.get_metadata_tag(
+			asset, tag.TAG_ASSET_TYPE_ATTR_NAME) or ''
+		asset_export_data.fbx_file = asset_fbx_file
+		asset_export_datas.append(asset_export_data)
 
-	return asset_export_files
+	return asset_export_datas
 
+
+# ======================================================================================================================
+# LEVELS
+# ======================================================================================================================
+
+def export_level(level_name, filename):
+	"""
+	Exports the complete level.
+
+	:param str level_name: name of the level to export.
+	"""
+
+	level_to_export = None
+	levels = unreal.AssetRegistryHelpers.get_asset_registry().get_assets_by_class('World')
+	for level in levels:
+		if level.get_editor_property('asset_name') == level_name:
+			level_to_export = level.get_asset()
+			break
+	if not level_to_export:
+		unreal.log_warning('No level to export found with name: "{}"'.format(level_name))
+		return
+
+	export_task = unreal.AssetExportTask()
+	export_task.object = level_to_export
+	export_task.filename = filename
+	export_task.automated = True
+	export_task.prompt = False
+	export_task.exporter = unreal.LevelExporterLOD()
+	export_task.options = unreal.FbxExportOption()
+
+	unreal.Exporter.run_asset_export_task(export_task)
 
 # ======================================================================================================================
 # LAYOUT
