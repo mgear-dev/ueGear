@@ -102,12 +102,17 @@ def export_assets(export_directory, assets=None):
 # LEVELS
 # ======================================================================================================================
 
-def export_level(level_name, filename):
+def export_level(filename, level_name=''):
 	"""
 	Exports the complete level.
 
+	:param str filename: name of the level to export.
 	:param str level_name: name of the level to export.
 	"""
+
+	if not level_name:
+		level_asset = unreal.LevelEditorSubsystem().get_current_level()
+		level_name = level_asset.get_path_name().split('/')[-1].split(':')[0].split('.')[0]
 
 	level_to_export = None
 	levels = unreal.AssetRegistryHelpers.get_asset_registry().get_assets_by_class('World')
@@ -129,11 +134,12 @@ def export_level(level_name, filename):
 
 	unreal.Exporter.run_asset_export_task(export_task)
 
+
 # ======================================================================================================================
 # LAYOUT
 # ======================================================================================================================
 
-def import_layout(layout_file_path=''):
+def import_layout_from_file(layout_file_path=''):
 
 	if not layout_file_path:
 		root = tk.Tk()
@@ -217,11 +223,12 @@ def import_layout(layout_file_path=''):
 	return True
 
 
-def export_layout(output_path=''):
+def export_layout_file(output_path='', only_selected_actors=False):
 	"""
 	Exports ueGear layout file.
 
 	:param str output_path: optional ueGear output directory.
+	:param bool only_selected_actors: whether to export only selected actors.
 	:return: True if the export layout operation was successful; False otherwise.
 	:rtype: bool
 	"""
@@ -235,25 +242,30 @@ def export_layout(output_path=''):
 
 	level_asset = unreal.LevelEditorSubsystem().get_current_level()
 	level_name = unreal.SystemLibrary.get_object_name(level_asset)
-	actors = helpers.get_all_actors_in_current_level()
+	if only_selected_actors:
+		actors = helpers.get_selected_actors_in_current_level()
+	else:
+		actors = helpers.get_all_actors_in_current_level()
+	if not actors:
+		unreal.log_warning('No actors to export')
+		return False
 
 	layout_data = list()
 	for level_actor in actors:
-		layout_data.append(
-			{
-				'guid': str(level_actor.get_editor_property('actor_guid ')),
-				'name': level_actor.get_actor_label(),
-				'path': level_actor.get_path_name(),
-				'translation': level_actor.get_actor_location().to_tuple(),
-				'rotation': level_actor.get_actor_rotation().to_tuple(),
-				'scale': level_actor.get_actor_scale3d().to_tuple()
-			}
-		)
+		level_actor_data = {
+			'guid': str(level_actor.get_editor_property('actor_guid')),
+			'name': level_actor.get_actor_label(),
+			'path': level_actor.get_path_name(),
+			'translation': level_actor.get_actor_location().to_tuple(),
+			'rotation': level_actor.get_actor_rotation().to_tuple(),
+			'scale': level_actor.get_actor_scale3d().to_tuple()
+		}
+		layout_data.append(level_actor_data)
 
 	output_file_path = os.path.join(output_path, '{}_layout.json'.format(level_name))
 	result = helpers.write_to_json_file(layout_data, output_file_path)
 	if not result:
-		unreal.log_error('Wa not possible to save ueGear layout file')
+		unreal.log_error('Was not possible to save ueGear layout file')
 		return False
 
 	unreal.log('Exported ueGear layout file: {}'.format(output_file_path))

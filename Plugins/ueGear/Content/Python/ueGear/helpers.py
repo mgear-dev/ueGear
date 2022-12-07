@@ -438,6 +438,19 @@ def get_actor_by_label_in_current_level(actor_label):
 	return found_actor
 
 
+def get_all_actors_with_component_of_type(component_class):
+
+	found_actors = list()
+	actors = unreal.EditorActorSubsystem().get_all_level_actors()
+	for actor in actors:
+		components = actor.get_components_by_class(component_class)
+		if not components:
+			continue
+		found_actors.append(actor)
+
+	return found_actors
+
+
 def delete_actor(actor):
 	"""
 	Deletes given actor from current scene.
@@ -750,7 +763,7 @@ def generate_fbx_export_task(asset, filename, replace_identical=True, automated=
 	"""
 	Creates and configures an Unreal AssetExportTask to export a FBX file.
 
-	:param str asset_type: asset type we want to export with the task.
+	:param str asset: asset we want to export with the task.
 	:param str filename: FBX file to export.
 	:param bool replace_identical: whether to replace identical files.
 	:param bool automated: unattended export.
@@ -807,24 +820,106 @@ def import_fbx_asset(filename, destination_path, destination_name=None, import_o
 	return get_first_in_list(import_assets(tasks), default='')
 
 
-def export_fbx_asset(asset, directory, export_options=None):
+def export_fbx_asset(asset, directory, fbx_filename='', export_options=None):
 	"""
 	Exports a FBX from Unreal Content Browser.
 
 	:param unreal.Object asset: asset to export.
 	:param str directory: directory where FBX asset will be exported.
 	:param dict export_options: dictionary containing all the FBX export settings to use.
+	:return: exported FBX file path.
+	:rtype: str
 	"""
 
-	fbx_filename = clean_path(os.path.join(directory, '{}.fbx'.format(asset.get_name())))
-	export_task = generate_fbx_export_task(asset, fbx_filename, fbx_options=export_options)
+	fbx_path = clean_path(os.path.join(directory, '{}.fbx'.format(fbx_filename or asset.get_name())))
+	export_task = generate_fbx_export_task(asset, fbx_path, fbx_options=export_options)
 	if not export_task:
 		unreal.log_warning('Was not possible to generate asset FBX export task')
 		return None
 
 	result = unreal.ExporterFBX.run_asset_export_task(export_task)
 
-	return fbx_filename if result else ''
+	return fbx_path if result else ''
+
+
+def get_actor_asset(actor):
+	"""
+	Returns the asset associated to given actor based on actor components.
+
+	:param unreal.Actor actor: actor to get linked asset of.
+	:return: found asset.
+	:rtype: unreal.Object
+
+	..warning:: For now, only Static Mesh, Skeletal Meshes are supported.
+	"""
+
+	is_static_mesh = False
+	is_skeletal_mesh = False
+	is_camera = False
+	actor_asset = None
+
+	static_mesh_components = list()
+	skeletal_mesh_components = list()
+	camera_components = list()
+
+	static_mesh_components = actor.get_components_by_class(unreal.StaticMeshComponent)
+	if static_mesh_components:
+		is_static_mesh = True
+
+	if not is_static_mesh:
+		skeletal_mesh_components = actor.get_components_by_class(unreal.SkeletalMeshComponent)
+		if skeletal_mesh_components:
+			is_skeletal_mesh = True
+
+	if is_static_mesh:
+		static_mesh_component = get_first_in_list(static_mesh_components)
+		static_mesh = static_mesh_component.get_editor_property('static_mesh')
+		actor_asset = get_asset(static_mesh.get_path_name())
+	elif is_skeletal_mesh:
+		skeletal_mesh_component = get_first_in_list(skeletal_mesh_components)
+		skeletal_mesh = skeletal_mesh_component.get_editor_property('skeletal_mesh')
+		actor_asset = get_asset(skeletal_mesh.get_path_name())
+
+	return actor_asset
+
+
+def export_fbx_actor(actor, directory, export_options=None):
+	"""
+	Exports a FBX of the given actor.
+
+	:param unreal.Actor actor: actor to export as FBX.
+	:param str directory: directory where FBX actor will be exported.
+	:param dict export_options: dictionary containing all the FBX export settings to use.
+	:return: exported FBX file path.
+	:rtype: str
+	"""
+
+	actor_asset = get_actor_asset(actor)
+	if not actor_asset:
+		unreal.log_warning('Was not possible to retrieve valid asset for actor: {}'.format(actor))
+		return ''
+
+	return export_fbx_asset(
+		actor_asset, directory=directory, fbx_filename=actor.get_actor_label(), export_options=export_options)
+
+
+def export_all_fbx_actors_in_current_scene(directory, export_options=None):
+	"""
+	Exports all actors in current scene.
+
+	:param str directory: directory where FBX actor will be exported.
+	:param dict export_options: dictionary containing all the FBX export settings to use.
+	:return: exported FBX file paths.
+	:rtype: list(str)
+	"""
+
+	exported_actors = list()
+	all_actors = get_all_actors_in_current_level()
+	for actor in all_actors:
+		actor_export_path = export_fbx_actor(actor, directory=directory, export_options=export_options)
+		exported_actors.append(actor_export_path)
+
+	return exported_actors
 
 
 def generate_texture_import_task(
@@ -836,7 +931,7 @@ def generate_texture_import_task(
 	:param str filename: texture file to import.
 	:param str destination_path: Content Browser path where the asset will be placed.
 	:param str or None destination_name: optional name of the imported texture. If not given, the name will be the
-		filenanme without the extension.
+		file name without the extension.
 	:param bool replace_existing:
 	:param bool automated:
 	:param bool save:
@@ -875,9 +970,9 @@ def import_texture_asset(filename, destination_path, destination_name=None, impo
 
 	:param str filename: texture file to import.
 	:param str destination_path: Content Browser path where the texture will be placed.
-	:param str or None destination_name: optional name of the imported texutre. If not given, the name will be the
+	:param str or None destination_name: optional name of the imported texture. If not given, the name will be the
 		filename without the extension.
-	:param dict import_options: dictionary containing all the textutre import settings to use.
+	:param dict import_options: dictionary containing all the texture import settings to use.
 	:return: path to the imported texture asset.
 	:rtype: str
 	"""
@@ -973,7 +1068,7 @@ def convert_maya_transforms_into_unreal_transforms(translation, rotation, scale)
 	:param list(float, float, float) translation:
 	:param list(float, float, float) rotation:
 	:param list(float, float, float) scale:
-	:return: Unreal transofrms.
+	:return: Unreal transforms.
 	:rtype: tuple(unreal.Vector, unreal.Vector, unreal.Vector)
 	"""
 
@@ -1059,7 +1154,7 @@ def clear_level_selection():
 
 def select_actors_in_current_level(actors):
 	"""
-	Set the given actors as selected ones witihn current level.
+	Set the given actors as selected ones within current level.
 
 	:param unreal.Actor or list(unreal.Actor) actors: list of actors to select.
 	"""
@@ -1071,7 +1166,7 @@ def get_unreal_python_interpreter_path():
 	"""
 	Returns path where Unreal Python interpreter is located.
 
-	:return: Unreal Python intrpreter absolute path.
+	:return: Unreal Python interpreter absolute path.
 	:rtype: str
 	"""
 

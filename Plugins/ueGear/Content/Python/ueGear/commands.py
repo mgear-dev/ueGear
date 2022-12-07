@@ -13,7 +13,7 @@ import importlib
 
 import unreal
 
-from . import helpers, mayaio, structs
+from . import helpers, mayaio, structs, tag
 importlib.reload(helpers)
 importlib.reload(mayaio)
 importlib.reload(structs)
@@ -46,7 +46,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         Opens a file window that allow users to choose a JSON file that contains layout data to load.
         """
 
-        mayaio.import_layout()
+        mayaio.import_layout_from_file()
 
     @unreal.ufunction(override=True, meta=dict(Category='ueGear Commands'))
     def export_unreal_layout(self):
@@ -54,7 +54,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         Exports a layout JSON file based on the objects on the current Unreal level.
         """
 
-        mayaio.export_layout()
+        mayaio.export_layout_file()
 
     # ==================================================================================================================
     # ASSETS
@@ -192,4 +192,62 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :param str layout_file: layout file path.
         """
 
-        mayaio.import_layout(layout_file)
+        mayaio.import_layout_from_file(layout_file)
+
+    @unreal.ufunction(params=[str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def export_maya_layout(directory):
+        """
+        Exports ueGear layout into Maya.
+
+        :param str directory: export directory.
+        """
+
+        directory = r'E:\assets\warehouse\assets\output'
+
+        layout_data = list()
+        actors_mapping = dict()
+
+        level_asset = unreal.LevelEditorSubsystem().get_current_level()
+        level_name = unreal.SystemLibrary.get_object_name(level_asset)
+
+        actors = helpers.get_all_actors_in_current_level()
+        for actor in actors:
+            actor_asset = helpers.get_actor_asset(actor)
+            if not actor_asset:
+                unreal.log_warning('Was not possible to retrieve asset for actor: {}'.format(actor))
+                continue
+            actor_asset_name = actor_asset.get_path_name()
+            actors_mapping.setdefault(actor_asset_name, {'actors': list(), 'export_path': ''})
+            actors_mapping[actor_asset_name]['actors'].append(actor)
+
+        # Export assets
+        for asset_path in list(actors_mapping.keys()):
+            asset = helpers.get_asset(asset_path)
+            export_asset_path = helpers.export_fbx_asset(asset, directory=directory)
+            actors_mapping[asset_path]['export_path'] = export_asset_path
+
+        for asset_path, asset_data in actors_mapping.items():
+            asset_actors = asset_data['actors']
+            for asset_actor in asset_actors:
+                actor_data = {
+                    'guid': asset_actor.get_editor_property('actor_guid').to_string(),
+                    'name': asset_actor.get_actor_label(),
+                    'path': asset_actor.get_path_name(),
+                    'translation': asset_actor.get_actor_location().to_tuple(),
+                    'rotation': asset_actor.get_actor_rotation().to_tuple(),
+                    'scale': asset_actor.get_actor_scale3d().to_tuple(),
+                    'assetPath': '/'.join(asset_path.split('/')[:-1]),
+                    'assetName': asset_path.split('/')[-1].split('.')[0],
+                    'assetExportPath': asset_data['export_path'],
+                    'assetType': unreal.EditorAssetLibrary.get_metadata_tag(
+                        asset_actor, tag.TAG_ASSET_TYPE_ATTR_NAME) or ''
+                }
+                layout_data.append(actor_data)
+
+        output_file_path = os.path.join(directory, '{}_layout.json'.format(level_name))
+        result = helpers.write_to_json_file(layout_data, output_file_path)
+        if not result:
+            unreal.log_error('Was not possible to save ueGear layout file')
+            return ''
+
+        return output_file_path
