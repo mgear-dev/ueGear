@@ -36,8 +36,8 @@ This tools will be implemented in mGear
 
   - Shifter:
     - EPIC components update: 
-    - EPIC Arm and leg 2.0
-    - Add leaf joints in all Epic components
+      - EPIC Arm and leg 2.0
+      - Add leaf joints in all Epic components
     - Template Browser:
       - Update Templates and New templates (Manny, Quimm, bird, quadruped)
 
