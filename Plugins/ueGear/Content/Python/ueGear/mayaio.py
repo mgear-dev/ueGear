@@ -13,7 +13,7 @@ from tkinter import filedialog
 
 import unreal
 
-from . import helpers, structs, tag
+from . import helpers, structs, tag, actors, assets, sequencer
 
 
 # ======================================================================================================================
@@ -78,13 +78,13 @@ def export_assets(export_directory, assets=None):
 
 	asset_export_datas = list()
 
-	assets = helpers.force_list(assets or list(helpers.get_selected_assets()))
+	assets = helpers.force_list(assets or list(assets.get_selected_assets()))
 	if not assets:
 		unreal.log_warning('No assets to export')
 		return asset_export_datas
 
 	for asset in assets:
-		asset_fbx_file = helpers.export_fbx_asset(asset, export_directory)
+		asset_fbx_file = assets.export_fbx_asset(asset, export_directory)
 		if not asset_fbx_file or not os.path.isfile(asset_fbx_file):
 			continue
 		asset_export_data = structs.AssetExportData()
@@ -151,9 +151,9 @@ def import_layout_from_file(layout_file_path=''):
 		unreal.log_error('No valid Layout file path selected!')
 		return False
 
-	actors = helpers.get_all_actors_in_current_level()
+	level_actors = actors.get_all_actors_in_current_level()
 	actors_names = list()
-	for actor in actors:
+	for actor in level_actors:
 		actors_names.append(actor.get_actor_label())
 
 	layout_data = helpers.read_json_file(layout_file_path)
@@ -162,7 +162,6 @@ def import_layout_from_file(layout_file_path=''):
 		return False
 
 	namespace = ''
-
 	for layout_asset_name, layout_asset_data in layout_data.items():
 		actor_in_level_name = layout_asset_name
 		if ':' in layout_asset_name:
@@ -187,7 +186,7 @@ def import_layout_from_file(layout_file_path=''):
 
 		if not layout_asset_name == actor_in_level_name:
 			if layout_asset_name in actors_names:
-				if not actor_in_level_name in actors_names:
+				if actor_in_level_name not in actors_names:
 					current_actor = actors[actors_names.index(layout_asset_name)]
 					current_actor.set_actor_label(actor_in_level_name)
 					actors_names.append(actor_in_level_name)
@@ -199,7 +198,7 @@ def import_layout_from_file(layout_file_path=''):
 			current_actor.set_actor_rotation(current_rotation, True)
 			current_actor.set_actor_scale3d(current_scale)
 		else:
-			asset_paths = helpers.list_asset_paths('/Game/Assets/', recursive=True, include_folder=False)
+			asset_paths = assets.list_asset_paths('/Game/Assets/', recursive=True, include_folder=False)
 			for asset_path in asset_paths:
 				if '{}.{}'.format(source_name, source_name) in asset_path:
 					source_asset_path = asset_path
@@ -218,7 +217,7 @@ def import_layout_from_file(layout_file_path=''):
 			current_actor.set_actor_rotation(current_rotation, False)
 			current_actor.set_actor_scale3d(current_scale)
 			actors_names.append(actor_in_level_name)
-			actors.append(current_actor)
+			level_actors.append(current_actor)
 
 	return True
 
@@ -243,15 +242,15 @@ def export_layout_file(output_path='', only_selected_actors=False):
 	level_asset = unreal.LevelEditorSubsystem().get_current_level()
 	level_name = unreal.SystemLibrary.get_object_name(level_asset)
 	if only_selected_actors:
-		actors = helpers.get_selected_actors_in_current_level()
+		level_actors = actors.get_selected_actors_in_current_level()
 	else:
-		actors = helpers.get_all_actors_in_current_level()
-	if not actors:
+		level_actors = actors.get_all_actors_in_current_level()
+	if not level_actors:
 		unreal.log_warning('No actors to export')
 		return False
 
 	layout_data = list()
-	for level_actor in actors:
+	for level_actor in level_actors:
 		level_actor_data = {
 			'guid': str(level_actor.get_editor_property('actor_guid')),
 			'name': level_actor.get_actor_label(),
@@ -284,7 +283,7 @@ def import_camera(destination_path='', level_sequence_name='', camera_name='', f
 		destination_path = destination_path + '/'
 
 	world = helpers.get_editor_world()
-	actors, actor_labels = helpers.get_all_actors_and_labels_in_current_level()
+	level_actors, actor_labels = actors.get_all_actors_and_labels_in_current_level()
 	level_sequence_name = destination_path + level_sequence_name
 	level_sequence_asset = unreal.load_asset(level_sequence_name)
 	if not level_sequence_asset:
@@ -295,8 +294,8 @@ def import_camera(destination_path='', level_sequence_name='', camera_name='', f
 	bindings = level_sequence_asset.get_bindings()
 
 	if camera_name in actor_labels:
-		helpers.remove_sequence_camera(level_sequence_name=level_sequence_name, camera_name=camera_name)
-		helpers.delete_actor(actors[actor_labels.index(camera_name)])
+		sequencer.remove_sequence_camera(level_sequence_name=level_sequence_name, camera_name=camera_name)
+		actors.delete_actor(level_actors[actor_labels.index(camera_name)])
 		helpers.save_current_level()
 
 	import_options = unreal.MovieSceneUserImportFBXSettings()
@@ -308,8 +307,8 @@ def import_camera(destination_path='', level_sequence_name='', camera_name='', f
 
 	unreal.SequencerTools.import_level_sequence_fbx(world, level_sequence_asset, bindings, import_options, file_path)
 
-	actors, actor_labels = helpers.get_all_actors_and_labels_in_current_level()
-	camera_asset = actors[actor_labels.index(camera_name)]
+	level_actors, actor_labels = actors.get_all_actors_and_labels_in_current_level()
+	camera_asset = level_actors[actor_labels.index(camera_name)]
 
 	if custom_params:
 		camera_component = camera_asset.get_cine_camera_component()
@@ -325,23 +324,3 @@ def import_camera(destination_path='', level_sequence_name='', camera_name='', f
 	unreal.EditorAssetLibrary.save_asset(level_sequence_name)
 
 	return True
-
-
-# importlib.reload(mayaio); mayaio.import_camera('/Game/Assets/Cinematics', 'shot0050_01', 'camera1', 'E:/assets/warehouse/scenes/output/camera1.fbx')
-
-def export_camera(camera_name):
-	"""
-	Exports camera with given name.
-
-	:param str camera_name: name of the camera to export.
-	:return: export data.
-	"""
-
-	export_directory = helpers.create_temporary_directory()
-	fbx_filename = '{}.fbx'.format(camera_name)
-
-	current_level = unreal.EditorLevelLibrary.get_editor_world().get_path_name()
-
-
-
-

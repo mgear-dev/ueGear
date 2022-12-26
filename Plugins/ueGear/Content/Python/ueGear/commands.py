@@ -13,10 +13,15 @@ import importlib
 
 import unreal
 
-from . import helpers, mayaio, structs, tag
+from . import helpers, mayaio, structs, tag, assets, actors, textures
+
 importlib.reload(helpers)
-importlib.reload(mayaio)
 importlib.reload(structs)
+importlib.reload(tag)
+importlib.reload(assets)
+importlib.reload(actors)
+importlib.reload(textures)
+importlib.reload(mayaio)
 
 
 # TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
@@ -69,7 +74,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :rtype: bool
         """
 
-        return helpers.asset_exists(asset_path)
+        return assets.asset_exists(asset_path)
 
     @unreal.ufunction(params=[str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
     def rename_asset(asset_path, new_name):
@@ -77,7 +82,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         Renames asset with new given name.
         """
 
-        new_name = helpers.rename_asset(asset_path, new_name)
+        new_name = assets.rename_asset(asset_path, new_name)
         unreal.log('Renamed to {}'.format(new_name))
         return new_name
 
@@ -110,7 +115,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         # Actor is found using actor label within Unreal level.
         # TODO: Actor labels are not unique, so if two actors have the same label then maybe we are going to update
         # TODO: an undesired one. Try to find a workaround for this.
-        found_actor = helpers.get_actor_by_label_in_current_level(actor_name)
+        found_actor = actors.get_actor_by_label_in_current_level(actor_name)
         if not found_actor:
             unreal.log_warning('No Actor found with label: "{}"'.format(actor_name))
             return
@@ -143,7 +148,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         except SyntaxError:
             import_options = dict()
         import_options['import_as_skeletal'] = True
-        import_asset_path = helpers.import_fbx_asset(fbx_file, import_path, import_options=import_options)
+        import_asset_path = assets.import_fbx_asset(fbx_file, import_path, import_options=import_options)
 
         return import_asset_path
 
@@ -166,7 +171,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
             import_options = ast.literal_eval(import_options)
         except SyntaxError:
             import_options = dict()
-        import_asset_path = helpers.import_texture_asset(texture_file, import_path, import_options=import_options)
+        import_asset_path = textures.import_texture_asset(texture_file, import_path, import_options=import_options)
 
         return import_asset_path
 
@@ -194,8 +199,8 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         mayaio.import_layout_from_file(layout_file)
 
-    @unreal.ufunction(params=[str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
-    def export_maya_layout(directory):
+    @unreal.ufunction(params=[str, bool], ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def export_maya_layout(directory, export_assets):
         """
         Exports ueGear layout into Maya.
 
@@ -210,9 +215,13 @@ class PyUeGearCommands(unreal.UeGearCommands):
         level_asset = unreal.LevelEditorSubsystem().get_current_level()
         level_name = unreal.SystemLibrary.get_object_name(level_asset)
 
-        actors = helpers.get_all_actors_in_current_level()
-        for actor in actors:
-            actor_asset = helpers.get_actor_asset(actor)
+        level_actors = actors.get_selected_actors_in_current_level() or actors.get_all_actors_in_current_level()
+        if not level_actors:
+            unreal.log_warning('No actors to export')
+            return ''
+
+        for actor in level_actors:
+            actor_asset = actors.get_actor_asset(actor)
             if not actor_asset:
                 unreal.log_warning('Was not possible to retrieve asset for actor: {}'.format(actor))
                 continue
@@ -221,10 +230,15 @@ class PyUeGearCommands(unreal.UeGearCommands):
             actors_mapping[actor_asset_name]['actors'].append(actor)
 
         # Export assets
-        for asset_path in list(actors_mapping.keys()):
-            asset = helpers.get_asset(asset_path)
-            export_asset_path = helpers.export_fbx_asset(asset, directory=directory)
-            actors_mapping[asset_path]['export_path'] = export_asset_path
+        if export_assets:
+            actors_list = list(actors_mapping.keys())
+            with unreal.ScopedSlowTask(len(actors_list), 'Exporting Asset: {}'.format(actors_list[0])) as slow_task:
+                slow_task.make_dialog(True)
+                for asset_path in list(actors_mapping.keys()):
+                    actor_asset = assets.get_asset(asset_path)
+                    export_asset_path = assets.export_fbx_asset(actor_asset, directory=directory)
+                    actors_mapping[asset_path]['export_path'] = export_asset_path
+                    slow_task.enter_progress_frame(1, 'Exporting Asset: {}'.format(asset_path))
 
         for asset_path, asset_data in actors_mapping.items():
             asset_actors = asset_data['actors']
