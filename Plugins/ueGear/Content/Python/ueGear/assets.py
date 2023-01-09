@@ -47,6 +47,18 @@ def asset_exists(asset_path):
 	return unreal.EditorAssetLibrary.does_asset_exist(asset_path)
 
 
+def get_export_path(asset_path):
+	"""
+	Returns path where asset was originally exported.
+
+	:param str asset_path: path of the asset
+	:return: export path.
+	:rtype: str
+	"""
+
+	return get_asset_data(asset_path).get_asset().get_editor_property('asset_import_data').get_first_filename()
+
+
 def get_asset_unique_name(asset_path, suffix=''):
 	"""
 	Returns a unique name for an asset in the given path.
@@ -317,7 +329,7 @@ def generate_asset_fbx_export_task(asset, filename, replace_identical=True, auto
 	return task
 
 
-def import_fbx_asset(filename, destination_path, destination_name=None, import_options=None):
+def import_fbx_asset(filename, destination_path, destination_name=None, save=True, import_options=None):
 	"""
 	Imports a FBX into Unreal Content Browser.
 
@@ -325,6 +337,7 @@ def import_fbx_asset(filename, destination_path, destination_name=None, import_o
 	:param str destination_path: Content Browser path where the asset will be placed.
 	:param str or None destination_name: optional name of the imported asset. If not given, the name will be the
 		filename without the extension.
+	:param bool save: whether to save the file after importing it.
 	:param dict import_options: dictionary containing all the FBX import settings to use.
 	:return: path of the imported object.
 	:rtype: str
@@ -332,7 +345,7 @@ def import_fbx_asset(filename, destination_path, destination_name=None, import_o
 
 	tasks = list()
 	tasks.append(generate_fbx_import_task(
-		filename, destination_path, destination_name=destination_name, fbx_options=import_options))
+		filename, destination_path, destination_name=destination_name, fbx_options=import_options, save=save))
 
 	return helpers.get_first_in_list(import_assets(tasks), default='')
 
