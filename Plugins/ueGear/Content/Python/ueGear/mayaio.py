@@ -65,33 +65,33 @@ def import_data(source_files=None, destination_path='', start_frame=1, end_frame
 # ASSETS
 # ======================================================================================================================
 
-def export_assets(export_directory, assets=None):
+def export_assets(export_directory, assets_to_export=None):
 	"""
 	Exports Unreal assets into FBX in the given directory.
 
 	:param str export_directory: absolute path export directory where asset FBX files will be located.
-	:param list(unreal.Object) or None assets: list of assets to export. If not given, current Content Browser selected
-		assets will be exported.
+	:param list(unreal.Object) or None assets_to_export: list of assets to export. If not given, current Content
+		Browser selected assets will be exported.
 	:return: list of asset export data struct instances.
 	:rtype: list(structs.AssetExportData)
 	"""
 
 	asset_export_datas = list()
 
-	assets = helpers.force_list(assets or list(assets.get_selected_assets()))
+	assets_to_export = helpers.force_list(assets_to_export or list(assets.get_selected_assets()))
 	if not assets:
 		unreal.log_warning('No assets to export')
 		return asset_export_datas
 
-	for asset in assets:
-		asset_fbx_file = assets.export_fbx_asset(asset, export_directory)
+	for asset_to_export in assets_to_export:
+		asset_fbx_file = assets.export_fbx_asset(asset_to_export, export_directory)
 		if not asset_fbx_file or not os.path.isfile(asset_fbx_file):
 			continue
 		asset_export_data = structs.AssetExportData()
-		asset_export_data.name = asset.get_name()
-		asset_export_data.path = asset.get_path_name()
+		asset_export_data.name = asset_to_export.get_name()
+		asset_export_data.path = asset_to_export.get_path_name()
 		asset_export_data.asset_type = unreal.EditorAssetLibrary.get_metadata_tag(
-			asset, tag.TAG_ASSET_TYPE_ATTR_NAME) or ''
+			asset_to_export, tag.TAG_ASSET_TYPE_ATTR_NAME) or ''
 		asset_export_data.fbx_file = asset_fbx_file
 		asset_export_datas.append(asset_export_data)
 
@@ -140,6 +140,14 @@ def export_level(filename, level_name=''):
 # ======================================================================================================================
 
 def import_layout_from_file(layout_file_path=''):
+	"""
+	Imports given ueGear layout file into current opened Unreal level.
+
+	:param str layout_file_path: absolute file path pointing to an ueGear layout JSON file. If not given, a file dialog
+		will be opened, so user can manually select which file to open.
+	:return: True if the import layout from file operation was successful; False otherwise.
+	:rtype: bool
+	"""
 
 	if not layout_file_path:
 		root = tk.Tk()
@@ -161,14 +169,15 @@ def import_layout_from_file(layout_file_path=''):
 		unreal.log_error('Was not possible to load layout data from layout file: {}'.format(layout_file_path))
 		return False
 
-	namespace = ''
 	for layout_asset_name, layout_asset_data in layout_data.items():
-		actor_in_level_name = layout_asset_name
-		if ':' in layout_asset_name:
-			namespace = layout_asset_name.split(':')[0]
-			actor_in_level_name = '{}_{}'.format(namespace, layout_asset_name.split(':')[-1])
+		actor_in_level_name = layout_asset_data.get('actorName', '')
+		if not actor_in_level_name:
+			actor_in_level_name = layout_asset_name
+		if ':' in actor_in_level_name:
+			namespace = actor_in_level_name.split(':')[0]
+			actor_in_level_name = '{}_{}'.format(namespace, actor_in_level_name.split(':')[-1])
 
-		source_name = layout_asset_data.get('sourceName', '')
+		source_name = layout_asset_data.get('assetName', '') or layout_asset_data.get('sourceName', '')
 		translation_value = layout_asset_data.get('translation', None)
 		rotation_value = layout_asset_data.get('rotation', None)
 		scale_value = layout_asset_data.get('scale', None)
@@ -187,25 +196,26 @@ def import_layout_from_file(layout_file_path=''):
 		if not layout_asset_name == actor_in_level_name:
 			if layout_asset_name in actors_names:
 				if actor_in_level_name not in actors_names:
-					current_actor = actors[actors_names.index(layout_asset_name)]
+					current_actor = level_actors[actors_names.index(layout_asset_name)]
 					current_actor.set_actor_label(actor_in_level_name)
 					actors_names.append(actor_in_level_name)
 
 		if actor_in_level_name in actors_names:
 			unreal.log('Updating transform on {}'.format(actor_in_level_name))
-			current_actor = actors[actors_names.index(actor_in_level_name)]
+			current_actor = level_actors[actors_names.index(actor_in_level_name)]
 			current_actor.set_actor_location(current_position, False, True)
 			current_actor.set_actor_rotation(current_rotation, True)
 			current_actor.set_actor_scale3d(current_scale)
 		else:
+			asset_name = '{}.{}'.format(source_name, source_name)
 			asset_paths = assets.list_asset_paths('/Game/Assets/', recursive=True, include_folder=False)
 			for asset_path in asset_paths:
-				if '{}.{}'.format(source_name, source_name) in asset_path:
+				if asset_name in asset_path:
 					source_asset_path = asset_path
 					break
 
 			if not source_asset_path:
-				unreal.log('Skipping actor: {}'.format(actor_in_level_name))
+				unreal.log('Skipping actor: {}, asset "{}" not found!'.format(actor_in_level_name, source_asset_path))
 				continue
 
 			source_asset = unreal.load_asset(source_asset_path)
