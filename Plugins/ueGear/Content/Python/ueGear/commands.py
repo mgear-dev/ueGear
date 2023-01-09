@@ -9,6 +9,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import ast
+import json
 import importlib
 
 import unreal
@@ -62,6 +63,21 @@ class PyUeGearCommands(unreal.UeGearCommands):
         mayaio.export_layout_file()
 
     # ==================================================================================================================
+    # PATHS
+    # ==================================================================================================================
+
+    @unreal.ufunction(ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def project_content_directory():
+        """
+        Returns the content directory of the current game.
+
+        :return: content directory.
+        :rtype: str
+        """
+
+        return unreal.Paths.project_content_dir()
+
+    # ==================================================================================================================
     # ASSETS
     # ==================================================================================================================
 
@@ -85,6 +101,14 @@ class PyUeGearCommands(unreal.UeGearCommands):
         new_name = assets.rename_asset(asset_path, new_name)
         unreal.log('Renamed to {}'.format(new_name))
         return new_name
+
+    @unreal.ufunction(params=[str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def asset_export_path(asset_path):
+        """
+        Returns the path where the asset was originally exported.
+        """
+
+        return assets.get_export_path(asset_path)
 
     @unreal.ufunction(params=[str], ret=unreal.Array(structs.AssetExportData), static=True, meta=dict(Category='ueGear Commands'))
     def export_selected_assets(directory):
@@ -127,6 +151,30 @@ class PyUeGearCommands(unreal.UeGearCommands):
         ue_transform.scale3d = unreal.Vector(*ast.literal_eval(scale))
 
         found_actor.set_actor_transform(ue_transform, False, False)
+
+    # ==================================================================================================================
+    # STATIC MESHES
+    # ==================================================================================================================
+
+    @unreal.ufunction(params=[str, str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
+    def import_static_mesh(fbx_file, import_path, import_options):
+        """
+        Imports skeletal mesh from FBX file.
+
+        :param str import_path: skeletal mesh FBX file path.
+        :param str import_options: FBX import options as a string.
+        :return: imported skeletal mesh asset path.
+        :rtype: str
+        """
+
+        import_options = json.loads(import_options)
+        import_options['import_as_skeletal'] = False
+        destination_name = import_options.pop('destination_name', None)
+        save = import_options.pop('save', True)
+        import_asset_path = assets.import_fbx_asset(
+            fbx_file, import_path, destination_name=destination_name, save=save, import_options=import_options)
+
+        return import_asset_path
 
     # ==================================================================================================================
     # SKELETAL MESHES
