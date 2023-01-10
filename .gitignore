@@ -215,5 +215,14 @@ DerivedDataCache/*
 # Jetbrains IDE files
 .idea
 
+# Visual Studio IDE files
+.vsconfig
+
 # RiderLink Plugin
 Plugins/Developer/RiderLink/*
+
+# Unreal Engine files
+Config/DefaultInput.ini
+Content/**/*.u*
+Platforms
+Package
