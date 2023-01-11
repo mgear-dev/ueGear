@@ -9,7 +9,7 @@ from __future__ import print_function, division, absolute_import
 
 import unreal
 
-from . import helpers
+from . import helpers, assets
 
 TAG_ASSET_TYPE_ATTR_NAME = 'ueGearAssetType'
 TAG_ASSET_ID_ATTR_NAME = 'ueGearAssetId'
@@ -38,9 +38,9 @@ def auto_tag(asset=None, remove=False, save_assets=False):
 	:param bool save_assets: whether to save assets after tag is done.
 	"""
 
-	assets = helpers.force_list(asset or list(helpers.get_selected_assets()))
+	found_assets = helpers.force_list(asset or list(assets.selected_assets()))
 
-	for asset in assets:
+	for asset in found_assets:
 
 		asset_class = asset.get_class()
 		asset_name = asset.get_name()
@@ -56,7 +56,7 @@ def auto_tag(asset=None, remove=False, save_assets=False):
 
 	if save_assets:
 		with unreal.ScopedEditorTransaction('ueGear auto tag'):
-			unreal.EditorAssetLibrary.save_loaded_assets(assets)
+			unreal.EditorAssetLibrary.save_loaded_assets(found_assets)
 
 
 def apply_tag(asset=None, attribute_name=TAG_ASSET_TYPE_ATTR_NAME, attribute_value=''):
@@ -68,10 +68,10 @@ def apply_tag(asset=None, attribute_name=TAG_ASSET_TYPE_ATTR_NAME, attribute_val
 	:param str attribute_value: value to set tag to.
 	"""
 
-	assets = helpers.force_list(asset or list(helpers.get_selected_assets()))
+	found_assets = helpers.force_list(asset or list(assets.selected_assets()))
 	attribute_value = str(attribute_value)
 
-	for asset in assets:
+	for asset in found_assets:
 		unreal.EditorAssetLibrary.set_metadata_tag(asset, attribute_name, attribute_value)
 		if attribute_value:
 			unreal.log('Tagged "{}.{}" as {}.'.format(asset, attribute_name, attribute_value))
@@ -87,9 +87,9 @@ def remove_tag(asset=None, attribute_name=TAG_ASSET_TYPE_ATTR_NAME):
 	:param str attribute_name: tag attribute value to remove. By default, TAG_ASSET_TYPE_ATTR_NAME will be used.
 	"""
 
-	assets = helpers.force_list(asset or list(helpers.get_selected_assets()))
+	found_assets = helpers.force_list(asset or list(assets.selected_assets()))
 
-	for asset in assets:
+	for asset in found_assets:
 		if not unreal.EditorAssetLibrary.get_metadata_tag(asset, attribute_name):
 			continue
 		unreal.EditorAssetLibrary.remove_metadata_tag(asset, attribute_name)

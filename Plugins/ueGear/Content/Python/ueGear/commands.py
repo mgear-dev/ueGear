@@ -9,13 +9,13 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import ast
-import json
 import importlib
 
 import unreal
 
 from . import helpers, mayaio, structs, tag, assets, actors, textures
 
+# TODO: Remove the imports once we release into production
 importlib.reload(helpers)
 importlib.reload(structs)
 importlib.reload(tag)
@@ -92,16 +92,6 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         return assets.asset_exists(asset_path)
 
-    @unreal.ufunction(params=[str, str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
-    def rename_asset(asset_path, new_name):
-        """
-        Renames asset with new given name.
-        """
-
-        new_name = assets.rename_asset(asset_path, new_name)
-        unreal.log('Renamed to {}'.format(new_name))
-        return new_name
-
     @unreal.ufunction(params=[str], ret=str, static=True, meta=dict(Category='ueGear Commands'))
     def asset_export_path(asset_path):
         """
@@ -167,7 +157,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :rtype: str
         """
 
-        import_options = json.loads(import_options)
+        import_options = ast.literal_eval(import_options)
         import_options['import_as_skeletal'] = False
         destination_name = import_options.pop('destination_name', None)
         save = import_options.pop('save', True)

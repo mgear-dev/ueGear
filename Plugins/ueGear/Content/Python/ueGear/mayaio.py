@@ -78,7 +78,8 @@ def export_assets(export_directory, assets_to_export=None):
 
 	asset_export_datas = list()
 
-	assets_to_export = helpers.force_list(assets_to_export or list(assets.get_selected_assets()))
+	# if not assets to export given, we retrieve current selected assets in Unreal Engine Content Browser
+	assets_to_export = helpers.force_list(assets_to_export or list(assets.selected_assets()))
 	if not assets:
 		unreal.log_warning('No assets to export')
 		return asset_export_datas
@@ -86,6 +87,7 @@ def export_assets(export_directory, assets_to_export=None):
 	for asset_to_export in assets_to_export:
 		asset_fbx_file = assets.export_fbx_asset(asset_to_export, export_directory)
 		if not asset_fbx_file or not os.path.isfile(asset_fbx_file):
+			unreal.log_warning('Was not possible to export asset: "{}"'.format(asset_to_export))
 			continue
 		asset_export_data = structs.AssetExportData()
 		asset_export_data.name = asset_to_export.get_name()

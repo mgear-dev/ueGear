@@ -338,9 +338,13 @@ def convert_maya_transforms_into_unreal_transforms(translation, rotation, scale)
 	maya_rotation = rotation or [0.0, 0.0, 0.0]
 	maya_scale = scale or [1.0, 1.0, 1.0]
 
-	unreal_translation = unreal.Vector(maya_translation[0], maya_translation[2], maya_translation[1])
-	unreal_rotation = unreal.Rotator(maya_rotation[0], maya_rotation[2], maya_rotation[1] * -1)
-	unreal_scale = unreal.Vector(maya_scale[0], maya_scale[2], maya_scale[1])
+	# unreal_translation = unreal.Vector(maya_translation[0], maya_translation[2], maya_translation[1])
+	# unreal_rotation = unreal.Rotator(maya_rotation[0], maya_rotation[2], maya_rotation[1] * -1)
+	# unreal_scale = unreal.Vector(maya_scale[0], maya_scale[2], maya_scale[1])
+
+	unreal_translation = unreal.Vector(-maya_translation[0] * -1, maya_translation[2], maya_translation[1])
+	unreal_rotation = unreal.Rotator(maya_rotation[0] + 90, maya_rotation[2], maya_rotation[1] * -1)
+	unreal_scale = unreal.Vector(maya_scale[0], maya_scale[1], maya_scale[2])
 
 	return unreal_translation, unreal_rotation, unreal_scale
 

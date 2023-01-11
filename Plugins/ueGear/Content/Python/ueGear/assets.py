@@ -172,7 +172,7 @@ def get_selected_asset_data():
 	return unreal.EditorUtilityLibrary.get_selected_asset_data()
 
 
-def get_selected_assets():
+def selected_assets():
 	"""
 	Returns current selected asset instances in Content Browser.
 
@@ -362,6 +362,7 @@ def export_fbx_asset(asset, directory, fbx_filename='', export_options=None):
 	"""
 
 	fbx_path = helpers.clean_path(os.path.join(directory, '{}.fbx'.format(fbx_filename or asset.get_name())))
+	unreal.log('Exporting Asset "{}" in following path: "{}"'.format(asset, fbx_path))
 	export_task = generate_asset_fbx_export_task(asset, fbx_path, fbx_options=export_options)
 	if not export_task:
 		unreal.log_warning('Was not possible to generate asset FBX export task')
