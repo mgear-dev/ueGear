@@ -134,7 +134,7 @@ def sequence_to_json(sequence):
 
     return json.dumps(sequence_to_dict(sequence))
 
-
+# TODO: DOES NOT RETURN ANYTHING
 def get_bound_objects(sequence):
     """
     Returns objects in the current map that are bound to the given sequence.
@@ -249,7 +249,7 @@ def remove_sequence_camera(level_sequence_name="", camera_name=""):
 
     return True
 
-
+# TODO: This needs to return unreal.MovieSceneSequence and not unreal.SubSections
 def get_subsequences(level_sequence_name):
     """
     Returns a list of sequences from the given sequence name.

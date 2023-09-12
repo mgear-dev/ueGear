@@ -4,6 +4,7 @@ import unreal
 
 def DEPRECATED_get_viewport_camera_matrix():
     """
+    Uses a deprecated unreal method.
     Gets the active viewport's camera matrix, if it is available.
     :return: Viewport's camera matrix if available, else None.
     :rtype: unreal.Matrix
@@ -26,8 +27,8 @@ def get_viewport_camera_matrix():
     :return: Viewport's camera matrix if available, else None.
     :rtype: unreal.Matrix
     """
-
-    cam_location, cam_rotation = unreal.UnrealEditorSubsystem.get_level_viewport_camera_info()
+    editor_system = unreal.UnrealEditorSubsystem
+    cam_location, cam_rotation = editor_system.get_level_viewport_camera_info()
     
     # Exit early if no camera info was returned...
     if [cam_location, cam_rotation] is None:    
@@ -59,31 +60,82 @@ def get_current_level_sequence():
     """
     Get the current open level sequence.
 
-    Note: Level sequence has to be added to level.
+    Note: The Sequencer UI has to be open, else return None.
 
     :rtype: unreal.LevelSequence|None
     """
     level_sequence = unreal.LevelSequenceEditorBlueprintLibrary
     return level_sequence.get_current_level_sequence()
 
-# [ ] Look for Camera in level
-# [ ] Look for level sequencer in level
-    # [ ] Look for camera in level sequencer, or sequence
-    # [ ] Check Camera in level
+# Minimum Version Unreal 5.2
+# Minimum Maya Version.... As old as we can go
+
+# [X] Look for Camera in level
+# [X] Look for level sequencer in level
+    # [X] Look for camera in level sequencer, or sequence
+    # [X] Check Camera in level
+    # [X] Look for SubSequence Cameras
+# [X] Export FBX Camera Animation from Sequencer
+# [X] Get Sequencer Work Range 
+# [X] Get Sequencer View Range
+# [X] Get Sequencer Start and End Time
+
+# [ ] Look into mGears Maya import Sequencer Command [Maya Client]
+    # [ ] Start up UE Server 
+    # [ ] Shutdown up UE Server
+
 # [ ] Access Camera Transform data
 # [ ] Access Camera Specific component data
 # [ ] Access Attributes
 # [ ] Access Animated Attributes
-# [ ] Get Animation
-# [ ] Write Animation
+# [ ] Create Animated Attributes
+# [ ] Update Animation Attributes
 # [ ] Save out and load data from Unreal to Unreal
 
-def get_cameras_in_level():
-    return unreal.GameplayStatics().get_all_actors_of_class( unreal.EditorLevelLibrary.get_editor_world(), unreal.CameraActor)
+# [ ] Need to add some MetaData to the Unreal Level, to associate it to the Maya level
+    # [ ] Or ask everytime for the location.
+    # [ ] Track which camera comes from which LevelSequencer / track, so they can be matched up on re-import
 
-def get_all_subsequences():
-    active_lvl_seq = get_current_level_sequence()
-    return active_lvl_seq.find_tracks_by_exact_type(unreal.MovieSceneSubTrack)
+
+
+def get_cameras_in_level():
+    """
+    Returns all the Camera Actors that exist in the level, at this moment in time.
+    
+    NOTE: This MIGHT NOT return all camera's in the sequencer as the sequencer may have 
+          Sequence instancable Cameras, that only appear when the current frame overlaps
+          with its active track section.
+        
+    :return: List of CameraActors, that exist in the Level
+    :rtype: [unreal.CameraActor]
+    """
+    world = unreal.EditorLevelLibrary.get_editor_world()
+    cam_type = unreal.CameraActor
+    return unreal.GameplayStatics().get_all_actors_of_class(world, cam_type)
+
+def get_subsequence_tracks(sequence:unreal.LevelSequence=None):
+    """
+    Gets all tracks that have sub sequences tracks.
+    :return: List of MovieSceneSubTrack, that exist in the sequence
+    :rtype: [unreal.MovieSceneSubTrack]
+    """
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    return sequence.find_tracks_by_exact_type(unreal.MovieSceneSubTrack)
+
+def get_subsequences(track:unreal.MovieSceneSubTrack):
+    """
+    Gets all sequences that exist in the Sub sequence track.
+    :return: List of MovieSceneSequences, that were part of the track.
+    :rtype: [unreal.MovieSceneSequence]
+    """
+    sequences = []
+
+    for section in track.get_sections():
+        sequences.append(section.get_sequence())
+
+    return sequences
 
 def query_level_sequence():
     active_lvl_seq = get_current_level_sequence()
@@ -99,10 +151,25 @@ def query_level_sequence():
         print(f"       {track.get_class()}")
         
         if track.get_class() == unreal.MovieSceneSubTrack().get_class():
-            print("  SUB-SEQUENCE")
+            print( "     SUB-SEQUENCE")
+            print(f"        {track.get_display_name()}")
+            print(f"        {track.get_package()}")
+            print(f"        {track.get_path_name()}")
+            print(f"        {track.get_default_object()}")
+            
+            # print(get_subsequences(track))
+
+            for sub_seq in get_subsequences(track):
+                print( get_sequencer_playback_range( sub_seq ) )
+
+            # for sctn in track.get_sections():
+                # print(f"             {sctn}")
+                # print(f"             {sctn.get_sequence()}")
+                # print( get_sequencer_playback_range( sctn.get_sequence() ) )
+            
 
     print("Find By Exact Type")
-    for track in get_all_subsequences():
+    for track in get_subsequence_tracks():
         print(f"  {track.get_display_name()}")
         print(f"       {track.get_class()}")
 
@@ -123,7 +190,7 @@ def query_level_sequence():
             # TODO: Shift the timeline to the start of the Spanwable camera, so one exists in the level at export time.
 
             print("     CAMERA ACTOR")
-            export_level_sequence_bound_object(spawnable)
+            export_level_sequence_bound_object(spawnable, "/Users/simonanderson/Documents/maya/projects/default/assets/")
 
         print("        TRACKS:")
         for track in spawnable.get_tracks():
@@ -162,7 +229,7 @@ def query_level_sequence():
             print("     CAMERA ACTOR")
             print(f"        GUI: {possables.get_id()}")
 
-            export_level_sequence_bound_object(possables)
+            export_level_sequence_bound_object(possables, "/Users/simonanderson/Documents/maya/projects/default/assets/")
 
             objs = get_bound_object(possables)
 
@@ -209,18 +276,21 @@ def query_level_sequence():
                         
             
 
-def get_bound_object(track:unreal.MovieSceneBindingProxy):
+def get_bound_object(track:unreal.MovieSceneBindingProxy, sequence:unreal.LevelSequence=None):
     """
     Queries the active Level Sequencer for the Objects that are bound to 
     the input Track ( MovieSceneBindingProxy ).
     """
     seq_tools = unreal.SequencerTools()
     editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    active_lvl_seq = get_current_level_sequence()
+    
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
     world = editor_system.get_editor_world()
-    range = active_lvl_seq.get_playback_range()
+    range = sequence.get_playback_range()
     seq_bound_objs = seq_tools.get_bound_objects(world, 
-                                                active_lvl_seq, 
+                                                sequence, 
                                                 [track],
                                                 range)
 
@@ -231,32 +301,102 @@ def get_bound_object(track:unreal.MovieSceneBindingProxy):
     return bound_objs
 
 
-def export_level_sequence_bound_object(track:unreal.MovieSceneBindingProxy):
+def export_level_sequence_bound_object(track:unreal.MovieSceneBindingProxy, path:str, sequence:unreal.LevelSequence=None):
+    """
+    Exports the object that relates to the track, to the path specified.
+    Example: Camera track, would export the camera object to the specified location.
+    """
     editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    active_lvl_seq = get_current_level_sequence()
     world = editor_system.get_editor_world()
-    range = active_lvl_seq.get_playback_range()
-
     fbx_config = unreal.FbxExportOption()
+    seq_tools = unreal.SequencerTools()
 
-    TEMP_PATH = "/Users/simonanderson/Documents/maya/projects/default/assets/"
+    if sequence is None:
+        sequence = get_current_level_sequence()
 
-    export_path =TEMP_PATH + str(track.get_display_name())
+    export_path = path + str(track.get_display_name())
 
     seq_fbx_params = unreal.SequencerExportFBXParams(world=world, 
-                                                     sequence=active_lvl_seq, 
+                                                     sequence=sequence, 
                                                      bindings=[track],
                                                      override_options = fbx_config,
                                                      fbx_file_name = export_path
     )
 
-    seq_tools = unreal.SequencerTools()
     complete =  seq_tools.export_level_sequence_fbx(seq_fbx_params)
 
     if complete:
-        print("FBX EXPORTED")
-        print(export_path)
+        print(f"FBX EXPORTED: {export_path}")
+        return export_path
 
+    return None
+
+def get_sequencer_playback_range(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the Start and End frame of the sequence provided, else defaults to 
+    active sequence.
+    If Sequence has no start or end, then None is returned.
+    :return: The Start and End Frame of the playback range.
+    :rtype: [int, int]
+    """
+    playback_data = None
+    start_frame = None
+    end_frame = None
+
+    if sequence is None:
+        playback_data = get_current_level_sequence().get_playback_range()
+    else:
+        playback_data = sequence.get_playback_range()
+
+    if playback_data.has_start():
+        start_frame = playback_data.get_start_frame()
+    if playback_data.has_end():    
+        end_frame = playback_data.get_end_frame()
+
+    return start_frame, end_frame
+
+
+def get_sequencer_view_range(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the sequences view range.
+    :return: The Start and End Frame of the view range.
+    :rtype: [int, int]
+    """
+    start_frame = None
+    end_frame = None
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    fps = sequence.get_display_rate().numerator
+
+    start_frame = round(sequence.get_view_range_start() * fps)
+    end_frame = round(sequence.get_view_range_end() * fps)
+
+    return start_frame, end_frame
+
+
+def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the sequences work range.
+    :return: The Start and End Frame of the work range.
+    :rtype: [int, int]
+    """
+    start_frame = None
+    end_frame = None
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    fps = sequence.get_display_rate().numerator
+
+    start_frame = round(sequence.get_work_range_start() * fps)
+    end_frame = round(sequence.get_work_range_end() * fps)
+
+    return start_frame, end_frame
 
 print("Getting current level Sequence")
 query_level_sequence()
+
+
+
