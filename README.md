@@ -75,3 +75,4 @@ The following plugins must be activated in your project to get the full benefit 
 
 ## OSX
 Go to the FBX webpage and install the latest version that works with your Maya version.
+

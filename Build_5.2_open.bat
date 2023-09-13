@@ -1,1 +1,1 @@
-cmd /k "Build_5.1.bat"
+cmd /k "Build_5.2.sh"
