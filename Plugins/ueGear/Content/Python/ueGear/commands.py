@@ -76,8 +76,10 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :return: content directory.
         :rtype: str
         """
-
-        return unreal.Paths.project_content_dir()
+        # Gets the path relative to the project
+        path = unreal.Paths.project_content_dir()
+        # Standardises the path, removing any extra data
+        return unreal.Paths.make_standard_filename(path)
 
     # ==================================================================================================================
     # ASSETS
