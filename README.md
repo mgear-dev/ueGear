@@ -41,13 +41,20 @@ These tools will be implemented in mGear
   [?] Subsequence Actor
 
 [ ] Commands from Maya
+  [ ] Query Unreal for FPS, check if it is the same as Maya, alert user before importing Cameras
+    [X] Get Sequencer FPS
+    [ ] Add UE Command for Maya to pass
+    [ ] Add Maya listener, to repsond to commands responce
+    [ ] Show dialog if fps are different
+
   [ ] Maya to Unreal
-    [ ] Static Objects
+    [X] Static Objects
     [ ] Cameras
+    
   [ ] Unreal to Maya
     [ ] Active LevelSequence Cameras
     [ ] Static Objects in Level
-    [ ] Selected objects in Content Browser
+    [X] Selected objects in Content Browser
 
 [ ] See if it is possible for Maya to not require FBX_SDK for Unreal export commands
 

@@ -2,6 +2,15 @@
 
 import unreal
 
+import ueGear.sequencer as sequencer
+import ueGear.sequencer.bindings
+
+import ueGear.commands as ueCommands
+import importlib
+importlib.reload(ueCommands)
+importlib.reload(sequencer)
+# importlib.reload(ueGear.sequencer.bindings)
+
 def DEPRECATED_get_viewport_camera_matrix():
     """
     Uses a deprecated unreal method.
@@ -395,8 +404,77 @@ def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
 
     return start_frame, end_frame
 
-print("Getting current level Sequence")
-query_level_sequence()
+# [ ] Export Selected Camera From Sequencer
+#   [ ] Full track
+#   [ ] Active Track
 
+def export_selected_sequencer_camera(active_track=True):
+    """
+
+    DESIGN ASSUMPTION: We will only be exporting Bindings and Sections.
+    as tracks equate to object attributes, which require more custom
+    handlingwhen exporting and importing the fbx.
+
+    :return: Dictionary of paths exported(key), and the value 
+    :rtype: [int, int]
+    """
+    level_sequence = unreal.LevelSequenceEditorBlueprintLibrary
+
+    # Track that is an objects and not an objects attribute.
+    bindings = level_sequence.get_selected_bindings()
+
+    # otherwise refered to as clips, a segment that appears on the binding
+    # Unreal Bug: Seems to not populate correctly all the time.
+#    sections = level_sequence.get_selected_sections()
+
+    print("SELECTED")
+ #   print(f"  {sections}")
+    print(f"  {bindings}")
+
+    exported_cameras = dict()
+
+#    for section in sections:
+#        print("Section")
+#        print(f"  {section.get_full_name()}")
+#        print(f"  {section.get_path_name()}")
+        
+    for binding in bindings:
+
+        if ueGear.sequencer.bindings.is_instanced_camera(binding):
+            print("Binding: INSTANCED CAMERA")
+            print(f"  {binding.get_name()}")
+            print(f"  {binding.get_display_name()}")
+            print(f"  {binding.static_struct()}")
+            print(f"  {binding.get_possessed_object_class()}")
+            print(f"       {binding.get_child_possessables()}")
+            print(f"       {binding.get_possessed_object_class() }")
+            print(f"       {binding.get_child_possessables()[0].get_name()}")
+
+            export_path = export_level_sequence_bound_object(
+                track=binding, 
+                path="/Users/simonanderson/Documents/maya/projects/default/scenes"
+            )
+
+        if ueGear.sequencer.bindings.is_camera(binding):
+            print("Binding: CAMERA")
+            print(f"  {binding.get_name()}")
+            print(f"  {binding.get_display_name()}")
+            print(f"  {binding.static_struct()}")
+            print(f"  {binding.get_possessed_object_class() == unreal.CineCameraActor.static_class()}")
+
+        # export_path = export_level_sequence_bound_object(
+        #     track=binding, 
+        #     path="/Users/simonanderson/Documents/maya/projects/default/scenes"
+        # )
+
+        # exported_cameras[export_path] = binding
+
+    return exported_cameras
+
+
+# print("Getting current level Sequence")
+# query_level_sequence()
+export_selected_sequencer_camera()
+print( sequencer.get_framerate() )
 
 

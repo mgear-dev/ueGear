@@ -3,7 +3,7 @@ import json
 
 import unreal
 
-from . import helpers, assets
+from ueGear import helpers, assets
 
 # Dictionary containing default FBX export options
 DEFAULT_SEQUENCE_FBX_EXPORT_OPTIONS = {
@@ -24,6 +24,20 @@ def get_current_level_sequence():
         unreal.LevelSequenceEditorBlueprintLibrary.get_current_level_sequence()
     )
 
+def get_framerate(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the sequencer's frame rate.
+    :return: Frame rate for the specified sequencer. Frames per second.
+    :rtype: int | None
+    """
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    if sequence is None:
+        return None
+
+    return sequence.get_display_rate().numerator
 
 def track_section_to_dict(section):
     """
