@@ -185,11 +185,24 @@ class PyUeGearCommands(unreal.UeGearCommands):
         """
         Imports skeletal mesh from FBX file.
 
-        :param str import_path: skeletal mesh FBX file path.
+        :param str fbx_file: skeletal mesh FBX file path.
+        :param str import_path: package path location
         :param str import_options: FBX import options as a string.
         :return: imported skeletal mesh asset path.
         :rtype: str
         """
+
+        # Check import path is a package path, else update it.
+        is_package_path = False
+        if import_path.find('game') == 0 or \
+            import_path.find('game') == 1:
+            is_package_path = True
+
+        if not is_package_path:
+            raw_path = unreal.Paths.project_content_dir()
+            content_dir = unreal.Paths.make_standard_filename(raw_path)
+            import_path = import_path.replace(content_dir,"")
+            import_path = os.path.join(os.path.sep, "Game", import_path)
 
         import_options = ast.literal_eval(import_options)
         import_options["import_as_skeletal"] = False
