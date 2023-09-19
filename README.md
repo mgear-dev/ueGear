@@ -34,6 +34,8 @@ These tools will be implemented in mGear
 #   DEVELOPER NOTES
 # ===================
 
+# WORKING ON: [MAYA] Import Active Sequencer Cameras + TimeLine
+
 [X] Export Camera
 [ ] Get Cameras From Sequencer
   [X] Actor in Level
@@ -56,7 +58,8 @@ These tools will be implemented in mGear
     [ ] Static Objects in Level
     [X] Selected objects in Content Browser
 
-[ ] See if it is possible for Maya to not require FBX_SDK for Unreal export commands
+[ ] See if it is possible for Maya to not require FBX_SDK for Unreal export commands.
+  - Currently it fails if you do not have FBX_SDK and try and perform an object export.
 
 # Unreal Plugins
 The following plugins must be activated in your project to get the full benefit of ueGear.
@@ -83,3 +86,9 @@ The following plugins must be activated in your project to get the full benefit 
 ## OSX
 Go to the FBX webpage and install the latest version that works with your Maya version.
 
+# Cameras
+- Can exist in LevelSequencer
+- Can exist in a sub sequence of a LevelSequencer
+- Can be instantiated by the LevelSequencer
+- Can exist in a Level and not in a LevelSequencer
+- Never exists in the Content Browser. It will appear in a LevelSequence or inside a level.

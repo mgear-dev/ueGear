@@ -24,6 +24,33 @@ def get_current_level_sequence():
         unreal.LevelSequenceEditorBlueprintLibrary.get_current_level_sequence()
     )
 
+
+def get_subsequence_tracks(sequence:unreal.LevelSequence=None):
+    """
+    Gets all tracks that are sub-sequence tracks.
+    :return: List of MovieSceneSubTrack, that exist in the sequence
+    :rtype: [unreal.MovieSceneSubTrack]
+    """
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    return sequence.find_tracks_by_exact_type(unreal.MovieSceneSubTrack)
+
+
+def get_subsequences(track:unreal.MovieSceneSubTrack):
+    """
+    Gets all sequences that exist in the Sub sequence track.
+    :return: List of MovieSceneSequences, that were part of the track.
+    :rtype: [unreal.MovieSceneSequence]
+    """
+    sequences = []
+
+    for section in track.get_sections():
+        sequences.append(section.get_sequence())
+
+    return sequences
+
+
 def get_framerate(sequence:unreal.MovieSceneSequence=None):
     """
     Gets the sequencer's frame rate.
@@ -148,27 +175,60 @@ def sequence_to_json(sequence):
 
     return json.dumps(sequence_to_dict(sequence))
 
-# TODO: DOES NOT RETURN ANYTHING
-def get_bound_objects(sequence):
+
+def get_bound_objects(sequence:unreal.LevelSequence):
     """
     Returns objects in the current map that are bound to the given sequence.
 
-    :param unreal.MovieSceneSequence sequence: sequence to get bound objects of.
+    :param unreal.LevelSequence sequence: sequence to get bound objects of.
     :return: list of bound objects.
+    :rtype: [unreal.Object]
     """
 
     world = unreal.get_editor_subsystem(
         unreal.UnrealEditorSubsystem
     ).get_editor_world()
     sequence_range = sequence.get_playback_range()
-    bound_objects = unreal.SequencerTools.get_bound_objects(
-        world, sequence, sequence.get_bindings(), sequence_range
+    seq_bound_objs = unreal.SequencerTools.get_bound_objects(
+        world, 
+        sequence, 
+        sequence.get_bindings(), 
+        sequence_range
     )
 
-    for bound_object in bound_objects:
-        print("Binding: {}".format(bound_object.binding_proxy))
-        print("Bound Objects: {}".format(bound_object.bound_objects))
-        print("----\n")
+    bound_objs = []
+    for entry in seq_bound_objs:
+        bound_objs.extend(entry.bound_objects)
+    
+    return bound_objs
+
+
+def get_bound_object(track:unreal.MovieSceneBindingProxy, sequence:unreal.LevelSequence=None):
+    """
+    Queries the active Level Sequencer for the Objects that are bound to 
+    the input Track ( MovieSceneBindingProxy ).
+
+    :return: Bound objects that exist on the track input..
+    :rtype: [unreal.Object]
+    """
+    seq_tools = unreal.SequencerTools()
+    editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    world = editor_system.get_editor_world()
+    range = sequence.get_playback_range()
+    seq_bound_objs = seq_tools.get_bound_objects(world, 
+                                                sequence, 
+                                                [track],
+                                                range)
+
+    bound_objs = []
+    for entry in seq_bound_objs:
+        bound_objs.extend(entry.bound_objects)
+
+    return bound_objs
 
 
 def export_fbx_sequence(
@@ -287,3 +347,72 @@ def get_subsequences(level_sequence_name):
     return (
         found_subscene_track.get_sections() if found_subscene_track else list()
     )
+
+
+def get_sequencer_playback_range(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the Start and End frame of the sequence provided, else defaults to 
+    active sequence.
+    If Sequence has no start or end, then None is returned.
+    :return: The Start and End Frame of the playback range.
+    :rtype: [int, int]
+    """
+    playback_data = None
+    start_frame = None
+    end_frame = None
+
+    if sequence is None:
+        playback_data = get_current_level_sequence().get_playback_range()
+    else:
+        playback_data = sequence.get_playback_range()
+
+    if playback_data.has_start():
+        start_frame = playback_data.get_start_frame()
+    if playback_data.has_end():    
+        end_frame = playback_data.get_end_frame()
+
+    return start_frame, end_frame
+
+
+def get_sequencer_view_range(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the sequences view range.
+    If no sequence is specified, then defaults to current active level sequencer.
+    
+    :return: The Start and End Frame of the view range.
+    :rtype: [int, int]
+    """
+    start_frame = None
+    end_frame = None
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    fps = sequence.get_display_rate().numerator
+
+    start_frame = round(sequence.get_view_range_start() * fps)
+    end_frame = round(sequence.get_view_range_end() * fps)
+
+    return start_frame, end_frame
+
+
+def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
+    """
+    Gets the sequences work range.
+    If no sequence is specified, then defaults to current active level sequencer.
+
+    :return: The Start and End Frame of the work range.
+    :rtype: [int, int]
+    """
+    start_frame = None
+    end_frame = None
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    fps = sequence.get_display_rate().numerator
+
+    start_frame = round(sequence.get_work_range_start() * fps)
+    end_frame = round(sequence.get_work_range_end() * fps)
+
+    return start_frame, end_frame
