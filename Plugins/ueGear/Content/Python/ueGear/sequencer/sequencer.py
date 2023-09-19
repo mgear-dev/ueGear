@@ -4,6 +4,7 @@ import json
 import unreal
 
 from ueGear import helpers, assets
+import ueGear.sequencer.bindings
 
 # Dictionary containing default FBX export options
 DEFAULT_SEQUENCE_FBX_EXPORT_OPTIONS = {
@@ -231,6 +232,34 @@ def get_bound_object(track:unreal.MovieSceneBindingProxy, sequence:unreal.LevelS
     return bound_objs
 
 
+def get_selected_cameras():
+    """
+    Gets the Camera Bindings, from the selected Sequence Tracks.
+
+    :return: Array of Camera bindings.
+    :rtype: [unreal.MovieSceneBindingProxy]
+    """
+    print("    DEBUG: Get Selected Cameras")
+    cameras = []
+
+    lvl_seq_bpl = unreal.LevelSequenceEditorBlueprintLibrary
+
+    # Track that is an objects and not an objects attribute.
+    bindings = lvl_seq_bpl.get_selected_bindings()
+
+    for binding in bindings:
+
+        if ueGear.sequencer.bindings.is_instanced_camera(binding):
+            # Instanced Camera
+            cameras.append(binding)
+
+        elif ueGear.sequencer.bindings.is_camera(binding):
+            # Camera
+            cameras.append(binding)
+
+    return cameras
+
+
 def export_fbx_sequence(
     sequence,
     directory,
@@ -284,6 +313,74 @@ def export_fbx_sequence(
     result = unreal.SequencerTools.export_level_sequence_fbx(export_fbx_params)
 
     return fbx_path if result else ""
+
+
+def export_fbx_binding(binding:unreal.MovieSceneBindingProxy, 
+                       path:str, 
+                       sequence:unreal.LevelSequence=None):
+    """
+    Exports the object that relates to the track, to the path specified, as an fbx.
+    Example: Camera track, would export the camera object to the specified location.
+
+    :param unreal.MovieSceneBindingProxy bindings: binding to export.
+    :param str path: Full path to directory, where the fbxs will be exported.
+    :param sequence, optional: LevelSequence that the bindings belong to, else it
+    assumes to be the Active Sequncer.
+
+    :return: The FBX export location.
+    :rtype: str
+    """
+
+    editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    world = editor_system.get_editor_world()
+    fbx_config = unreal.FbxExportOption()
+    seq_tools = unreal.SequencerTools()
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    export_path = path + str(binding.get_display_name())
+
+    seq_fbx_params = unreal.SequencerExportFBXParams(world=world, 
+                                                     sequence=sequence, 
+                                                     bindings=[binding],
+                                                     override_options = fbx_config,
+                                                     fbx_file_name = export_path
+    )
+
+    complete =  seq_tools.export_level_sequence_fbx(seq_fbx_params)
+
+    if complete:
+        return export_path + ".fbx"
+
+    return None
+
+
+def export_fbx_bindings(bindings:list, path:str, sequence:unreal.LevelSequence=None):
+    """
+    Exports the MovieSceneBindingProxy as an fbx, to the path specified.
+
+    :param [unreal.MovieSceneBindingProxy] bindings: bindings to export.
+    :param str path: Full path to directory, where the fbxs will be exported.
+    :param sequence, optional: LevelSequence that the bindings belong to, else it
+    assumes to be the Active Sequncer.
+
+    :return: The FBX export locations.
+    :rtype: [str]
+    """
+    export_paths = []
+
+    if sequence is None:
+        sequence = get_current_level_sequence()
+
+    for proxy_bind in bindings:
+        fbx_path = export_fbx_binding(
+            binding=proxy_bind, 
+            path=path)
+        
+        export_paths.append(fbx_path)
+
+    return export_paths
 
 
 def remove_sequence_camera(level_sequence_name="", camera_name=""):
@@ -354,6 +451,7 @@ def get_sequencer_playback_range(sequence:unreal.MovieSceneSequence=None):
     Gets the Start and End frame of the sequence provided, else defaults to 
     active sequence.
     If Sequence has no start or end, then None is returned.
+    
     :return: The Start and End Frame of the playback range.
     :rtype: [int, int]
     """

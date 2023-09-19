@@ -36,6 +36,65 @@ These tools will be implemented in mGear
 
 # WORKING ON: [MAYA] Import Active Sequencer Cameras + TimeLine
 
+Maya > Unreal
+## Scenario A:
+  - Maya Camera with ueGear Tag exists
+  - Camera does not exist in any Level's or LevelSequences
+  **On Unreal Import**
+  - Check for associated LevelSequence PackagePath
+    - if None
+      + Import into active level
+      + Generate new LevelSequence
+        - Create New Camera Track
+        - Import Camera Data
+
+## Scenario B:
+  - Maya Camera with ueGear Tag exists
+  - Camera does exist in the Open Level or specified LevelSequencer
+  **On Unreal Import**
+    - update Level or LevelSequencer
+  
+
+Unreal > Maya
+##  Scenario A:
+- Unreal Camera is being exported to Maya, Camera exists
+  - Export Camera with meta data
+    - Name
+    - Type
+    - PackagePath
+  - Check Maya scene for Cameras
+    + Does a camera exist with the same name
+      + Does the camera have all 3 populated meta data
+        - Update Camera
+      + Does the camera have matching name and no package path [Most likely a camera that has not done a round trip]
+        - Update Package path
+        - Update Camera
+    + No Camera exists
+      - Create new Camera
+      - Populate with Meta data
+
+# Implementation
+Unreal > Maya > Unreal
+- Select Camera in Sequencer
+  - Tag Camera with metadata for fbx export
+  - export to temp location
+  - import into Maya
+- Adjustments in Maya
+  - Select Camera
+  - export to temp location
+  - find LevelSequencer in unreal
+    - Find track name that matches attribute
+    - import data 
+
+# DESIGN DECISIONS
+- Always starting from Unreal
+- Always assume camera in sequencer
+Unreal > Maya > Unreal camera flows
+- Adding custom attributes on Camera to FBX
+- A shot represents one Camera track.
+
+
+# TASKS:
 [X] Export Camera
 [ ] Get Cameras From Sequencer
   [X] Actor in Level
@@ -86,7 +145,7 @@ The following plugins must be activated in your project to get the full benefit 
 ## OSX
 Go to the FBX webpage and install the latest version that works with your Maya version.
 
-# Cameras
+# Unreal Cameras
 - Can exist in LevelSequencer
 - Can exist in a sub sequence of a LevelSequencer
 - Can be instantiated by the LevelSequencer

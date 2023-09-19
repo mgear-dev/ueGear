@@ -45,29 +45,7 @@ importlib.reload(sequencer)
 
 
 
-def get_subsequence_tracks(sequence:unreal.LevelSequence=None):
-    """
-    Gets all tracks that have sub sequences tracks.
-    :return: List of MovieSceneSubTrack, that exist in the sequence
-    :rtype: [unreal.MovieSceneSubTrack]
-    """
-    if sequence is None:
-        sequence = sequencer.get_current_level_sequence()
 
-    return sequence.find_tracks_by_exact_type(unreal.MovieSceneSubTrack)
-
-def get_subsequences(track:unreal.MovieSceneSubTrack):
-    """
-    Gets all sequences that exist in the Sub sequence track.
-    :return: List of MovieSceneSequences, that were part of the track.
-    :rtype: [unreal.MovieSceneSequence]
-    """
-    sequences = []
-
-    for section in track.get_sections():
-        sequences.append(section.get_sequence())
-
-    return sequences
 
 def query_level_sequence():
     active_lvl_seq = sequencer.get_current_level_sequence()
@@ -206,64 +184,6 @@ def query_level_sequence():
                         # print(f"              {channel.get_full_name()}")
                         # print(f"              {channel.get_editor_property(channel.get_full_name())}")
                         
-            
-
-def get_bound_object(track:unreal.MovieSceneBindingProxy, sequence:unreal.LevelSequence=None):
-    """
-    Queries the active Level Sequencer for the Objects that are bound to 
-    the input Track ( MovieSceneBindingProxy ).
-    """
-    seq_tools = unreal.SequencerTools()
-    editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    
-    if sequence is None:
-        sequence = sequencer.get_current_level_sequence()
-
-    world = editor_system.get_editor_world()
-    range = sequence.get_playback_range()
-    seq_bound_objs = seq_tools.get_bound_objects(world, 
-                                                sequence, 
-                                                [track],
-                                                range)
-
-    bound_objs = []
-    for entry in seq_bound_objs:
-        bound_objs.extend(entry.bound_objects)
-
-    return bound_objs
-
-
-def export_level_sequence_bound_object(track:unreal.MovieSceneBindingProxy, path:str, sequence:unreal.LevelSequence=None):
-    """
-    Exports the object that relates to the track, to the path specified.
-    Example: Camera track, would export the camera object to the specified location.
-    """
-    editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    world = editor_system.get_editor_world()
-    fbx_config = unreal.FbxExportOption()
-    seq_tools = unreal.SequencerTools()
-
-    if sequence is None:
-        sequence = sequencer.get_current_level_sequence()
-
-    export_path = path + str(track.get_display_name())
-
-    seq_fbx_params = unreal.SequencerExportFBXParams(world=world, 
-                                                     sequence=sequence, 
-                                                     bindings=[track],
-                                                     override_options = fbx_config,
-                                                     fbx_file_name = export_path
-    )
-
-    complete =  seq_tools.export_level_sequence_fbx(seq_fbx_params)
-
-    if complete:
-        print(f"FBX EXPORTED: {export_path}")
-        return export_path
-
-    return None
-
-
 
 # [ ] Export Selected Camera From Sequencer
 #   [ ] Full track
@@ -310,6 +230,7 @@ def export_selected_sequencer_camera():
             print(f"       {binding.get_child_possessables()[0].get_name()}")
             
 
+
             # export_path = export_level_sequence_bound_object(
             #     track=binding, 
             #     path=temporary_path
@@ -324,6 +245,9 @@ def export_selected_sequencer_camera():
             print(f"  {binding.get_id()}")
             print(f"  {binding.get_possessed_object_class() == unreal.CineCameraActor.static_class()}")
 
+            print(f"  {binding.get_child_possessables()[0].get_name()}")
+            
+            print("--")
             # export_path = export_level_sequence_bound_object(
             #     track=binding, 
             #     path=temporary_path
@@ -360,3 +284,8 @@ print(sequencer.get_framerate())
 print(sequencer.get_sequencer_playback_range())
 print(sequencer.get_sequencer_view_range())
 print(sequencer.get_sequencer_work_range())
+
+# unreal.EditorAssetLibrary.set_metadata_tag(
+#                     binding, 
+#                     tag.TAG_ASSET_TYPE_ATTR_NAME
+#                 )

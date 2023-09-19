@@ -13,7 +13,7 @@ import importlib
 
 import unreal
 
-from . import helpers, mayaio, structs, tag, assets, actors, textures
+from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 
 # TODO: Remove the imports once we release into production
 importlib.reload(helpers)
@@ -130,6 +130,44 @@ class PyUeGearCommands(unreal.UeGearCommands):
         """
 
         return mayaio.export_assets(directory)
+
+    @unreal.ufunction(
+        params=[str],
+        ret=unreal.Array(structs.AssetExportData),
+        static=True,
+        meta=dict(Category="ueGear Commands"),
+    )
+    def export_selected_sequencer_cameras(directory):
+        """
+        Export selected Cameras from LevelSequencer.
+
+        :param str directory: directory where assets will be exported.
+        :return: 
+        :rtype: 
+        """
+        meta_data = []
+
+        # Validate directory, as osx required the path to end in a /
+        directory = os.path.join(directory, "")
+
+        level_sequencer_path_name = sequencer.get_current_level_sequence().get_path_name()
+
+        camera_bindings = sequencer.get_selected_cameras()
+        if not camera_bindings:
+            return []
+
+        fbx_paths = sequencer.export_fbx_bindings(camera_bindings, directory)
+
+        for binding, path in zip(camera_bindings, fbx_paths):
+            asset_export_data = structs.AssetExportData()
+            asset_export_data.name = binding.get_name()
+            asset_export_data.path = level_sequencer_path_name
+            asset_export_data.asset_type = "camera"
+            asset_export_data.fbx_file = path
+
+            meta_data.append(asset_export_data)
+
+        return meta_data
 
     # ==================================================================================================================
     # ACTORS
