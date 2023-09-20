@@ -560,7 +560,7 @@ def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
 
 def open_sequencer(level_sequence_path:str):
     """
-    Opens the Sequencer in Unreal with the sequencer file.
+    Opens the Sequencer UI in Unreal with the sequencer file.
     level_sequencer_path: Needs to be a PackageName (Start with /Game )
 
     :return: The LevelSequence that was opened inside the Sequencer.

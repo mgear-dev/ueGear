@@ -169,6 +169,25 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         return meta_data
 
+    @unreal.ufunction(
+        params=[str, str, str],
+        static=True,
+        meta=dict(Category="ueGear Commands"),
+    )
+    def update_sequencer_camera_from_maya(camera_name, sequencer_package, fbx_path):
+        """
+        Updates the camera in the specified LevelSequencer
+
+        :param str camera_name: The name of the camera that exists on the level sequnce.
+        :param str sequencer_package: The package path to the sequencer file.
+        :param str fbx_path: Location of the fbx camera.
+        """
+
+        print("[ueGear] Command Triggered - Update Sequencer Cameras")
+        levelsequencer = sequencer.open_sequencer(sequencer_package)
+        sequencer.import_fbx_camera(name=camera_name, sequence=levelsequencer, fbx_path=fbx_path)
+
+
     # ==================================================================================================================
     # ACTORS
     # ==================================================================================================================
