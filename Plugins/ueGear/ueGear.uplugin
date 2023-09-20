@@ -20,8 +20,8 @@
 			"Name": "ueGear",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
-			"PlatformAllowList": [ "Win64" ],
-			"WhitelistPlatforms": [ "Win64" ]
+			"PlatformAllowList": [ "Win64", "Mac" ],
+			"WhitelistPlatforms": [ "Win64", "Mac" ]
 		}
 	],
 	"Plugins":

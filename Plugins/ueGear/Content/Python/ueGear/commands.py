@@ -13,7 +13,7 @@ import importlib
 
 import unreal
 
-from . import helpers, mayaio, structs, tag, assets, actors, textures
+from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 
 # TODO: Remove the imports once we release into production
 importlib.reload(helpers)
@@ -76,8 +76,10 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :return: content directory.
         :rtype: str
         """
-
-        return unreal.Paths.project_content_dir()
+        # Gets the path relative to the project
+        path = unreal.Paths.project_content_dir()
+        # Standardises the path, removing any extra data
+        return unreal.Paths.make_standard_filename(path)
 
     # ==================================================================================================================
     # ASSETS
@@ -128,6 +130,63 @@ class PyUeGearCommands(unreal.UeGearCommands):
         """
 
         return mayaio.export_assets(directory)
+
+    @unreal.ufunction(
+        params=[str],
+        ret=unreal.Array(structs.AssetExportData),
+        static=True,
+        meta=dict(Category="ueGear Commands"),
+    )
+    def export_selected_sequencer_cameras(directory):
+        """
+        Export selected Cameras from LevelSequencer.
+
+        :param str directory: directory where assets will be exported.
+        :return: 
+        :rtype: 
+        """
+        meta_data = []
+
+        # Validate directory, as osx required the path to end in a /
+        directory = os.path.join(directory, "")
+
+        level_sequencer_path_name = sequencer.get_current_level_sequence().get_path_name()
+
+        camera_bindings = sequencer.get_selected_cameras()
+        if not camera_bindings:
+            return []
+
+        fbx_paths = sequencer.export_fbx_bindings(camera_bindings, directory)
+
+        for binding, path in zip(camera_bindings, fbx_paths):
+            asset_export_data = structs.AssetExportData()
+            asset_export_data.name = binding.get_name()
+            asset_export_data.path = level_sequencer_path_name
+            asset_export_data.asset_type = "camera"
+            asset_export_data.fbx_file = path
+
+            meta_data.append(asset_export_data)
+
+        return meta_data
+
+    @unreal.ufunction(
+        params=[str, str, str],
+        static=True,
+        meta=dict(Category="ueGear Commands"),
+    )
+    def update_sequencer_camera_from_maya(camera_name, sequencer_package, fbx_path):
+        """
+        Updates the camera in the specified LevelSequencer
+
+        :param str camera_name: The name of the camera that exists on the level sequnce.
+        :param str sequencer_package: The package path to the sequencer file.
+        :param str fbx_path: Location of the fbx camera.
+        """
+
+        print("[ueGear] Command Triggered - Update Sequencer Cameras")
+        levelsequencer = sequencer.open_sequencer(sequencer_package)
+        sequencer.import_fbx_camera(name=camera_name, sequence=levelsequencer, fbx_path=fbx_path)
+
 
     # ==================================================================================================================
     # ACTORS
@@ -183,11 +242,24 @@ class PyUeGearCommands(unreal.UeGearCommands):
         """
         Imports skeletal mesh from FBX file.
 
-        :param str import_path: skeletal mesh FBX file path.
+        :param str fbx_file: skeletal mesh FBX file path.
+        :param str import_path: package path location
         :param str import_options: FBX import options as a string.
         :return: imported skeletal mesh asset path.
         :rtype: str
         """
+
+        # Check import path is a package path, else update it.
+        is_package_path = False
+        if import_path.find('game') == 0 or \
+            import_path.find('game') == 1:
+            is_package_path = True
+
+        if not is_package_path:
+            raw_path = unreal.Paths.project_content_dir()
+            content_dir = unreal.Paths.make_standard_filename(raw_path)
+            import_path = import_path.replace(content_dir,"")
+            import_path = os.path.join(os.path.sep, "Game", import_path)
 
         import_options = ast.literal_eval(import_options)
         import_options["import_as_skeletal"] = False
