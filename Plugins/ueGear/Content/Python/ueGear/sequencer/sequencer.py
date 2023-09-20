@@ -260,6 +260,48 @@ def get_selected_cameras():
     return cameras
 
 
+def import_fbx_camera(name:str, sequence:unreal.LevelSequence, fbx_path:str):
+    """
+    Imports the Camera FBX into the specified level sequencer. It overrides the camera that
+    exists in the sequence and has a matching name.
+    """
+    camera_track = None
+
+    # Looks over the Possessables for the correct name
+    tracks = sequence.get_possessables()
+    for track in tracks:
+        if track.get_display_name() == name and ueGear.sequencer.bindings.is_camera(track):
+            camera_track = track
+            break
+
+    # Looks over the Spawnables for the correct name
+    if camera_track is None:
+        tracks = sequence.get_spawnables()
+        for track in tracks:
+            if track.get_display_name() == name and \
+                ueGear.sequencer.bindings.is_instanced_camera(track):
+                camera_track = track
+                break
+
+    if camera_track is None:
+        return
+
+    editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    world = editor_system.get_editor_world()
+    fbx_config = unreal.MovieSceneUserImportFBXSettings()
+    seq_tools = unreal.SequencerTools()
+
+    fbx_config.set_editor_property("match_by_name_only", True )
+    fbx_config.set_editor_property("replace_transform_track", True)
+    fbx_config.set_editor_property("create_cameras", False)
+
+    seq_tools.import_level_sequence_fbx(world,
+                                        sequence, 
+                                        [camera_track], 
+                                        fbx_config,
+                                        fbx_path)
+
+
 def export_fbx_sequence(
     sequence,
     directory,
