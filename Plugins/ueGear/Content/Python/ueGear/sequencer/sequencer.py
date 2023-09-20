@@ -514,3 +514,29 @@ def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
     end_frame = round(sequence.get_work_range_end() * fps)
 
     return start_frame, end_frame
+
+
+def open_sequencer(level_sequence_path:str):
+    """
+    Opens the Sequencer in Unreal with the sequencer file.
+    level_sequencer_path: Needs to be a PackageName (Start with /Game )
+
+    :return: The LevelSequence that was opened inside the Sequencer.
+    :rtype: unreal.LevelSequence
+    """
+
+    # Check if path is an Object path, if so remove the .##
+    if level_sequence_path.find(".") > -1:
+        level_sequence_path = level_sequence_path.split(".")[0]
+
+    if not assets.asset_exists(level_sequence_path):
+        return
+
+    # Converts path to Asset
+    asset_data = unreal.EditorAssetLibrary.find_asset_data(level_sequence_path)
+    asset_editor = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
+
+    # Opens the Sequencer
+    asset_editor.open_editor_for_assets([asset_data.get_asset()])
+
+    return asset_data.get_asset()
