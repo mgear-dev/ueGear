@@ -34,58 +34,6 @@ These tools will be implemented in mGear
 #   DEVELOPER NOTES
 # ===================
 
-# WORKING ON: [MAYA] Import Active Sequencer Cameras + TimeLine
-
-Maya > Unreal
-## Scenario A:
-  - Maya Camera with ueGear Tag exists
-  - Camera does not exist in any Level's or LevelSequences
-  **On Unreal Import**
-  - Check for associated LevelSequence PackagePath
-    - if None
-      + Import into active level
-      + Generate new LevelSequence
-        - Create New Camera Track
-        - Import Camera Data
-
-## Scenario B:
-  - Maya Camera with ueGear Tag exists
-  - Camera does exist in the Open Level or specified LevelSequencer
-  **On Unreal Import**
-    - update Level or LevelSequencer
-  
-
-Unreal > Maya
-##  Scenario A:
-- Unreal Camera is being exported to Maya, Camera exists
-  - Export Camera with meta data
-    - Name
-    - Type
-    - PackagePath
-  - Check Maya scene for Cameras
-    + Does a camera exist with the same name
-      + Does the camera have all 3 populated meta data
-        - Update Camera
-      + Does the camera have matching name and no package path [Most likely a camera that has not done a round trip]
-        - Update Package path
-        - Update Camera
-    + No Camera exists
-      - Create new Camera
-      - Populate with Meta data
-
-# Implementation
-Unreal > Maya > Unreal
-- Select Camera in Sequencer
-  - Tag Camera with metadata for fbx export
-  - export to temp location
-  - import into Maya
-- Adjustments in Maya
-  - Select Camera
-  - export to temp location
-  - find LevelSequencer in unreal
-    - Find track name that matches attribute
-    - import data 
-
 # DESIGN DECISIONS
 - Always starting from Unreal
 - Always assume camera in sequencer
@@ -103,21 +51,9 @@ Unreal > Maya > Unreal camera flows
 
 [ ] Commands from Maya
   [ ] Query Unreal for FPS, check if it is the same as Maya, alert user before importing Cameras
-    [X] Get Sequencer FPS
-    [ ] Add UE Command for Maya to pass
-    [ ] Add Maya listener, to repsond to commands responce
     [ ] Show dialog if fps are different
 
-  [ ] Maya to Unreal
-    [X] Static Objects
-    [ ] Cameras
-    
-  [ ] Unreal to Maya
-    [ ] Active LevelSequence Cameras
-    [ ] Static Objects in Level
-    [X] Selected objects in Content Browser
-
-[ ] See if it is possible for Maya to not require FBX_SDK for Unreal export commands.
+[ ] Investigate if it is possible for Maya to not require FBX_SDK for Unreal export commands.
   - Currently it fails if you do not have FBX_SDK and try and perform an object export.
 
 # Unreal Plugins
