@@ -2,6 +2,25 @@
 Unreal Engine Gear
 
 
+### ueGear 0.1 Roadmap Goals
+**Goal:** 
+  - IO layout data (Cameras + static Mesh + skeletal mesh)
+
+**New tools:**
+  - Core libraries
+
+### mGear 4.3 counterpart/Pipeline tools for ueGear
+These tools will be implemented in mGear
+
+**Goal:**
+ - improve game pipeline
+
+
+### ueGear 0.2 Roadmap Goals
+**Goal:** 
+  - Syncing selected assets in Unreal Levels with Maya.
+
+
 ### ueGear 1.0 Roadmap Goals
 **Goal:** 
 
@@ -30,16 +49,15 @@ These tools will be implemented in mGear
   - FBX exporter  
       - 1click send to Unreal (FBX) Skeletal mesh and animation
 
+
 # ===================
 #   DEVELOPER NOTES
 # ===================
 
 # DESIGN DECISIONS
 - Always starting from Unreal
-- Always assume camera in sequencer
-Unreal > Maya > Unreal camera flows
-- Adding custom attributes on Camera to FBX
-- A shot represents one Camera track.
+- Always assume camera exist in sequencer first.
+- A Sequencer Track represents one shot.
 
 
 # TASKS:

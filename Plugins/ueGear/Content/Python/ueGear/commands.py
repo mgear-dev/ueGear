@@ -376,9 +376,6 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         :param str directory: export directory.
         """
-
-        directory = r"E:\assets\warehouse\assets\output"
-
         layout_data = list()
         actors_mapping = dict()
 
