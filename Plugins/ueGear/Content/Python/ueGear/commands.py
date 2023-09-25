@@ -216,17 +216,23 @@ class PyUeGearCommands(unreal.UeGearCommands):
             )
             return
 
+        mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                            y_plane=[0, 0, 1, 0],
+                            z_plane=[0, 1, 0, 0],
+                            w_plane=[0, 0, 0, 1]
+                            )
+
         ue_transform = unreal.Transform()
         rotation = ast.literal_eval(rotation)
-        ue_transform.rotation = unreal.Rotator(
-            rotation[0], rotation[1], rotation[2] * -1.0
-        ).quaternion()
-        ue_transform.translation = unreal.Vector(
-            *ast.literal_eval(translation)
-        )
+        ue_transform.rotation = unreal.Rotator(rotation[0], rotation[1], rotation[2]).quaternion()
+        ue_transform.translation = unreal.Vector(*ast.literal_eval(translation))
         ue_transform.scale3d = unreal.Vector(*ast.literal_eval(scale))
 
-        found_actor.set_actor_transform(ue_transform, False, False)
+        corrected_mtx =  mtx * ue_transform.to_matrix()
+        corrected_trans = corrected_mtx.transform()
+
+        # found_actor.set_actor_transform(ue_transform, False, False)
+        found_actor.set_actor_transform(corrected_trans, False, False)
 
     # ==================================================================================================================
     # STATIC MESHES
