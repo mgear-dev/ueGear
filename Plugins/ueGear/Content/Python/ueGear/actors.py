@@ -103,6 +103,25 @@ def get_actor_by_label_in_current_level(actor_label):
     return found_actor
 
 
+def get_actor_by_guid_in_current_level(actor_guid):
+    """
+    Return actor within current level with the given actor guid.
+
+    :param str actor_guid: actor guid.
+    :return: found actor with given guid in current level.
+    :rtype: unreal.Actor or None
+    """
+
+    found_actor = None
+    all_actors = get_all_actors_in_current_level()
+    for actor in all_actors:
+        if actor.actor_guid.to_string() == actor_guid:
+            found_actor = actor
+            break
+
+    return found_actor
+
+
 def get_all_actors_with_component_of_type(component_class):
     found_actors = list()
     actors = unreal.EditorActorSubsystem().get_all_level_actors()

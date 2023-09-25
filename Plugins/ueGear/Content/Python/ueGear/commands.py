@@ -197,22 +197,18 @@ class PyUeGearCommands(unreal.UeGearCommands):
         static=True,
         meta=dict(Category="ueGear Commands"),
     )
-    def set_actor_world_transform(actor_name, translation, rotation, scale):
+    def set_actor_world_transform(actor_guid, translation, rotation, scale):
         """
-        Sect the world transform of the actor with given name withing current opened level.
+        Sect the world transform of the actor with given GUID withing current opened level.
 
         :param str translation: actor world translation as a string [float, float, float] .
         :param str rotation: actor world rotation as a string [float, float, float].
         :param str scale: actor world scale as a string [float, float, float].
         """
-
-        # Actor is found using actor label within Unreal level.
-        # TODO: Actor labels are not unique, so if two actors have the same label then maybe we are going to update
-        # TODO: an undesired one. Try to find a workaround for this.
-        found_actor = actors.get_actor_by_label_in_current_level(actor_name)
+        found_actor = actors.get_actor_by_guid_in_current_level(actor_guid)
         if not found_actor:
             unreal.log_warning(
-                'No Actor found with label: "{}"'.format(actor_name)
+                'No Actor found with guid: "{}"'.format(actor_guid)
             )
             return
 
