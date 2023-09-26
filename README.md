@@ -41,21 +41,6 @@ Unreal > Maya > Unreal camera flows
 - Adding custom attributes on Camera to FBX
 - A shot represents one Camera track.
 
-
-# TASKS:
-[X] Export Camera
-[ ] Get Cameras From Sequencer
-  [X] Actor in Level
-  [X] Instanced Actor
-  [?] Subsequence Actor
-
-[ ] Commands from Maya
-  [ ] Query Unreal for FPS, check if it is the same as Maya, alert user before importing Cameras
-    [ ] Show dialog if fps are different
-
-[ ] Investigate if it is possible for Maya to not require FBX_SDK for Unreal export commands.
-  - Currently it fails if you do not have FBX_SDK and try and perform an object export.
-
 # Unreal Plugins
 The following plugins must be activated in your project to get the full benefit of ueGear.
 - `Python Editor Script Plugin`
