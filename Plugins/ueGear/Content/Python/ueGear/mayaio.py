@@ -437,3 +437,23 @@ def import_camera(
     unreal.EditorAssetLibrary.save_asset(level_sequence_name)
 
     return True
+
+
+def convert_transform_maya_to_unreal(maya_transform):
+    """
+    Converts a unreal.Transform(), that stores Maya data, into a transformation matrix that
+    works in Unreal.
+
+    :param unreal.Transform() transform: Transform with Maya transformation data.
+
+    :return: Maya transformation now in Unreal transform space.
+    :rtype: unreal.Transform()
+    """
+    mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                            y_plane=[0, 0, 1, 0],
+                            z_plane=[0, 1, 0, 0],
+                            w_plane=[0, 0, 0, 1]
+                            )
+
+    corrected_mtx =  mtx * maya_transform.to_matrix()
+    return corrected_mtx.transform()
