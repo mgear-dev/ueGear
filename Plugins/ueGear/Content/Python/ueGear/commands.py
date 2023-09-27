@@ -152,6 +152,9 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         level_sequencer_path_name = sequencer.get_current_level_sequence().get_path_name()
 
+        # Gets the framerate of the Sequencer.
+        fps = sequencer.get_framerate(sequencer.get_current_level_sequence())
+
         camera_bindings = sequencer.get_selected_cameras()
         if not camera_bindings:
             return []
@@ -168,6 +171,17 @@ class PyUeGearCommands(unreal.UeGearCommands):
             meta_data.append(asset_export_data)
 
         return meta_data
+
+    @unreal.ufunction(
+        ret=int,
+        static=True,
+        meta=dict(Category="ueGear Commands")
+        )
+    def get_selected_sequencer_fps():
+        """
+        Returns the active Sequencer's fps
+        """
+        return sequencer.get_framerate(sequencer.get_current_level_sequence())
 
     @unreal.ufunction(
         params=[str, str, str],

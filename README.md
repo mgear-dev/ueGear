@@ -51,9 +51,11 @@ These tools will be implemented in mGear
 
 # DESIGN DECISIONS
 - Always starting from Unreal
-- Always assume camera exist in sequencer first.
-- A Sequencer Track represents one shot.
-- Unreal assets are the ground truth for transform data. As transform data in maya will not represent final numeric values due to the different world axis.
+- Always assume camera in sequencer
+Unreal > Maya > Unreal camera flows
+- Adding custom attributes on Camera to FBX
+- A shot represents one Camera track.
+
 
 # Unreal Plugins
 The following plugins must be activated in your project to get the full benefit of ueGear.
