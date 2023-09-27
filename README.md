@@ -2,6 +2,25 @@
 Unreal Engine Gear
 
 
+### ueGear 0.1 Roadmap Goals
+**Goal:** 
+  - IO layout data (Cameras + static Mesh + skeletal mesh)
+
+**New tools:**
+  - Core libraries
+
+#### mGear 4.3 counterpart/Pipeline tools for ueGear
+These tools will be implemented in mGear
+
+**Goal:**
+ - improve game pipeline
+
+
+### ueGear 0.2 Roadmap Goals
+**Goal:** 
+  - Syncing selected assets in Unreal Levels with Maya.
+  
+
 ### ueGear 1.0 Roadmap Goals
 **Goal:** 
 
@@ -17,7 +36,7 @@ Unreal Engine Gear
   - ueShifter:
     - EPIC component counterpart to build from Collected data in Maya
 
-### mGear 4.3 counterpart/Pipeline tools for ueGear
+#### mGear 4.3 counterpart/Pipeline tools for ueGear
 These tools will be implemented in mGear
 
 **Goal:**
@@ -30,16 +49,13 @@ These tools will be implemented in mGear
   - FBX exporter  
       - 1click send to Unreal (FBX) Skeletal mesh and animation
 
-# ===================
-#   DEVELOPER NOTES
-# ===================
-
 # DESIGN DECISIONS
 - Always starting from Unreal
 - Always assume camera in sequencer
 Unreal > Maya > Unreal camera flows
 - Adding custom attributes on Camera to FBX
 - A shot represents one Camera track.
+
 
 # Unreal Plugins
 The following plugins must be activated in your project to get the full benefit of ueGear.
