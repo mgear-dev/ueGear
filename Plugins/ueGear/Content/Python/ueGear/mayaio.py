@@ -439,21 +439,31 @@ def import_camera(
     return True
 
 
-def convert_transform_maya_to_unreal(maya_transform):
+def convert_transform_maya_to_unreal(maya_transform, world_up):
     """
     Converts a unreal.Transform(), that stores Maya data, into a transformation matrix that
     works in Unreal.
 
     :param unreal.Transform() transform: Transform with Maya transformation data.
+    :param str transform: Mayas world up setting.
 
     :return: Maya transformation now in Unreal transform space.
     :rtype: unreal.Transform()
     """
-    mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
-                            y_plane=[0, 0, 1, 0],
-                            z_plane=[0, 1, 0, 0],
-                            w_plane=[0, 0, 0, 1]
+    mtx_y_up = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                             y_plane=[0, 0, -1, 0],
+                             z_plane=[0, 1, 0, 0],
+                             w_plane=[0, 0, 0, 1]
                             )
 
-    corrected_mtx =  mtx * maya_transform.to_matrix()
+    mtx_z_up = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                             y_plane=[0,-1, 0, 0],
+                             z_plane=[0, 0, -1, 0],
+                             w_plane=[0, 0, 0, 1]
+                            )
+
+    if world_up == 'y':
+        corrected_mtx =  maya_transform.to_matrix() * mtx_y_up
+    elif world_up == 'z':
+        corrected_mtx =  maya_transform.to_matrix() * mtx_z_up
     return corrected_mtx.transform()

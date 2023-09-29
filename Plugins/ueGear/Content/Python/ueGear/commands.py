@@ -207,17 +207,18 @@ class PyUeGearCommands(unreal.UeGearCommands):
     # ==================================================================================================================
 
     @unreal.ufunction(
-        params=[str, str, str, str],
+        params=[str, str, str, str, str],
         static=True,
         meta=dict(Category="ueGear Commands"),
     )
-    def set_actor_world_transform(actor_guid, translation, rotation, scale):
+    def set_actor_world_transform(actor_guid, translation, rotation, scale, world_up):
         """
         Sect the world transform of the actor with given GUID withing current opened level.
 
         :param str translation: actor world translation as a string [float, float, float] .
         :param str rotation: actor world rotation as a string [float, float, float].
         :param str scale: actor world scale as a string [float, float, float].
+        :param str world_up: describes mayas world up axis.
         """
         found_actor = actors.get_actor_by_guid_in_current_level(actor_guid)
         if not found_actor:
@@ -232,7 +233,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         maya_transform.translation = unreal.Vector(*ast.literal_eval(translation))
         maya_transform.scale3d = unreal.Vector(*ast.literal_eval(scale))
 
-        ue_transform = mayaio.convert_transform_maya_to_unreal(maya_transform)
+        ue_transform = mayaio.convert_transform_maya_to_unreal(maya_transform, world_up)
 
         found_actor.set_actor_transform(ue_transform, False, False)
 
