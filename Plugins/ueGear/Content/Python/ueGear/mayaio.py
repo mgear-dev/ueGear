@@ -457,13 +457,29 @@ def convert_transform_maya_to_unreal(maya_transform, world_up):
                             )
 
     mtx_z_up = unreal.Matrix(x_plane=[1, 0, 0, 0],
-                             y_plane=[0,-1, 0, 0],
-                             z_plane=[0, 0, -1, 0],
+                             y_plane=[0, -1, 0, 0],
+                             z_plane=[0, 0, 1, 0],
                              w_plane=[0, 0, 0, 1]
                             )
 
     if world_up == 'y':
-        corrected_mtx =  maya_transform.to_matrix() * mtx_y_up
+        corrected_mtx =  mtx_y_up * maya_transform.to_matrix() * mtx_y_up.get_inverse()
     elif world_up == 'z':
-        corrected_mtx =  maya_transform.to_matrix() * mtx_z_up
-    return corrected_mtx.transform()
+        corrected_mtx = maya_transform.to_matrix() * mtx_y_up
+
+        # update Rotation
+        euler = maya_transform.rotation.euler()
+        quat = unreal.Quat()
+        quat.set_from_euler(unreal.Vector(euler.x, -euler.z, euler.y))
+        trans = corrected_mtx.transform()
+        trans.rotation = quat
+
+        # Update Position
+        pos = trans.translation
+        pos_y = pos.y
+        pos_z = pos.z
+        pos.y = pos_z
+        pos.z = pos_y
+        trans.translation = pos
+            
+    return trans
