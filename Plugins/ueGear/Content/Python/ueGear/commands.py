@@ -81,6 +81,18 @@ class PyUeGearCommands(unreal.UeGearCommands):
         # Standardises the path, removing any extra data
         return unreal.Paths.make_standard_filename(path)
 
+    @unreal.ufunction(
+        ret=str, static=True, meta=dict(Category="ueGear Commands")
+    )
+    def selected_content_browser_directory():
+        """
+        Returns the selected directory in the Content Browser.
+
+        :return: selected directory.
+        :rtype: str
+        """
+        return assets.get_selected_folders()
+
     # ==================================================================================================================
     # ASSETS
     # ==================================================================================================================

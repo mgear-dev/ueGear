@@ -478,3 +478,34 @@ def import_assets(asset_tasks):
             imported_paths.append(object_path)
 
     return imported_paths
+
+
+def get_selected_folders(relative=False):
+    """
+    Returns a list of paths for the folders selected in the Content Browser.
+
+    :param bool relative: If true paths will be relative to the Unreal Project. if False, they will be absolute.
+    :return: list of folder paths
+    :rtype: list(str)
+    """
+    paths = []
+
+    folder_paths =  unreal.EditorUtilityLibrary.get_selected_folder_paths()
+
+    if relative:
+        return folder_paths
+    
+    for idx in range(len(folder_paths)):
+        project_dir = unreal.Paths.project_dir()
+        content_dir = unreal.Paths.project_content_dir()
+
+        absolute_project_dir = str(unreal.Paths.normalize_directory_name(unreal.Paths.convert_relative_path_to_full(project_dir)))
+        absolute_content_dir = str(unreal.Paths.normalize_directory_name(unreal.Paths.convert_relative_path_to_full(content_dir)))
+        relative_folder_path = str(folder_paths[idx])
+
+        absolute_folder_path = absolute_content_dir + relative_folder_path.split('Game')[-1]
+
+        if unreal.Paths.directory_exists(absolute_folder_path):
+            paths.append(absolute_folder_path)
+    
+    return paths
