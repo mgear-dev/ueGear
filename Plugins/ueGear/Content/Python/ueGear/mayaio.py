@@ -439,21 +439,56 @@ def import_camera(
     return True
 
 
-def convert_transform_maya_to_unreal(maya_transform):
+def convert_transform_maya_to_unreal(maya_transform, world_up):
     """
     Converts a unreal.Transform(), that stores Maya data, into a transformation matrix that
     works in Unreal.
 
     :param unreal.Transform() transform: Transform with Maya transformation data.
+    :param str transform: Mayas world up setting.
 
     :return: Maya transformation now in Unreal transform space.
     :rtype: unreal.Transform()
     """
-    mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
-                            y_plane=[0, 0, 1, 0],
-                            z_plane=[0, 1, 0, 0],
-                            w_plane=[0, 0, 0, 1]
+    convertion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                             y_plane=[0, 0, -1, 0],
+                             z_plane=[0, 1, 0, 0],
+                             w_plane=[0, 0, 0, 1]
                             )
 
-    corrected_mtx =  mtx * maya_transform.to_matrix()
-    return corrected_mtx.transform()
+    if world_up == 'y':
+        corrected_mtx =  convertion_mtx * maya_transform.to_matrix() * convertion_mtx.get_inverse()
+        # update Rotation
+        euler = maya_transform.rotation.euler()
+        quat = unreal.Quat()
+        quat.set_from_euler(unreal.Vector(euler.x + 90, euler.y, euler.z))
+        trans = corrected_mtx.transform()
+        trans.rotation = quat
+
+        # Update Position
+        pos = trans.translation
+        pos_y =  pos.y
+        pos_z =  pos.z
+        pos.y =  pos_z
+        pos.z =  -pos_y
+        trans.translation = pos
+
+    elif world_up == 'z':
+        corrected_mtx = maya_transform.to_matrix() * convertion_mtx
+
+        # update Rotation
+        euler = maya_transform.rotation.euler()
+        quat = unreal.Quat()
+        quat.set_from_euler(unreal.Vector(euler.x, -euler.z, euler.y))
+        trans = corrected_mtx.transform()
+        trans.rotation = quat
+
+        # Update Position
+        pos = trans.translation
+        pos_y = pos.y
+        pos_z = pos.z
+        pos.y = pos_z
+        pos.z = pos_y
+        trans.translation = pos
+
+    return trans
