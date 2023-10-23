@@ -509,3 +509,32 @@ def get_selected_folders(relative=False):
             paths.append(absolute_folder_path)
     
     return paths
+
+
+def get_skeleton_meshes(game_asset=True):
+    """
+    Gets a list of all available skeleton meshes
+
+    :param bool game_asset: If false all skeleton meshes will be returned, if true only
+    the skm's found in \Game
+
+    :return: List of Skeletal Meshes
+    :rtype: list(unreal.AssetData)
+    """
+
+    asset_registery = unreal.AssetRegistryHelpers.get_asset_registry()
+    skeletal_mesh_path = unreal.TopLevelAssetPath('/Script/Engine', 'SkeletalMesh')
+
+    skeletal_meshes = asset_registery.get_assets_by_class(skeletal_mesh_path)
+
+    # Returns all skeleton Meshes, found in all packs(Engine, Virtual Production)
+    if not game_asset:
+        return skeletal_meshes
+
+    # Removes any asset that is not in the Games Project
+    for idx in reversed(range(len(skeletal_meshes))):
+        skm = skeletal_meshes[idx]
+        if str(skm.package_path).find("Game") != 1:
+            skeletal_meshes.pop(idx)
+
+    return skeletal_meshes
