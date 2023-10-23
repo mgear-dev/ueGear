@@ -511,6 +511,36 @@ def get_selected_folders(relative=False):
     return paths
 
 
+def get_all_by_type(package_name, asset_name, game_asset=True):
+    """
+    Gets a list of all available assets in the engine/game
+
+    :param str package_name: Name of the package the asset class exists in 
+    :param str asset_name: Name of the asset type
+    :param bool game_asset: If false all skeleton meshes will be returned, if true only
+    the skm's found in \Game
+
+    :return: List of assets that match.
+    :rtype: list(unreal.AssetData)
+    """
+    asset_registery = unreal.AssetRegistryHelpers.get_asset_registry()
+    asset_path = unreal.TopLevelAssetPath(package_name, asset_name)
+
+    assets_found = asset_registery.get_assets_by_class(asset_path)
+
+    # Returns all assets, found in all packs(Engine, Virtual Production)
+    if not game_asset:
+        return assets_found
+
+    # Removes any asset that is not in the Games Project
+    for idx in reversed(range(len(assets_found))):
+        skm = assets_found[idx]
+        if str(skm.package_path).find("Game") != 1:
+            assets_found.pop(idx)
+
+    return assets_found
+
+
 def get_skeleton_meshes(game_asset=True):
     """
     Gets a list of all available skeleton meshes
@@ -521,20 +551,17 @@ def get_skeleton_meshes(game_asset=True):
     :return: List of Skeletal Meshes
     :rtype: list(unreal.AssetData)
     """
+    return get_all_by_type('/Script/Engine', 'SkeletalMesh', game_asset)
 
-    asset_registery = unreal.AssetRegistryHelpers.get_asset_registry()
-    skeletal_mesh_path = unreal.TopLevelAssetPath('/Script/Engine', 'SkeletalMesh')
 
-    skeletal_meshes = asset_registery.get_assets_by_class(skeletal_mesh_path)
+def get_skeletons(game_asset=True):
+    """
+    Gets a list of all available skeletons
 
-    # Returns all skeleton Meshes, found in all packs(Engine, Virtual Production)
-    if not game_asset:
-        return skeletal_meshes
+    :param bool game_asset: If false all skeletons will be returned, if true only
+    the skm's found in \Game
 
-    # Removes any asset that is not in the Games Project
-    for idx in reversed(range(len(skeletal_meshes))):
-        skm = skeletal_meshes[idx]
-        if str(skm.package_path).find("Game") != 1:
-            skeletal_meshes.pop(idx)
-
-    return skeletal_meshes
+    :return: List of Skeletons that exist in Content Browser.
+    :rtype: list(unreal.AssetData)
+    """
+    return get_all_by_type('/Script/Engine', 'Skeleton', game_asset)
