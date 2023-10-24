@@ -565,3 +565,40 @@ def get_skeletons(game_asset=True):
     :rtype: list(unreal.AssetData)
     """
     return get_all_by_type('/Script/Engine', 'Skeleton', game_asset)
+
+
+def import_fbx_animation(fbx_path, dest_path, anim_sequence_name, skeleton_path):
+    """
+    Imports the fbx file as an Skeletal Animation.
+
+    :param str fbx_path: Path to the fbx file that will be imported.
+    :param str dest_path: Location where the AnimationSequence will be generated. eg."/Game/StarterContent/Character/Boy_1_Animation"
+    :param str name: Name of the Animation Sequence in unreal
+    :param str skeleton_path: Location of the Skeleton file. eg."/Game/Character/Boy_1/Butcher_Skeleton.Butcher_Skeleton"
+
+    :return: List of Asset Path locations, to the newly imported Animation Sequence
+    :rtype: list(str)
+    """
+
+    task = unreal.AssetImportTask()
+    task.filename = fbx_path
+    task.destination_path = dest_path
+    task.destination_name = anim_sequence_name
+
+    task.replace_existing = True
+    task.automated = True
+    task.save = True
+
+    task.options = unreal.FbxImportUI()
+    task.options.import_materials = False
+    task.options.import_animations = True
+    task.options.import_as_skeletal = True
+    task.options.import_mesh = False
+    task.options.automated_import_should_detect_type = False
+
+    task.options.skeleton = unreal.load_asset(skeleton_path)
+
+    task.options.mesh_type_to_import = unreal.FBXImportType.FBXIT_ANIMATION 
+
+    paths = import_assets([task])
+    return paths
