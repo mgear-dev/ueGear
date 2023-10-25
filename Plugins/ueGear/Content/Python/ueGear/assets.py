@@ -569,7 +569,7 @@ def get_skeletons(game_asset=True):
 
 def import_fbx_animation(fbx_path, dest_path, anim_sequence_name, skeleton_path):
     """
-    Imports the fbx file as an Skeletal Animation.
+    Imports the fbx file as an Animation Sequence.
 
     :param str fbx_path: Path to the fbx file that will be imported.
     :param str dest_path: Location where the AnimationSequence will be generated. eg."/Game/StarterContent/Character/Boy_1_Animation"
@@ -602,3 +602,55 @@ def import_fbx_animation(fbx_path, dest_path, anim_sequence_name, skeleton_path)
 
     paths = import_assets([task])
     return paths
+
+
+def import_fbx_skeletal_mesh(fbx_path, dest_path, anim_sequence_name):
+    """
+    Imports the fbx file as an Skeletal Mesh.
+
+    NOTE: FBX file must contain no animation on the character.
+
+    :param str fbx_path: Path to the fbx file that will be imported.
+    :param str dest_path: Location where the AnimationSequence will be generated. eg."/Game/StarterContent/Character/Boy_1_Animation"
+    :param str name: Name of the Animation Sequence in unreal
+
+    :return: List of Asset Path locations, to the newly imported Animation Sequence
+    :rtype: list(str)
+    """
+
+    task = unreal.AssetImportTask()
+    task.filename = fbx_path
+    task.destination_path = dest_path
+    task.destination_name = anim_sequence_name
+
+    task.replace_existing = True
+    task.automated = True
+    task.save = True
+
+    task.options = unreal.FbxImportUI()
+    task.options.import_mesh = True
+    task.options.import_as_skeletal = True
+    task.options.import_materials = True
+    task.options.import_animations = False
+
+    task.options.override_full_name = True
+    task.options.create_physics_asset = True
+    task.options.automated_import_should_detect_type = False
+    # task.options.skeletal_mesh_import_data.set_editor_property('update_skeleton_reference_pose', False)
+    # task.options.skeletal_mesh_import_data.set_editor_property('use_t0_as_ref_pose', True)
+    task.options.skeletal_mesh_import_data.set_editor_property('preserve_smoothing_groups', 1)
+    # task.options.skeletal_mesh_import_data.set_editor_property('import_meshes_in_bone_hierarchy', False)
+    task.options.skeletal_mesh_import_data.set_editor_property('import_morph_targets', True)
+    # task.options.skeletal_mesh_import_data.set_editor_property('threshold_position',  0.00002)
+    # task.options.skeletal_mesh_import_data.set_editor_property('threshold_tangent_normal', 0.00002)
+    # task.options.skeletal_mesh_import_data.set_editor_property('threshold_uv', 0.000977)
+    
+    task.options.skeletal_mesh_import_data.set_editor_property('convert_scene', True)
+    # task.options.skeletal_mesh_import_data.set_editor_property('force_front_x_axis', False)
+    # task.options.skeletal_mesh_import_data.set_editor_property('convert_scene_unit', False)
+
+    task.options.mesh_type_to_import = unreal.FBXImportType.FBXIT_SKELETAL_MESH 
+
+    paths = import_assets([task])
+    return paths
+
