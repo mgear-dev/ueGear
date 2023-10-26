@@ -326,6 +326,33 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         return import_asset_path
 
+    @unreal.ufunction(
+        params=[bool],
+        ret=unreal.Array(unreal.StringValuePair),
+        static=True,
+        meta=dict(Category="ueGear Commands"),)
+    def get_skeletons_data(skeletal_mesh=False):
+        """
+        Returns a list of skeletons, that exist in the open unreal project.
+
+        :param bool skeletal_mesh: If True return SkeletalMesh data, False return Skeleton data.
+        :return: The package_name and asset_name. Stored in an Array of Key Value pairs.
+        :rtype: unreal.Array(unreal.StringValuePair)
+        """
+        skeleton_list = unreal.Array(unreal.StringValuePair)
+
+        if skeletal_mesh:
+            skeletons = assets.get_skeleton_meshes()
+        else:
+            skeletons = assets.get_skeletons()
+
+        for skeleton in skeletons:
+            package_name = skeleton.get_editor_property("package_name")
+            asset_name = skeleton.get_editor_property("asset_name")
+            skeleton_list.append(unreal.StringValuePair(package_name, asset_name))
+
+        return skeleton_list
+
     # ==================================================================================================================
     # TEXTURES
     # ==================================================================================================================
