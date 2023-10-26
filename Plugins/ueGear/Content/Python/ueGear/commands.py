@@ -82,7 +82,9 @@ class PyUeGearCommands(unreal.UeGearCommands):
         return unreal.Paths.make_standard_filename(path)
 
     @unreal.ufunction(
-        ret=str, static=True, meta=dict(Category="ueGear Commands")
+        ret=unreal.Array(str),
+        static=True,
+        meta=dict(Category="ueGear Commands")
     )
     def selected_content_browser_directory():
         """
@@ -91,7 +93,13 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :return: selected directory.
         :rtype: str
         """
-        return assets.get_selected_folders()
+        unreal_array = unreal.Array(str)
+
+        paths = assets.get_selected_folders()
+        for path in paths:
+            unreal_array.append(path)
+
+        return unreal_array
 
     # ==================================================================================================================
     # ASSETS
@@ -333,7 +341,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         meta=dict(Category="ueGear Commands"),)
     def get_skeletons_data(skeletal_mesh=False):
         """
-        Returns a list of skeletons, that exist in the open unreal project.
+        Returns a list of skeletons or skeletal meshes, that exist in the open unreal project.
 
         :param bool skeletal_mesh: If True return SkeletalMesh data, False return Skeleton data.
         :return: The package_name and asset_name. Stored in an Array of Key Value pairs.

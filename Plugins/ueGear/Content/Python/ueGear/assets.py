@@ -513,12 +513,12 @@ def get_selected_folders(relative=False):
 
 def get_all_by_type(package_name, asset_name, game_asset=True):
     """
-    Gets a list of all available assets in the engine/game
+    Gets a list of all available assets in the engine /game
 
     :param str package_name: Name of the package the asset class exists in 
     :param str asset_name: Name of the asset type
     :param bool game_asset: If false all skeleton meshes will be returned, if true only
-    the skm's found in \Game
+    the skm's found in /Game
 
     :return: List of assets that match.
     :rtype: list(unreal.AssetData)
@@ -546,7 +546,7 @@ def get_skeleton_meshes(game_asset=True):
     Gets a list of all available skeleton meshes
 
     :param bool game_asset: If false all skeleton meshes will be returned, if true only
-    the skm's found in \Game
+    the skm's found in /Game
 
     :return: List of Skeletal Meshes
     :rtype: list(unreal.AssetData)
@@ -559,7 +559,7 @@ def get_skeletons(game_asset=True):
     Gets a list of all available skeletons
 
     :param bool game_asset: If false all skeletons will be returned, if true only
-    the skm's found in \Game
+    the skm's found in /Game
 
     :return: List of Skeletons that exist in Content Browser.
     :rtype: list(unreal.AssetData)
