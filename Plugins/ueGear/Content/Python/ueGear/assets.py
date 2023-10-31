@@ -604,7 +604,7 @@ def import_fbx_animation(fbx_path, dest_path, anim_sequence_name, skeleton_path)
     return paths
 
 
-def import_fbx_skeletal_mesh(fbx_path, dest_path, anim_sequence_name):
+def import_fbx_skeletal_mesh(fbx_path, dest_path, anim_sequence_name, skeleton_path=None):
     """
     Imports the fbx file as an Skeletal Mesh.
 
@@ -613,6 +613,7 @@ def import_fbx_skeletal_mesh(fbx_path, dest_path, anim_sequence_name):
     :param str fbx_path: Path to the fbx file that will be imported.
     :param str dest_path: Location where the AnimationSequence will be generated. eg."/Game/StarterContent/Character/Boy_1_Animation"
     :param str name: Name of the Animation Sequence in unreal
+    :param str skeleton_path: Path to the Skeleton. If populated then this skeleton will be used, instead of generating a new one.
 
     :return: List of Asset Path locations, to the newly imported Animation Sequence
     :rtype: list(str)
@@ -651,6 +652,22 @@ def import_fbx_skeletal_mesh(fbx_path, dest_path, anim_sequence_name):
 
     task.options.mesh_type_to_import = unreal.FBXImportType.FBXIT_SKELETAL_MESH 
 
+    if skeleton_path:
+        task.options.skeleton = unreal.load_asset(skeleton_path)
+        task.options.import_as_skeletal = False
+
     paths = import_assets([task])
     return paths
 
+
+def get_skeleton_count(path):
+    """
+    Returns the amount of joints in the skeleton
+    
+    example path : "/Game/StarterContent/Character/Boy_1/Butcher_Skeleton.Butcher_Skeleton"
+    """
+    skeleton_asset = unreal.EditorAssetLibrary.load_asset(path)
+
+    ref_pose = skeleton_asset.get_reference_pose()
+    bone_names = ref_pose.get_bone_names()
+    return len(bone_names)

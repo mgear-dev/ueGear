@@ -82,11 +82,12 @@ class PyUeGearCommands(unreal.UeGearCommands):
         return unreal.Paths.make_standard_filename(path)
 
     @unreal.ufunction(
+        params=[bool],
         ret=unreal.Array(str),
         static=True,
         meta=dict(Category="ueGear Commands")
     )
-    def selected_content_browser_directory():
+    def selected_content_browser_directory(relative=False):
         """
         Returns the selected directory in the Content Browser.
 
@@ -95,7 +96,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
         """
         unreal_array = unreal.Array(str)
 
-        paths = assets.get_selected_folders()
+        paths = assets.get_selected_folders(relative)
         for path in paths:
             unreal_array.append(path)
 
@@ -360,6 +361,34 @@ class PyUeGearCommands(unreal.UeGearCommands):
             skeleton_list.append(unreal.StringValuePair(package_name, asset_name))
 
         return skeleton_list
+
+    # ==================================================================================================================
+    # ANIMATED SKELETAL MESHES
+    # ==================================================================================================================
+    @unreal.ufunction(
+        params=[str, str, str, str],
+        ret=unreal.Array(str),
+        static=True,
+        meta=dict(Category="ueGear Commands"),)
+    def import_animation(animation_path, dest_path, name, skeleton_path):
+        """
+        Imports an Skeletal Animation into Unreal.
+        
+        :param str animation_path: Path to FBX location
+        :param str dest_path: Package path to the folder that will store the animation.
+        :param str name: Name of the animation file
+        :param str skeleton_path: Package path to the Skeleton in Unreal
+        
+        :return: imported path.
+        :rtype: str
+        """
+        result = assets.import_fbx_animation(fbx_path=animation_path, 
+                                    dest_path=dest_path, 
+                                    anim_sequence_name=name,
+                                    skeleton_path=skeleton_path
+                                    )
+        
+        return result
 
     # ==================================================================================================================
     # TEXTURES
