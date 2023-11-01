@@ -326,11 +326,27 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         try:
             import_options = ast.literal_eval(import_options)
+
+            # If a skeletal string encoded dictionary exists, convert it to a dict.
+            skeletal_data = import_options.get("skeletal_mesh_import_data", None)
+            if skeletal_data:
+                skeletal_data = ast.literal_eval(skeletal_data)
+                import_options["skeletal_mesh_import_data"] = skeletal_data
+
         except SyntaxError:
             import_options = dict()
+
+        name = import_options.get("destination_name", None)
+        if name:
+            import_options.pop("destination_name")
+
         import_options["import_as_skeletal"] = True
+
         import_asset_path = assets.import_fbx_asset(
-            fbx_file, import_path, import_options=import_options
+            fbx_file,
+            import_path,
+            destination_name = name,
+            import_options=import_options
         )
 
         return import_asset_path

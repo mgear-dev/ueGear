@@ -338,6 +338,10 @@ def generate_fbx_import_task(
             unreal.FBXImportType.FBXIT_SKELETAL_MESH
         )
 
+    if fbx_options.get("skeleton", None) is not None:
+            task.options.skeleton = unreal.load_asset(fbx_options["skeleton"])
+            task.options.import_as_skeletal = False
+
     return task
 
 
