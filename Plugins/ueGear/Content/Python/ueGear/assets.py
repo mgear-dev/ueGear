@@ -338,6 +338,10 @@ def generate_fbx_import_task(
             unreal.FBXImportType.FBXIT_SKELETAL_MESH
         )
 
+    if fbx_options.get("skeleton", None) is not None:
+            task.options.skeleton = unreal.load_asset(fbx_options["skeleton"])
+            task.options.import_as_skeletal = False
+
     return task
 
 
@@ -478,3 +482,196 @@ def import_assets(asset_tasks):
             imported_paths.append(object_path)
 
     return imported_paths
+
+
+def get_selected_folders(relative=False):
+    """
+    Returns a list of paths for the folders selected in the Content Browser.
+
+    :param bool relative: If true paths will be relative to the Unreal Project. if False, they will be absolute.
+    :return: list of folder paths
+    :rtype: list(str)
+    """
+    paths = []
+
+    folder_paths =  unreal.EditorUtilityLibrary.get_selected_folder_paths()
+
+    if relative:
+        return folder_paths
+    
+    for idx in range(len(folder_paths)):
+        project_dir = unreal.Paths.project_dir()
+        content_dir = unreal.Paths.project_content_dir()
+
+        absolute_project_dir = str(unreal.Paths.normalize_directory_name(unreal.Paths.convert_relative_path_to_full(project_dir)))
+        absolute_content_dir = str(unreal.Paths.normalize_directory_name(unreal.Paths.convert_relative_path_to_full(content_dir)))
+        relative_folder_path = str(folder_paths[idx])
+
+        absolute_folder_path = absolute_content_dir + relative_folder_path.split('Game')[-1]
+
+        if unreal.Paths.directory_exists(absolute_folder_path):
+            paths.append(absolute_folder_path)
+    
+    return paths
+
+
+def get_all_by_type(package_name, asset_name, game_asset=True):
+    """
+    Gets a list of all available assets in the engine /game
+
+    :param str package_name: Name of the package the asset class exists in 
+    :param str asset_name: Name of the asset type
+    :param bool game_asset: If false all skeleton meshes will be returned, if true only
+    the skm's found in /Game
+
+    :return: List of assets that match.
+    :rtype: list(unreal.AssetData)
+    """
+    asset_registery = unreal.AssetRegistryHelpers.get_asset_registry()
+    asset_path = unreal.TopLevelAssetPath(package_name, asset_name)
+
+    assets_found = asset_registery.get_assets_by_class(asset_path)
+
+    # Returns all assets, found in all packs(Engine, Virtual Production)
+    if not game_asset:
+        return assets_found
+
+    # Removes any asset that is not in the Games Project
+    for idx in reversed(range(len(assets_found))):
+        skm = assets_found[idx]
+        if str(skm.package_path).find("Game") != 1:
+            assets_found.pop(idx)
+
+    return assets_found
+
+
+def get_skeleton_meshes(game_asset=True):
+    """
+    Gets a list of all available skeleton meshes
+
+    :param bool game_asset: If false all skeleton meshes will be returned, if true only
+    the skm's found in /Game
+
+    :return: List of Skeletal Meshes
+    :rtype: list(unreal.AssetData)
+    """
+    return get_all_by_type('/Script/Engine', 'SkeletalMesh', game_asset)
+
+
+def get_skeletons(game_asset=True):
+    """
+    Gets a list of all available skeletons
+
+    :param bool game_asset: If false all skeletons will be returned, if true only
+    the skm's found in /Game
+
+    :return: List of Skeletons that exist in Content Browser.
+    :rtype: list(unreal.AssetData)
+    """
+    return get_all_by_type('/Script/Engine', 'Skeleton', game_asset)
+
+
+def import_fbx_animation(fbx_path, dest_path, anim_sequence_name, skeleton_path):
+    """
+    Imports the fbx file as an Animation Sequence.
+
+    :param str fbx_path: Path to the fbx file that will be imported.
+    :param str dest_path: Location where the AnimationSequence will be generated. eg."/Game/StarterContent/Character/Boy_1_Animation"
+    :param str name: Name of the Animation Sequence in unreal
+    :param str skeleton_path: Location of the Skeleton file. eg."/Game/Character/Boy_1/Butcher_Skeleton.Butcher_Skeleton"
+
+    :return: List of Asset Path locations, to the newly imported Animation Sequence
+    :rtype: list(str)
+    """
+
+    task = unreal.AssetImportTask()
+    task.filename = fbx_path
+    task.destination_path = dest_path
+    task.destination_name = anim_sequence_name
+
+    task.replace_existing = True
+    task.automated = True
+    task.save = True
+
+    task.options = unreal.FbxImportUI()
+    task.options.import_materials = False
+    task.options.import_animations = True
+    task.options.import_as_skeletal = True
+    task.options.import_mesh = False
+    task.options.automated_import_should_detect_type = False
+
+    task.options.skeleton = unreal.load_asset(skeleton_path)
+
+    task.options.mesh_type_to_import = unreal.FBXImportType.FBXIT_ANIMATION 
+
+    paths = import_assets([task])
+    return paths
+
+
+def import_fbx_skeletal_mesh(fbx_path, dest_path, anim_sequence_name, skeleton_path=None):
+    """
+    Imports the fbx file as an Skeletal Mesh.
+
+    NOTE: FBX file must contain no animation on the character.
+
+    :param str fbx_path: Path to the fbx file that will be imported.
+    :param str dest_path: Location where the AnimationSequence will be generated. eg."/Game/StarterContent/Character/Boy_1_Animation"
+    :param str name: Name of the Animation Sequence in unreal
+    :param str skeleton_path: Path to the Skeleton. If populated then this skeleton will be used, instead of generating a new one.
+
+    :return: List of Asset Path locations, to the newly imported Animation Sequence
+    :rtype: list(str)
+    """
+
+    task = unreal.AssetImportTask()
+    task.filename = fbx_path
+    task.destination_path = dest_path
+    task.destination_name = anim_sequence_name
+
+    task.replace_existing = True
+    task.automated = True
+    task.save = True
+
+    task.options = unreal.FbxImportUI()
+    task.options.import_mesh = True
+    task.options.import_as_skeletal = True
+    task.options.import_materials = True
+    task.options.import_animations = False
+
+    task.options.override_full_name = True
+    task.options.create_physics_asset = True
+    task.options.automated_import_should_detect_type = False
+    # task.options.skeletal_mesh_import_data.set_editor_property('update_skeleton_reference_pose', False)
+    # task.options.skeletal_mesh_import_data.set_editor_property('use_t0_as_ref_pose', True)
+    task.options.skeletal_mesh_import_data.set_editor_property('preserve_smoothing_groups', 1)
+    # task.options.skeletal_mesh_import_data.set_editor_property('import_meshes_in_bone_hierarchy', False)
+    task.options.skeletal_mesh_import_data.set_editor_property('import_morph_targets', True)
+    # task.options.skeletal_mesh_import_data.set_editor_property('threshold_position',  0.00002)
+    # task.options.skeletal_mesh_import_data.set_editor_property('threshold_tangent_normal', 0.00002)
+    # task.options.skeletal_mesh_import_data.set_editor_property('threshold_uv', 0.000977)
+    
+    task.options.skeletal_mesh_import_data.set_editor_property('convert_scene', True)
+    # task.options.skeletal_mesh_import_data.set_editor_property('force_front_x_axis', False)
+    # task.options.skeletal_mesh_import_data.set_editor_property('convert_scene_unit', False)
+
+    task.options.mesh_type_to_import = unreal.FBXImportType.FBXIT_SKELETAL_MESH 
+
+    if skeleton_path:
+        task.options.skeleton = unreal.load_asset(skeleton_path)
+        task.options.import_as_skeletal = False
+
+    paths = import_assets([task])
+    return paths
+
+
+def get_skeleton_count(path):
+    """
+    Returns the amount of joints in the skeleton
+    
+    example path : "/Game/StarterContent/Character/Boy_1/Butcher_Skeleton.Butcher_Skeleton"
+    """
+    skeleton_asset = unreal.EditorAssetLibrary.load_asset(path)
+
+    ref_pose = skeleton_asset.get_reference_pose()
+    bone_names = ref_pose.get_bone_names()
+    return len(bone_names)

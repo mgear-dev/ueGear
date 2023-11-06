@@ -81,6 +81,27 @@ class PyUeGearCommands(unreal.UeGearCommands):
         # Standardises the path, removing any extra data
         return unreal.Paths.make_standard_filename(path)
 
+    @unreal.ufunction(
+        params=[bool],
+        ret=unreal.Array(str),
+        static=True,
+        meta=dict(Category="ueGear Commands")
+    )
+    def selected_content_browser_directory(relative=False):
+        """
+        Returns the selected directory in the Content Browser.
+
+        :return: selected directory.
+        :rtype: str
+        """
+        unreal_array = unreal.Array(str)
+
+        paths = assets.get_selected_folders(relative)
+        for path in paths:
+            unreal_array.append(path)
+
+        return unreal_array
+
     # ==================================================================================================================
     # ASSETS
     # ==================================================================================================================
@@ -306,14 +327,85 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         try:
             import_options = ast.literal_eval(import_options)
+
+            # If a skeletal string encoded dictionary exists, convert it to a dict.
+            skeletal_data = import_options.get("skeletal_mesh_import_data", None)
+            if skeletal_data:
+                skeletal_data = ast.literal_eval(skeletal_data)
+                import_options["skeletal_mesh_import_data"] = skeletal_data
+
         except SyntaxError:
             import_options = dict()
+
+        name = import_options.get("destination_name", None)
+        if name:
+            import_options.pop("destination_name")
+
         import_options["import_as_skeletal"] = True
+
         import_asset_path = assets.import_fbx_asset(
-            fbx_file, import_path, import_options=import_options
+            fbx_file,
+            import_path,
+            destination_name = name,
+            import_options=import_options
         )
 
         return import_asset_path
+
+    @unreal.ufunction(
+        params=[bool],
+        ret=unreal.Array(unreal.StringValuePair),
+        static=True,
+        meta=dict(Category="ueGear Commands"),)
+    def get_skeletons_data(skeletal_mesh=False):
+        """
+        Returns a list of skeletons or skeletal meshes, that exist in the open unreal project.
+
+        :param bool skeletal_mesh: If True return SkeletalMesh data, False return Skeleton data.
+        :return: The package_name and asset_name. Stored in an Array of Key Value pairs.
+        :rtype: unreal.Array(unreal.StringValuePair)
+        """
+        skeleton_list = unreal.Array(unreal.StringValuePair)
+
+        if skeletal_mesh:
+            skeletons = assets.get_skeleton_meshes()
+        else:
+            skeletons = assets.get_skeletons()
+
+        for skeleton in skeletons:
+            package_name = skeleton.get_editor_property("package_name")
+            asset_name = skeleton.get_editor_property("asset_name")
+            skeleton_list.append(unreal.StringValuePair(package_name, asset_name))
+
+        return skeleton_list
+
+    # ==================================================================================================================
+    # ANIMATED SKELETAL MESHES
+    # ==================================================================================================================
+    @unreal.ufunction(
+        params=[str, str, str, str],
+        ret=unreal.Array(str),
+        static=True,
+        meta=dict(Category="ueGear Commands"),)
+    def import_animation(animation_path, dest_path, name, skeleton_path):
+        """
+        Imports an Skeletal Animation into Unreal.
+        
+        :param str animation_path: Path to FBX location
+        :param str dest_path: Package path to the folder that will store the animation.
+        :param str name: Name of the animation file
+        :param str skeleton_path: Package path to the Skeleton in Unreal
+        
+        :return: imported path.
+        :rtype: str
+        """
+        result = assets.import_fbx_animation(fbx_path=animation_path, 
+                                    dest_path=dest_path, 
+                                    anim_sequence_name=name,
+                                    skeleton_path=skeleton_path
+                                    )
+        
+        return result
 
     # ==================================================================================================================
     # TEXTURES
