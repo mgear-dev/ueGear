@@ -1,2 +1,0 @@
-set rootPath=%cd%
-"C:\Program Files\Epic Games\UE_5.1\Engine\Build\BatchFiles\RunUAT.bat" BuildPlugin -Plugin="%rootPath%\Plugins\ueGear\ueGear.uplugin" -Package="%rootPath%\Package\ueGear Plugin 5.1" -Rocket -VS2019
