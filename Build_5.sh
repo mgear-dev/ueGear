@@ -18,12 +18,12 @@ if [ "$(uname)" == "Darwin" ]; then
 
     # Build 5.2
     if [ -e "/Users/Shared/Epic Games/UE_5.2" ]; then
-        '/Users/Shared/Epic Games/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh' BuildPlugin -Plugin="${rootPath}/Plugins/ueGear/ueGear.uplugin" -Package="${rootPath}/Package/ueGear_5.2" -architecture=arm64 || echo "Failed to find Unreal 5.2"
+        '/Users/Shared/Epic Games/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh' BuildPlugin -Plugin="${rootPath}/Plugins/ueGear/ueGear.uplugin" -Package="${rootPath}/Package/ueGear_0.5_UE5.2/ueGear" -architecture=arm64 || echo "Failed to find Unreal 5.2"
     fi
 
     # Build 5.3
     if [ -e "/Users/Shared/Epic Games/UE_5.3" ]; then
-        '/Users/Shared/Epic Games/UE_5.3/Engine/Build/BatchFiles/RunUAT.sh' BuildPlugin -Plugin="${rootPath}/Plugins/ueGear/ueGear.uplugin" -Package="${rootPath}/Package/ueGear_5.3" -architecture=arm64 || echo "Failed to find Unreal 5.3"
+        '/Users/Shared/Epic Games/UE_5.3/Engine/Build/BatchFiles/RunUAT.sh' BuildPlugin -Plugin="${rootPath}/Plugins/ueGear/ueGear.uplugin" -Package="${rootPath}/Package/ueGear_0.5_UE5.3/ueGear" -architecture=arm64 || echo "Failed to find Unreal 5.3"
     fi
 
 elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
