@@ -108,8 +108,7 @@ def convert_json_to_mg_rig(build_json_path:str) -> mgRig:
 
     return rig
 
-
-UE_GEAR_FUNCTION_LIBRARY_PATH = "/Game/StarterContent/Character/ueGearFunctionLibrary.ueGearFunctionLibrary_C"
+UE_GEAR_FUNCTION_LIBRARY_PATH = "/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C"
 
 class ueGearManager():
 
@@ -208,6 +207,7 @@ class ueGearManager():
         return rig
 
     def create_controlrig_by_mesh(self, mesh_package_path):
+        """Generates the control rig using the mesh package path"""
         # load a skeletal mesh
         mesh = unreal.load_object(name = mesh_package_path, outer = None)
         # create a control rig for the mesh
@@ -236,6 +236,13 @@ class ueGearManager():
 
         return self._active_blueprint
 
+    def load_rig(self, mgear_rig:mgRig):
+        """
+        Loads the mgear rig object into the manager, so the manager can generate the control rig and its components.
+        """
+        self.mg_rig = mgear_rig
+
+
 #----------------------------------------------------------------------
 
 # .add_external_function_reference_node(UE_GEAR_FUNCTION_LIBRARY_PATH, 'gear_FK_Constructor', unreal.Vector2D(-1649.118012, -931.602505), 'gear_FK_Constructor')
@@ -243,17 +250,97 @@ class ueGearManager():
 
 
 TEST_BUILD_JSON = "/Users/simonanderson/Desktop/SIJO_STUDIOS/Contract_Work/mGear/GIT_REPOS/ueGear/Plugins/ueGear/Content/Python/ueGear/controlrig/butcher_data.json"
-TEST_CR_PATH = "/Game/StarterContent/Character/anim_test_001_CtrlRig.anim_test_001_CtrlRig"
+TEST_CR_PATH = "/Game/StarterContent/Character/anim_test_001_CtrlRig"
 
 mgear_rig = convert_json_to_mg_rig(TEST_BUILD_JSON)
 
 gear_manager = ueGearManager()
-print(f"Active CR BP : {gear_manager._active_blueprint}")
-print(f"Open CR BP : {gear_manager._cr_blueprints}")
+# print(f"Active CR BP : {gear_manager._active_blueprint}")
+# print(f"Open CR BP : {gear_manager._cr_blueprints}")
 
-# gear_manager.load_rig(mgear_rig)
-# manager.create_controlrig_by_location()
-
-#active_blueprint = gear_manager.set_active_control_rig()
+gear_manager.load_rig(mgear_rig)
 gear_manager.set_active_control_rig(TEST_CR_PATH)
 
+print(gear_manager.active_control_rig)
+#print(gear_manager.mg_rig)
+
+class ComponentAssociation():
+    """
+    Keeps track of the association between an mGear Component and a ueGear Component
+    """
+    mgear:str = None
+    uegear:str = None
+    functions:list = []
+    blueprint_variables:list = []
+
+    def __init__(self, mg, ue, funcs, vars) -> None:
+        self.mgear = mg
+        self.uegear = ue
+        self.functions = funcs
+        self.blueprint_variables = vars
+
+    def __repr__(self) -> str:
+        return f"{self.mgear} = {self.uegear} : {self.functions} : {self.blueprint_variables}"
+
+# Key for this dictionary is the mGear component Type name
+component_conversion = {}
+# component_conversion["EPIC_leg_02"] = ComponentAssociation("EPIC_leg_02", "EPIC_leg_02", ["gear_FK_Construction", "gear_FK_ForwardSolve"], [])
+# component_conversion["EPIC_arm_02"] = ComponentAssociation("EPIC_arm_02", "EPIC_arm_02", ["gear_FK_Construction", "gear_FK_ForwardSolve"], [])
+component_conversion["EPIC_neck_02"] = ComponentAssociation("EPIC_neck_02", "EPIC_neck_02", ["gear_FK_Constructor", "gear_FK_ForwardSolve"], [])
+
+gear_manager.component_association = component_conversion
+
+print(gear_manager.component_association)
+
+# How to tell which function is needed to get connected in what order?
+# How to tell which function is needed to get connected to which execte?
+
+rig_controller = gear_manager.active_control_rig.get_controller_by_name('RigVMModel')
+
+current_graph = rig_controller.get_graph()
+
+# Checks the current graph for the Execution nodes, if they do not exist creates them
+has_construction_node = current_graph.find_node("RigUnit_BeginExecution")
+has_forward_node = current_graph.find_node("PrepareForExecution")
+has_inverse_node = current_graph.find_node("InverseExecution")
+
+for comp_key in gear_manager.mg_rig.components:
+    # Gets the data from the mGear Dictionary
+    mgear_comp = gear_manager.mg_rig.components[comp_key]
+    mgear_comp_type = mgear_comp.comp_type
+    ue_gear_comp = component_conversion.get(mgear_comp_type, None)
+
+    if ue_gear_comp is None:
+        print(f"Warning: Component Association Missing `{mgear_comp_type}`. Please create a new association.")
+        continue
+
+    # Loops over the functions in the component and generates them.
+    for function_node_name in ue_gear_comp.functions:
+
+        # Unique name to destinguish the component's functions
+        component_function_name = f"{mgear_comp.fullname}_{function_node_name}"
+
+        component_function_exists = current_graph.find_node_by_name(component_function_name)
+        print(f"Component Function exists : {component_function_exists}")
+
+        # Component's function does not exist, Create it
+        if component_function_exists is None:
+
+            # Create the functions for the component in CR
+            function_node = rig_controller.add_external_function_reference_node(UE_GEAR_FUNCTION_LIBRARY_PATH,
+                                                                                function_node_name,
+                                                                                unreal.Vector2D(0, 0),
+                                                                                component_function_name)
+
+    # Attache meta data to bones from the component
+    # Check if meta data has already been setup
+    # Generate Functions Nodes, and connect them to the available execution pipeline
+    # Check if associated node exists in the pipeline already
+
+
+
+# Forward Solve Node
+rig_controller.set_node_selection(['RigUnit_BeginExecution'])
+
+# Construction Node
+rig_controller.set_node_selection(['PrepareForExecution'])
