@@ -88,3 +88,11 @@ Go to the FBX webpage and install the latest version that works with your Maya v
 - Can be instantiated by the LevelSequencer
 - Can exist in a Level and not in a LevelSequencer
 - Never exists in the Content Browser. It will appear in a LevelSequence or inside a level.
+
+# Control Rig
+
+The ueGear Control Rig Library can be found in the following location
+Repo: `ueGear/Plugins/ueGear/Content/Python/ueGear/controlrig/ueGearFunctionLibrary.uasset`
+Unreal: `ueGear/Content/Python/ueGear/controlrig/ueGearFunctionLibrary.uasset`
+
+If you enable plugins in the Content Browser Settings, you will be able to see the folder.

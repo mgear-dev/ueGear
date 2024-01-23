@@ -190,13 +190,18 @@ def get_selected_asset_data():
     return unreal.EditorUtilityLibrary.get_selected_asset_data()
 
 
-def selected_assets():
+def selected_assets(asset_type=None):
     """
     Returns current selected asset instances in Content Browser.
+
+    :param type(Class) type: The type of object you want to select. Filters out types that do not match
 
     :return: list of selected asset instances in Content Browser.
     :rtype: list(object)
     """
+
+    if asset_type:
+        return unreal.EditorUtilityLibrary.get_selected_assets_of_class(asset_type)
 
     return unreal.EditorUtilityLibrary.get_selected_assets()
 
