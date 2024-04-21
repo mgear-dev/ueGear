@@ -1,9 +1,13 @@
-from base_component import ueComponent
+__all__ = ['fkComponent']
 
-class fkComponent(ueComponent):
+from .base_component import UEComponent
+
+class fkComponent(UEComponent):
+
+    name = "test_FK"
+    mgear_component = "EPIC_control_01"
+    functions = ['gear_FK_Constructor', 'gear_FK_ForwardSolve']
+    cr_variables = {}
+
     def __init__(self) -> None:
         super().__init__()
-        name = "test_FK"
-        mgear_component = "test_FK"
-        functions = ['gear_FK_Constructor', 'gear_FK_ForwardSolve']
-        cr_variables = {}

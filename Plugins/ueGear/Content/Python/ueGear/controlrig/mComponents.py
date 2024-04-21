@@ -24,9 +24,9 @@ class MGComponent:
 
     # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
 
-    """Name of the component that is the parent of this component"""
+    """Name of the guide component that is the parent of this guide component"""
     parent_fullname: str = None
-    """Name of the control that drives this component"""
+    """Name of the guide control that drives this guide component"""
     parent_localname: str = None
 
     def __init__(self) -> None:
@@ -94,31 +94,38 @@ def convert_json_to_mg_rig(build_json_path:str) -> mgRig:
     rig = mgRig()
 
     for component in data["Components"]:
-        if len(component["DataContracts"]) > 0:
-            component_type = component["Type"]
-            component_side = component["Side"]
-            component_name = component["Name"]
-            component_fullname = component["FullName"]
-            data_contrat = component["DataContracts"]
 
-            mgear_component = MGComponent()
-            mgear_component.name = component_name
-            mgear_component.side = component_side
-            mgear_component.comp_type = component_type
-            mgear_component.fullname = component_fullname
-            mgear_component.parent_fullname = component['parent_fullName']
-            mgear_component.parent_localname = component['parent_localName']
-            mgear_component.data_contracts = {}
+        component_type = component["Type"]
+        component_side = component["Side"]
+        component_name = component["Name"]
+        component_fullname = component["FullName"]
+        data_contrat = component["DataContracts"]
 
-            for contract_name in data_contrat:
-                related_joints = component[contract_name]
-                mgear_component.data_contracts[contract_name] = related_joints
+        mgear_component = MGComponent()
+        mgear_component.name = component_name
+        mgear_component.side = component_side
+        mgear_component.comp_type = component_type
+        mgear_component.fullname = component_fullname
+        mgear_component.parent_fullname = component['parent_fullName']
+        mgear_component.parent_localname = component['parent_localName']
+        mgear_component.data_contracts = {}
 
-            rig.add_component(new_component=mgear_component)
+        for contract_name in data_contrat:
+            related_joints = component[contract_name]
+            mgear_component.data_contracts[contract_name] = related_joints
+
+        rig.add_component(new_component=mgear_component)
 
     return rig
 
 if __name__ == "__main__":
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
-    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\ueGear_ControlRig\butcherBuildData_v002.scd"
-    mg_rig = convert_json_to_mg_rig(TEST_BUILD_JSON)
+ #   TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\ueGear_ControlRig\butcherBuildData_v002.scd"
+    mg_guide_data = convert_json_to_mg_rig(TEST_BUILD_JSON)
+
+# Test basic component
+cf_lookup_component = {}
+
+import components
+available_components = components.lookup_mgear_component("EPIC_control_01")
+print(available_components)
