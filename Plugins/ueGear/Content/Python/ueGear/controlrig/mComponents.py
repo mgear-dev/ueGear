@@ -33,12 +33,14 @@ class MGComponent:
         pass
 
     def __repr__(self) -> str:
-        msg = ""
+        msg = "\n"
         msg += f"|  Full Name : {self.fullname}\n"
         msg += f"|       Name : {self.name}\n"
         msg += f"|       Side : {self.side}\n"
         msg += f"|       Type : {self.comp_type}\n"
         msg += f"|  Contracts : {self.data_contracts}\n"
+        msg += f"|  Parent Component : {self.parent_fullname}\n"
+        msg += f"|      Attach Point : {self.parent_localname}\n"
         return msg
 
 
@@ -63,6 +65,17 @@ class mgRig():
             self.components[new_component.fullname] = new_component
 
         return self.components.get(name, None)
+
+    def get_component_by_type(self, type_name: str) -> list:
+        """
+        Gets all components that match the type specified.
+        """
+        found_components = []
+        for comp in self.components.values():
+            if comp.comp_type == type_name:
+                found_components.append(comp)
+
+        return found_components
 
     def __repr__(self) -> str:
         msg = ""
@@ -126,6 +139,6 @@ if __name__ == "__main__":
 # Test basic component
 cf_lookup_component = {}
 
-import components
+from ueGear.controlrig import components
 available_components = components.lookup_mgear_component("EPIC_control_01")
 print(available_components)

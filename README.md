@@ -1,6 +1,7 @@
 # ueGear
 Unreal Engine Gear
 
+Requires: Unreal 5.2+
 
 ### ueGear 0.1 Roadmap Goals
 **Goal:** 

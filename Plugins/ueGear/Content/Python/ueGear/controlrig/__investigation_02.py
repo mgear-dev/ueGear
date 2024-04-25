@@ -1,10 +1,14 @@
 import json
+
 import unreal
 
 from ueGear import assets as ue_assets
 
 import importlib
 importlib.reload(ue_assets)
+
+from ueGear.controlrig import mComponents
+importlib.reload(mComponents)
 """
 The thought behind this investigation it to 
 -[ ] load in the build data JSON file. 
@@ -15,113 +19,14 @@ IDEA
 -[ ] Discussion: Generate the JSON data from the skeleton, even if it was not created at 'Build' time?
 """
 
-class mgComponent():
-    """
-    Simple Component object that wraps the maya compoent data, for easy access
-    """
-
-    fullname:str = ""
-    """Components Fullname, this is usually used as the default name"""
-    name:str = ""
-    """Name of the Component."""
-    side:str = ""
-    """The side that the component exists on. L(left), R(right) C(center)."""
-    comp_type:str = ""
-    """The mGear Component Type, that was used in Maya to generate it."""
-    data_contracts:dict = None
-
-    def __init__(self) -> None:
-        pass
-
-    def __repr__(self) -> str:
-        msg = ""
-        msg += f"|  Full Name : {self.fullname}\n"
-        msg += f"|       Name : {self.name}\n"
-        msg += f"|       Side : {self.side}\n"
-        msg += f"|       Type : {self.comp_type}\n"
-        msg += f"|  Contracts : {self.data_contracts}\n"
-        return msg
-
-
-class mgRig():
-    """
-    Simple Component object that wraps the mGear Maya Rig
-    """
-    components:dict[str, mgComponent] = {}
-
-    def __init__(self) -> None:
-        pass
-
-    def add_component(self, name:str=None, new_component:mgComponent=None):
-        """
-        Gets or Sets the specific component.
-
-        If setting the compnent, you can specify the name, or leave it blank and it will default to the new_components name
-        """
-        if new_component and name:
-            self.components[name] = new_component
-        elif new_component:
-            self.components[new_component.fullname] = new_component
-
-        return self.components.get(name, None)
-
-    def __repr__(self) -> str:
-        msg = ""
-        for (name, comp) in self.components.items():
-            msg +=  "o------------------\n"
-            msg += f"|  Rig's Key    : {name}\n"
-            msg += str(comp)
-            msg +=  "o - - - - - - - - -\n"
-        return msg
-
-def load_json_file(file_path):
-    """
-    Load a JSON file using the json module.
-    """
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
-
-def convert_json_to_mg_rig(build_json_path:str) -> mgRig:
-    """
-    Converts the mGear build json file into a mgRig object.
-
-    This process filters out all none required data.
-    """
-    data = load_json_file(build_json_path)
-
-    rig = mgRig()
-
-    for component in data["Components"]:
-        if len(component["DataContracts"]) > 0:
-            component_type = component["Type"]
-            component_side = component["Side"]
-            component_name = component["Name"]
-            component_fullname = component["FullName"]
-            data_contrat = component["DataContracts"]
-
-            mgear_component = mgComponent()
-            mgear_component.name = component_name
-            mgear_component.side = component_side
-            mgear_component.comp_type = component_type
-            mgear_component.fullname = component_fullname
-            mgear_component.data_contracts = {}
-
-            for contract_name in data_contrat:
-                related_joints = component[contract_name]
-                mgear_component.data_contracts[contract_name] = related_joints
-
-            rig.add_component(new_component=mgear_component)
-
-    return rig
-
 UE_GEAR_FUNCTION_LIBRARY_PATH = "/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C"
 
-class ueGearManager():
 
-    _factory:unreal.ControlRigBlueprintFactory = None
-    _cr_blueprints:list[unreal.ControlRigBlueprint] = []
-    _active_blueprint:unreal.ControlRigBlueprint = None
+class UEGearManager:
+
+    _factory: unreal.ControlRigBlueprintFactory = None
+    _cr_blueprints: list[unreal.ControlRigBlueprint] = []
+    _active_blueprint: unreal.ControlRigBlueprint = None
 
     _ue_gear_standard_library = None
 
@@ -243,16 +148,34 @@ class ueGearManager():
 
         return self._active_blueprint
 
-    def load_rig(self, mgear_rig:mgRig):
+    def load_rig(self, mgear_rig:mComponents.mgRig):
         """
         Loads the mgear rig object into the manager, so the manager can generate the control rig and its components.
         """
         self.mg_rig = mgear_rig
 
 
+    def get_graph(self) -> unreal.RigVMGraph:
+        """
+        Gets the graph of the current loaded control rig
+
+        https://docs.unrealengine.com/5.3/en-US/PythonAPI/class/RigVMGraph.html#unreal.RigVMGraph
+
+        """
+        rig_vm_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
+        active_cr_graph = rig_vm_controller.get_graph()
+        return active_cr_graph
+
+    def get_selected_nodes(self) -> list[str]:
+        if self._active_blueprint is None:
+            print("Error, please set the sctive Control Rig blueprint.")
+        graph = self.get_graph()
+        return graph.get_select_nodes()
+
+
 #----------------------------------------------------------------------
 
-class ComponentAssociation():
+class ComponentAssociation:
     """
     Keeps track of the association between an mGear Component and a ueGear Component
     """
@@ -369,7 +292,7 @@ def create_components_metadata_node(contract_name, skeleton_joints):
     return node_name
 
 
-def create_component_meta_data(component:mgComponent):
+def create_component_meta_data(component: mComponents.MGComponent):
     """
     Creates all the required skeleton joint data contract lookups required for the mgComponent.
     """
@@ -389,24 +312,44 @@ def create_component_meta_data(component:mgComponent):
 
 # ======================================================================
 
-TEST_BUILD_JSON = "/Users/simonanderson/Desktop/SIJO_STUDIOS/Contract_Work/mGear/GIT_REPOS/ueGear/Plugins/ueGear/Content/Python/ueGear/controlrig/butcher_data.json"
-TEST_CR_PATH = "/Game/StarterContent/Character/anim_test_001_CtrlRig"
+def test_build_component_count():
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+    if len(mgear_rig.components) == 55:
+        print("Test: Component Count Correct: 55 Components")
 
-mgear_rig = convert_json_to_mg_rig(TEST_BUILD_JSON)
+def test_build_fk_count():
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+    fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
+    print(fk_components)
+# ======================================================================
 
-gear_manager = ueGearManager()
-gear_manager.load_rig(mgear_rig)
-gear_manager.set_active_control_rig(TEST_CR_PATH)
+test_build_component_count()
+test_build_fk_count()
 
-rig_vm_controller = gear_manager.active_control_rig.get_controller_by_name('RigVMModel')
-active_cr_graph = rig_vm_controller.get_graph()
+TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+# TEST_CR_PATH = "/Game/StarterContent/Character/anim_test_001_CtrlRig"
 
-neck_component = gear_manager.mg_rig.components["neck_C0"]
+mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+
+gear_manager = UEGearManager()
+# gear_manager.load_rig(mgear_rig)
+# gear_manager.set_active_control_rig(TEST_CR_PATH)
+
+# rig_vm_controller = gear_manager.active_control_rig.get_controller_by_name('RigVMModel')
+# active_cr_graph = rig_vm_controller.get_graph()
+
+# neck_component = gear_manager.mg_rig.components["neck_C0"]
 
 #for comp_key in gear_manager.mg_rig.components:
 #    # Gets the data from the mGear Dictionary
 #    mgear_comp = gear_manager.mg_rig.components[comp_key]
 #    create_component_meta_data(mgear_comp)
 
-create_component_meta_data(neck_component)
+# create_component_meta_data(neck_component)
 
+#gear_manager.set_active_control_rig()
+#sel_nodes = gear_manager.get_selected_nodes()
+
+#print(sel_nodes)
