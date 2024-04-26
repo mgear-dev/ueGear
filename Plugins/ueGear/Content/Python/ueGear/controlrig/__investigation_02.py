@@ -5,9 +5,11 @@ import unreal
 from ueGear import assets as ue_assets
 
 import importlib
+
 importlib.reload(ue_assets)
 
 from ueGear.controlrig import mComponents
+
 importlib.reload(mComponents)
 """
 The thought behind this investigation it to 
@@ -20,13 +22,18 @@ IDEA
 """
 
 UE_GEAR_FUNCTION_LIBRARY_PATH = "/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C"
+"""Location of the Function Library that stores all the ueGear functions, that will be used to generate the Control Rig"""
 
 
 class UEGearManager:
-
     _factory: unreal.ControlRigBlueprintFactory = None
+    """Unreals Control Rig Blue Print Factory. This performs all the alterations to the Control Rig"""
+
     _cr_blueprints: list[unreal.ControlRigBlueprint] = []
+    """List of all available blueprints"""
+
     _active_blueprint: unreal.ControlRigBlueprint = None
+    """The Active Blueprint is the current blueprint that will be modified by the UE Gear Manager"""
 
     _ue_gear_standard_library = None
 
@@ -43,7 +50,7 @@ class UEGearManager:
         Initialises the ueGear Manager, making sure that the plugin exists and the factory has been accessed.
         """
         unreal.load_module('ControlRigDeveloper')
-        factory = unreal.ControlRigBlueprintFactory
+        self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
 
     def get_open_controlrig_blueprints(self):
@@ -73,20 +80,62 @@ class UEGearManager:
 
         self.set_active_blueprint(self._cr_blueprints[0])
 
+    def set_active_blueprint(self, bp: unreal.ControlRigBlueprint):
+        """Sets the blueprint that will be getting modified by the ueGearManager
 
-    def set_active_blueprint(self, bp:unreal.ControlRigBlueprint):
-        """Sets the blueprint that will be getting modified by the ueGearManager"""
+        The Control Rig Blueprint that will be modified by the  manager, is referred to as the "Active Blueprint"
+        """
         self._active_blueprint = bp
 
-    def create_control_rig(self, cr_name:str, cr_path:str):
+    def create_control_rig(self, cr_name: str, cr_path: str, skm_path: str, set_default=True):
         """Generates a new Control Rig Blueprint
-        
-        cr_name:str = Name of the control rig file
-        cr_path:str = Path to the location where the new cr will be generated.
-        """
-        pass
 
-    def create_component(self):
+        NOTE: This method requires a Skeleton Mesh to generate the Control Rig.
+
+        By default, this will fail if a control rig already exists at the location.
+        The newly created control rig will be set to the "Active Control Rig"
+
+        cr_name:str = Name of the control rig file
+        cr_path:str = Package Path to the location where the new cr will be generated.
+        skeleton_path = Path to the Skeleton Mesh object that will be used to generate the control rig
+        """
+
+        # Check control rig does not exists
+        # Check skeleton to use exists
+        # Create Control Rig blue print
+        # Set control rig to active blueprint
+
+        package_path = unreal.Paths.combine([cr_path, cr_name])
+        if unreal.Paths.file_exists(package_path):
+            unreal.log_warning("Control Rig File already exists")
+            return None
+
+        if not ue_assets.asset_exists(skm_path):
+            unreal.log_warning(f"Skeleton Mesh not found - {skm_path}")
+            return None
+
+        # Generates Control Rig Blueprint in place
+        skm_obj = ue_assets.get_asset_object(skm_path)
+        blueprint = self._factory.create_control_rig_from_skeletal_mesh_or_skeleton(skm_obj)
+
+        if blueprint is None:
+            unreal.log_warning(f"Failed to create Control Rig BP - {package_path}")
+            return None
+
+        # Move blueprint to correct location
+        moved_success = unreal.EditorAssetLibrary.rename_asset(blueprint.get_path_name(), package_path)
+        if not moved_success:
+            unreal.log_warning(f"Failed to rename Control Rig BP - {blueprint.get_path_name()}")
+            # Deletes invalid CRBP which is now stale, and should not exist in this location.
+            unreal.EditorAssetLibrary.delete_asset(blueprint.get_path_name())
+            return None
+
+        if set_default:
+            self._active_blueprint = blueprint
+
+        return blueprint
+
+    def create_component(self, name: str):
         pass
 
     # SUB MODULE - Control Rig Interface. -------------
@@ -95,7 +144,7 @@ class UEGearManager:
     def create_node(self):
         pass
 
-    def select_node(self, node_name:str):
+    def select_node(self, node_name: str):
         pass
 
     def select_nodes(self):
@@ -111,7 +160,7 @@ class UEGearManager:
         set_default: If disabled, the manager will not automatically set the active CR BP to the newly created CR BP.
         """
         factory = unreal.ControlRigBlueprintFactory()
-        rig = factory.create_new_control_rig_asset(desired_package_path = package_path)
+        rig = factory.create_new_control_rig_asset(desired_package_path=package_path)
 
         if set_default:
             self._active_blueprint = rig
@@ -121,10 +170,10 @@ class UEGearManager:
     def create_controlrig_by_mesh(self, mesh_package_path):
         """Generates the control rig using the mesh package path"""
         # load a skeletal mesh
-        mesh = unreal.load_object(name = mesh_package_path, outer = None)
+        mesh = unreal.load_object(name=mesh_package_path, outer=None)
         # create a control rig for the mesh
         factory = unreal.ControlRigBlueprintFactory
-        rig = factory.create_control_rig_from_skeletal_mesh_or_skeleton(selected_object = mesh)
+        rig = factory.create_control_rig_from_skeletal_mesh_or_skeleton(selected_object=mesh)
         return rig
 
     def set_active_control_rig(self, path=None):
@@ -133,7 +182,7 @@ class UEGearManager:
         """
 
         if path:
-            loaded_control_rig = unreal.load_object(name = path, outer = None)
+            loaded_control_rig = unreal.load_object(name=path, outer=None)
             self.set_active_blueprint(loaded_control_rig)
 
             if loaded_control_rig == None:
@@ -148,12 +197,11 @@ class UEGearManager:
 
         return self._active_blueprint
 
-    def load_rig(self, mgear_rig:mComponents.mgRig):
+    def load_rig(self, mgear_rig: mComponents.mgRig):
         """
         Loads the mgear rig object into the manager, so the manager can generate the control rig and its components.
         """
         self.mg_rig = mgear_rig
-
 
     def get_graph(self) -> unreal.RigVMGraph:
         """
@@ -173,16 +221,16 @@ class UEGearManager:
         return graph.get_select_nodes()
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 
 class ComponentAssociation:
     """
     Keeps track of the association between an mGear Component and a ueGear Component
     """
-    mgear:str = None
-    uegear:str = None
-    functions:list = []
-    blueprint_variables:list = []
+    mgear: str = None
+    uegear: str = None
+    functions: list = []
+    blueprint_variables: list = []
 
     def __init__(self, mg, ue, funcs, vars) -> None:
         self.mgear = mg
@@ -195,12 +243,11 @@ class ComponentAssociation:
 
 
 def test_full_build():
-
     # Key for this dictionary is the mGear component Type name
     component_conversion = {}
     # component_conversion["EPIC_leg_02"] = ComponentAssociation("EPIC_leg_02", "EPIC_leg_02", ["gear_FK_Construction", "gear_FK_ForwardSolve"], [])
     # component_conversion["EPIC_arm_02"] = ComponentAssociation("EPIC_arm_02", "EPIC_arm_02", ["gear_FK_Construction", "gear_FK_ForwardSolve"], [])
-    #component_conversion["EPIC_neck_02"] = ComponentAssociation("EPIC_neck_02", "EPIC_neck_02", {"Construction":["gear_FK_Constructor"], "Forward":["gear_FK_ForwardSolve"]}, [])
+    # component_conversion["EPIC_neck_02"] = ComponentAssociation("EPIC_neck_02", "EPIC_neck_02", {"Construction":["gear_FK_Constructor"], "Forward":["gear_FK_ForwardSolve"]}, [])
 
     gear_manager.component_association = component_conversion
 
@@ -239,7 +286,6 @@ def test_full_build():
 
             # Component's function does not exist, Create it
             if component_function_exists is None:
-
                 # Create the functions for the component in CR
                 function_node = rig_controller.add_external_function_reference_node(UE_GEAR_FUNCTION_LIBRARY_PATH,
                                                                                     function_node_name,
@@ -302,11 +348,13 @@ def create_component_meta_data(component: mComponents.MGComponent):
         long_contract_name = f"{component.fullname}_{contract_name}"
         contract_joints = component.data_contracts[contract_name]
 
-        new_node = create_components_metadata_node(contract_name = long_contract_name, skeleton_joints = contract_joints)
+        new_node = create_components_metadata_node(contract_name=long_contract_name, skeleton_joints=contract_joints)
         new_cr_nodes.append(new_node)
 
     # TODO: Still working on grouping the code on creation time, to allow for easier debugging.
     # Creates a Comment Block
+
+
 #    rig_vm_controller.set_node_selection(new_cr_nodes)
 #    rig_vm_controller.add_comment_node(f"{mgear_comp.fullname} mgComponent metadata", unreal.Vector2D(0, 0), unreal.Vector2D(286.000000, 279.000000), unreal.LinearColor(1.000000, 1.000000, 1.000000, 1.000000), f"{mgear_comp.fullname}_Comment")
 
@@ -317,16 +365,69 @@ def test_build_component_count():
     mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
     if len(mgear_rig.components) == 55:
         print("Test: Component Count Correct: 55 Components")
+    else:
+        unreal.log_error("Test: Component Count Correct: Failed")
+
 
 def test_build_fk_count():
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
     mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
     fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
-    print(fk_components)
-# ======================================================================
+    if len(fk_components) == 19:
+        print("Test: FK Component Count Correct: 19 Found")
+    else:
+        unreal.log_error("Test: FK Component Count Correct: Failed")
 
-test_build_component_count()
-test_build_fk_count()
+
+def test_create_control_rig_bp():
+    """
+    Testing the creation of an empty blueprint and the creation of a blueprint from a skeleton.
+    """
+    TEST_CONTROLRIG_PATH = "/Game/TEST/test_empty_control_rig_bp"
+    gear_manager = UEGearManager()
+
+    # Create
+    bp_1 = gear_manager.create_controlrig_by_location(TEST_CONTROLRIG_PATH)
+
+    bp_2 = gear_manager.create_control_rig("test_empty_skm_control_rig_bp",
+                                           "/Game/TEST",
+                                           skm_path="/Game/ButcherBoy/ButcherBoy_Master")
+
+    if bp_1 and bp_2:
+        print("Test: Create Empty Blueprint: Successful")
+    else:
+        unreal.log_error("Test: Create Empty Blueprint: Failed")
+
+    # Clean up
+    unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
+
+
+def test_create_fk_control():
+    """
+    Test will check to see if a control is generated and added to the correct Contruction, Forward and Backwards Solve
+    """
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    TEST_CONTROLRIG_PATH = "/Game/TEST/test_create_fk_control"
+
+    mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+    fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
+
+    gear_manager = UEGearManager()
+    gear_manager.load_rig(mgear_rig)
+    gear_manager.set_active_control_rig(TEST_CONTROLRIG_PATH)
+
+
+# ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+
+# test_build_component_count()
+# test_build_fk_count()
+test_create_control_rig_bp()
+
+# test_create_fk_control()
+
+# ------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
 
 TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
 # TEST_CR_PATH = "/Game/StarterContent/Character/anim_test_001_CtrlRig"
@@ -342,14 +443,14 @@ gear_manager = UEGearManager()
 
 # neck_component = gear_manager.mg_rig.components["neck_C0"]
 
-#for comp_key in gear_manager.mg_rig.components:
+# for comp_key in gear_manager.mg_rig.components:
 #    # Gets the data from the mGear Dictionary
 #    mgear_comp = gear_manager.mg_rig.components[comp_key]
 #    create_component_meta_data(mgear_comp)
 
 # create_component_meta_data(neck_component)
 
-#gear_manager.set_active_control_rig()
-#sel_nodes = gear_manager.get_selected_nodes()
+# gear_manager.set_active_control_rig()
+# sel_nodes = gear_manager.get_selected_nodes()
 
-#print(sel_nodes)
+# print(sel_nodes)
