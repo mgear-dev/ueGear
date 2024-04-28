@@ -98,6 +98,11 @@ manager.build(uegear_type="EPIC_arm_02")
 Build/Rebuild all components that exist of the specific type. In this case it would rebuild the left and right arm
 """
 
+manager.build_component(name="global_C0", ignore_parent=True)
+"""
+Builds a component that exists in the managers 
+"""
+
 # Rig Validation
 
 manager.stale()
