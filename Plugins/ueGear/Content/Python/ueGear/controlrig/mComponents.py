@@ -1,6 +1,5 @@
 import json
 
-
 """
 This module contains all the mGear component data that will be used to deserialise the `*.scd` file.
 """
@@ -11,16 +10,15 @@ class MGComponent:
     Simple Component object that wraps the maya compoent data, for easy access
     """
 
-    fullname:str = ""
+    fullname: str = ""
     """Components Fullname, this is usually used as the default name"""
-    name:str = ""
+    name: str = ""
     """Name of the Component."""
-    side:str = ""
+    side: str = ""
     """The side that the component exists on. L(left), R(right) C(center)."""
-    comp_type:str = ""
+    comp_type: str = ""
     """The mGear Component Type, that was used in Maya to generate it."""
-    data_contracts:dict = None
-
+    data_contracts: dict = None
 
     # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
 
@@ -53,7 +51,7 @@ class mgRig():
     def __init__(self) -> None:
         pass
 
-    def add_component(self, name:str=None, new_component: MGComponent=None):
+    def add_component(self, name: str = None, new_component: MGComponent = None):
         """
         Gets or Sets the specific component.
 
@@ -80,14 +78,14 @@ class mgRig():
     def __repr__(self) -> str:
         msg = ""
         for (name, comp) in self.components.items():
-            msg +=  "o------------------\n"
+            msg += "o------------------\n"
             msg += f"|  Rig's Key    : {name}\n"
             msg += str(comp)
-            msg +=  "o - - - - - - - - -\n"
+            msg += "o - - - - - - - - -\n"
         return msg
 
 
-def load_json_file(file_path:str):
+def load_json_file(file_path: str):
     """
     Load a JSON file using the json module.
     """
@@ -96,7 +94,7 @@ def load_json_file(file_path:str):
     return data
 
 
-def convert_json_to_mg_rig(build_json_path:str) -> mgRig:
+def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
     """
     Converts the mGear build json file into a mgRig object.
 
@@ -131,14 +129,16 @@ def convert_json_to_mg_rig(build_json_path:str) -> mgRig:
 
     return rig
 
+
 if __name__ == "__main__":
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
- #   TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\ueGear_ControlRig\butcherBuildData_v002.scd"
+    #   TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\ueGear_ControlRig\butcherBuildData_v002.scd"
     mg_guide_data = convert_json_to_mg_rig(TEST_BUILD_JSON)
 
 # Test basic component
 cf_lookup_component = {}
 
 from ueGear.controlrig import components
+
 available_components = components.lookup_mgear_component("EPIC_control_01")
 print(available_components)

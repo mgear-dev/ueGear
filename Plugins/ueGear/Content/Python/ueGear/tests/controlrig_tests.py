@@ -70,6 +70,7 @@ def test_create_fk_control():
     TEST_CONTROLRIG_NAME = "test_create_fk_control"
     TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
 
+    # Converts teh json data into a class based structure, filters out non-required metadata.
     mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
 
     gear_manager = UEGearManager()

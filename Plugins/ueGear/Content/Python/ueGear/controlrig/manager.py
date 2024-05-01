@@ -6,6 +6,7 @@ from ueGear.controlrig import components
 
 CONTROL_RIG_FUNCTION_PATH = '/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C'
 
+
 class UEGearManager:
     _factory: unreal.ControlRigBlueprintFactory = None
     """Unreals Control Rig Blue Print Factory. This performs all the alterations to the Control Rig"""
@@ -18,7 +19,7 @@ class UEGearManager:
 
     _ue_gear_standard_library = None
 
-    mg_rig = None
+    mg_rig: mComponents.mgRig = None
     """The mGear rig description, that is used to generate the ueGear 'Control Rig'"""
 
     @property
@@ -71,7 +72,7 @@ class UEGearManager:
         """
         self._active_blueprint = bp
 
-    def build_component(self, name="global_C0", ignore_parent=True):
+    def build_component(self, name, ignore_parent=True):
         """Create an individual component from the mgear scene desciptor file.
 
         """
@@ -79,60 +80,130 @@ class UEGearManager:
         if self._active_blueprint is None:
             unreal.log_error("ueGear Manager > Cannot create Control Rig Blueprint, please specify active blueprint.")
 
+        self.create_solves()
+
         guide_component = self.mg_rig.components.get(name, None)
 
         if guide_component is None:
             unreal.log_warning(f"Unable to find component, {name}")
             return None
 
-        print(guide_component)
         guide_type = guide_component.comp_type
         guide_name = guide_component.fullname
 
+        # Finds the ueGear Component class that matches the guide data class type.
         ue_comp_classes = components.lookup_mgear_component(guide_type)
         ueg_comp = ue_comp_classes[0]()
+        ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
 
         print(f"BUILDING COMPONENT: {name}")
         print("--------------------")
         print(ueg_comp)
-        print(ueg_comp.name)
-        print(ueg_comp.mgear_component)
-        print(ueg_comp.functions)
+        print(f"      NAME : {ueg_comp.name}")
+        print(f"mGear Comp : {ueg_comp.mgear_component}")
+        print(f" Functions :{ueg_comp.functions}")
+        print(f"  metadata :\n {ueg_comp.metadata}")
+        print("--------------------")
 
         bp_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
 
-        for cr_func in ueg_comp.functions:
-            new_node_name = f"{guide_name}_{ueg_comp.name}_{cr_func}"
+        for evaluation_path in ueg_comp.functions.keys():
+            for cr_func in ueg_comp.functions[evaluation_path]:
+                new_node_name = f"{guide_name}_{ueg_comp.name}_{cr_func}"
 
-            # Check if component exists
-            graph = bp_controller.get_graph()
-            ue_cr_node = graph.find_node_by_name(new_node_name)
+                # Check if component exists
+                ue_cr_node = self.get_node(new_node_name)
 
-            # Create Component If doesn't exist
-            if ue_cr_node is None:
-                print("Generating CR Node...")
-                print(new_node_name)
-                ue_cr_ref_node = bp_controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
-                                                               cr_func,
-                                                               unreal.Vector2D(119.091125, -205.350952),
-                                                               node_name=new_node_name)
-                # In Unreal, Ref Node inherits from Node
-                ue_cr_node = ue_cr_ref_node
+                # Create Component If doesn't exist
+                if ue_cr_node is None:
+                    print("Generating CR Node...")
+                    print(new_node_name)
+                    ue_cr_ref_node = bp_controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
+                                                                                        cr_func,
+                                                                                        unreal.Vector2D(0.0, 0.0),
+                                                                                        node_name=new_node_name)
+                    # In Unreal, Ref Node inherits from Node
+                    ue_cr_node = ue_cr_ref_node
 
-            print(ue_cr_node)
+                print(ue_cr_node)
+                ueg_comp.nodes[evaluation_path].append(ue_cr_node)
 
+        print(ueg_comp.nodes)
+
+        # No parent was specified so we will grab the root joint and use that to drive the nodes
+        if ueg_comp.metadata.parent_fullname is None:
+            print("Parent to root joint")
+
+            skeleton_array_node_name = "RigUnit_ItemArray"
+
+            found = self.get_node(skeleton_array_node_name)
+
+            # TODO: Should also check that if it is found, has it been connected, and dont assume it has been connected to other nodes.
+            if found:
+                return
+
+            # Gets the skeleton hierarchy and retrieves the root bone.
+            rig_hierarchy = self.active_control_rig.hierarchy
+            root_bone = rig_hierarchy.get_bones()[0]
+            root_bone_name = root_bone.name
+
+            # Creates an Item Array Node
+            bp_controller.add_unit_node_from_struct_path(
+                '/Script/ControlRig.RigUnit_ItemArray',
+                'Execute',
+                unreal.Vector2D(-54.908936, 204.649109),
+                skeleton_array_node_name)
+
+            # Populates the Item Array Node
+            bp_controller.insert_array_pin(f'{skeleton_array_node_name}.Items', -1, '')
+            bp_controller.set_pin_default_value(f'{skeleton_array_node_name}.Items.0',
+                                                f'(Type=Bone,Name="{root_bone_name}")',
+                                                True)
+            bp_controller.set_pin_expansion(f'{skeleton_array_node_name}.Items.0', True)
+            bp_controller.set_pin_expansion(f'{skeleton_array_node_name}.Items', True)
+
+            # Connects the Item Array Node to the functions.
+            # ASSUMPTION: Every function node uses the same skeleton array. What would happen if you didn't this would need to be overwritten.
+
+            for evaluation_path in ueg_comp.nodes.keys():
+                for function_node in ueg_comp.nodes[evaluation_path]:
+                    bp_controller.add_link(f'{skeleton_array_node_name}.Items',
+                                           f'{function_node.get_name()}.Array')
 
     # SUB MODULE - Control Rig Interface. -------------
     #   This may be abstracting away to much
 
-    def create_node(self):
-        pass
+    def get_node(self, node_name: str,
+                 create_if_missing: bool = False, function_path: str = None,
+                 function_name: str = None) -> unreal.RigVMNode:
+        """
+        Gets a node by name in the current graph that is active in the Manager.
 
-    def select_node(self, node_name: str):
-        pass
+        :param str node_name: Name of the node that is to be retrieved.
+        :param bool create_if_missing: If the node does not exist then create it
+        :param str function_path: Path to the function library that contains the function to be created.
+        :param str function_name: Name of the function node that will be created.
+        :return: Node that is found or created, else None.
+        :rtype: unreal.RigVMNode or None
+        """
+        graph = self.get_graph()
+
+        if graph is None:
+            unreal.log_error("No graph object found in manager, please make sure an active blueprint is set.")
+            return None
+
+        node = graph.find_node_by_name(node_name)
+
+        if node is None and create_if_missing and function_path and function_name:
+            node = self.create_node()
+
+        return node
+
+    def create_node(self):
+        raise NotImplementedError
 
     def select_nodes(self):
-        pass
+        raise NotImplementedError
 
     # ---------------------------------------
 
@@ -179,7 +250,6 @@ class UEGearManager:
 
         # TODO: Create Creation Solve Node
         # TODO: Create Backwards Solve Node
-
 
         return blueprint
 
@@ -251,8 +321,50 @@ class UEGearManager:
         graph = self.get_graph()
         return graph.get_select_nodes()
 
+    def create_solves(self):
+        """
+        Creates the Execution Nodes, for the following paths, as they are not created by default.
+        - Backwards / Inverse
+        - Construction
+        """
 
-def get_forward_solve(manager:UEGearManager):
+        rig_vm_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
+
+        # Forward
+        if not self.get_node("BeginExecution"):
+            rig_vm_controller.add_unit_node_from_struct_path(
+                '/Script/ControlRig.RigUnit_BeginExecution',
+                'Execute',
+                unreal.Vector2D(0.0, 0.0),
+                'BeginExecution')
+
+        # Backward
+        if not self.get_node("InverseExecution"):
+            rig_vm_controller.add_unit_node_from_struct_path(
+                '/Script/ControlRig.RigUnit_InverseExecution',
+                'Execute',
+                unreal.Vector2D(0.0, 0.0),
+                'InverseExecution')
+
+        # Construction
+        if not self.get_node("PrepareForExecution"):
+            rig_vm_controller.add_unit_node_from_struct_path(
+                '/Script/ControlRig.RigUnit_PrepareForExecution',
+                'Execute',
+                unreal.Vector2D(0.0, 0.0),
+                'PrepareForExecution')
+
+    def get_forward_execution_node(self) -> unreal.RigVMNode:
+        """Gets the Forward Execution Node"""
+        return self.get_node('BeginExecution')
+    def get_backwards_execution_node(self) -> unreal.RigVMNode:
+        """Gets the Backwards Execution Node"""
+        return self.get_node('InverseExecution')
+    def get_construction_execution_node(self) -> unreal.RigVMNode:
+        """Gets the Construction Execution Node"""
+        return self.get_node('PrepareForExecution')
+
+def get_forward_solve(manager: UEGearManager):
     manager.active_control_rig.get_controller_by_name('RigVMModel').set_node_selection(['RigUnit_BeginExecution'])
     # manager.active_control_rig.get_controller_by_name('RigVMModel').get
     raise NotImplementedError
