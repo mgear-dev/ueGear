@@ -248,8 +248,9 @@ class UEGearManager:
         if set_default:
             self._active_blueprint = blueprint
 
-        # TODO: Create Creation Solve Node
-        # TODO: Create Backwards Solve Node
+        # Create Forwards, Backwards and Construction Solve Node
+        self.create_solves()
+
 
         return blueprint
 
@@ -354,15 +355,18 @@ class UEGearManager:
                 unreal.Vector2D(0.0, 0.0),
                 'PrepareForExecution')
 
-    def get_forward_execution_node(self) -> unreal.RigVMNode:
+    def get_forward_node(self) -> unreal.RigVMNode:
         """Gets the Forward Execution Node"""
         return self.get_node('BeginExecution')
-    def get_backwards_execution_node(self) -> unreal.RigVMNode:
+
+    def get_backwards_node(self) -> unreal.RigVMNode:
         """Gets the Backwards Execution Node"""
         return self.get_node('InverseExecution')
-    def get_construction_execution_node(self) -> unreal.RigVMNode:
+
+    def get_construction_node(self) -> unreal.RigVMNode:
         """Gets the Construction Execution Node"""
         return self.get_node('PrepareForExecution')
+
 
 def get_forward_solve(manager: UEGearManager):
     manager.active_control_rig.get_controller_by_name('RigVMModel').set_node_selection(['RigUnit_BeginExecution'])

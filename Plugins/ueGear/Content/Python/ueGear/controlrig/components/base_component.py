@@ -16,10 +16,6 @@ class UEComponent(object):
 
     # DEVELOPMENT!!!!!!!
 
-    construction_functions: list = []
-    forward_functions: list = []
-    backwards_functions: list = []
-
     """The mGear Component that this ueGear component relates too"""
     functions: dict = {'construction_functions': [],
                        'forward_functions': [],

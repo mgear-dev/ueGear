@@ -8,11 +8,8 @@ class fkComponent(UEComponent):
     mgear_component = "EPIC_control_01"
     cr_variables = {}
 
-    construction_functions = ['gear_FK_Constructor']
-    forward_functions = ['gear_FK_ForwardSolve']
-
-    functions: dict = {'construction_functions': ['gear_FK_Constructor'],
-                       'forward_functions': ['gear_FK_ForwardSolve'],
+    functions: dict = {'construction_functions': ['construct_FK_singleton'],
+                       'forward_functions': ['forward_FK_singleton'],
                        'backwards_functions': [],
                        }
 
