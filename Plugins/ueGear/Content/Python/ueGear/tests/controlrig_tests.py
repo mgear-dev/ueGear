@@ -1,16 +1,21 @@
+import os
+
 import unreal
 
 from ueGear.controlrig import mComponents
 from ueGear.controlrig.manager import UEGearManager
+from ueGear import assets
 
-#---
+# ---
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
-
+from ueGear.controlrig.components import base_component, test_fk
 importlib.reload(ueM)
 importlib.reload(mComponents)
-#---
+importlib.reload(base_component)
+importlib.reload(test_fk)
+# ---
 
 def test_build_component_count():
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
@@ -43,7 +48,7 @@ def test_create_control_rig_bp():
 
     bp_2 = gear_manager.create_control_rig("test_empty_skm_control_rig_bp",
                                            "/Game/TEST",
-                                           skm_path="/Game/ButcherBoy/ButcherBoy_Master")
+                                           skm_package_path="/Game/ButcherBoy/ButcherBoy_Master")
 
     if bp_1 and bp_2:
         print("Test: Create Empty Blueprint: Successful")
@@ -56,7 +61,7 @@ def test_create_control_rig_bp():
 
 def test_create_fk_control():
     """
-    Test will check to see if a control is generated and added to the correct Contruction, Forward and Backwards Solve.
+    Test will check to see if a control is generated and added to the correct Construction, Forward and Backwards Solve.
 
     - No active control rig is set, so it should generate a new control rig
     """
@@ -69,11 +74,20 @@ def test_create_fk_control():
 
     gear_manager = UEGearManager()
     gear_manager.load_rig(mgear_rig)
-    cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_SKM)
+
+    # Creates an asset path
+    cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
+    cr_bp = assets.get_asset_object(cr_path)
+
+    if cr_bp is None:
+        cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_SKM)
+    else:
+        gear_manager.set_active_blueprint(cr_bp)
 
     if cr_bp is None:
         unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
         unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
+        return None
 
     # At this point we now have The Manager, with an empty Control Rig BP
 

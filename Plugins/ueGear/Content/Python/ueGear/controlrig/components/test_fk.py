@@ -9,5 +9,5 @@ class fkComponent(UEComponent):
     functions = ['gear_FK_Constructor', 'gear_FK_ForwardSolve']
     cr_variables = {}
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()

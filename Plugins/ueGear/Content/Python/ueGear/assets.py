@@ -159,7 +159,7 @@ def get_asset_data(asset_path, only_on_disk=False):
     )
 
 
-def get_asset_object(asset_path:str):
+def get_asset_object(asset_path:str) -> unreal.Object:
     """
     Returns the Object for the asset at the specific asset_path
 
@@ -213,7 +213,7 @@ def selected_assets(asset_type=None):
     """
     Returns current selected asset instances in Content Browser.
 
-    :param type(Class) type: The type of object you want to select. Filters out types that do not match
+    :param type(unreal.Class) asset_type: The type of object you want to select. Filters out types that do not match
 
     :return: list of selected asset instances in Content Browser.
     :rtype: list(object)

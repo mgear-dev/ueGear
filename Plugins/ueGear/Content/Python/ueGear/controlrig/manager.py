@@ -4,6 +4,8 @@ from ueGear import assets as ue_assets
 from ueGear.controlrig import mComponents
 from ueGear.controlrig import components
 
+CONTROL_RIG_FUNCTION_PATH = '/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C'
+
 class UEGearManager:
     _factory: unreal.ControlRigBlueprintFactory = None
     """Unreals Control Rig Blue Print Factory. This performs all the alterations to the Control Rig"""
@@ -75,7 +77,7 @@ class UEGearManager:
         """
 
         if self._active_blueprint is None:
-            unreal.log_error("Cannot create Control Rig Blueprint, please specify active blueprint.")
+            unreal.log_error("ueGear Manager > Cannot create Control Rig Blueprint, please specify active blueprint.")
 
         guide_component = self.mg_rig.components.get(name, None)
 
@@ -85,13 +87,39 @@ class UEGearManager:
 
         print(guide_component)
         guide_type = guide_component.comp_type
+        guide_name = guide_component.fullname
 
         ue_comp_classes = components.lookup_mgear_component(guide_type)
         ueg_comp = ue_comp_classes[0]()
+
+        print(f"BUILDING COMPONENT: {name}")
+        print("--------------------")
         print(ueg_comp)
+        print(ueg_comp.name)
+        print(ueg_comp.mgear_component)
+        print(ueg_comp.functions)
 
+        bp_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
 
+        for cr_func in ueg_comp.functions:
+            new_node_name = f"{guide_name}_{ueg_comp.name}_{cr_func}"
 
+            # Check if component exists
+            graph = bp_controller.get_graph()
+            ue_cr_node = graph.find_node_by_name(new_node_name)
+
+            # Create Component If doesn't exist
+            if ue_cr_node is None:
+                print("Generating CR Node...")
+                print(new_node_name)
+                ue_cr_ref_node = bp_controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
+                                                               cr_func,
+                                                               unreal.Vector2D(119.091125, -205.350952),
+                                                               node_name=new_node_name)
+                # In Unreal, Ref Node inherits from Node
+                ue_cr_node = ue_cr_ref_node
+
+            print(ue_cr_node)
 
 
     # SUB MODULE - Control Rig Interface. -------------
@@ -108,7 +136,7 @@ class UEGearManager:
 
     # ---------------------------------------
 
-    def create_control_rig(self, cr_name: str, cr_path: str, skm_package_path: str, set_default=True):
+    def create_control_rig(self, cr_path: str, cr_name: str, skm_package_path: str, set_default=True):
         """Generates a new Control Rig Blueprint
 
         NOTE: This method requires a Skeleton Mesh to generate the Control Rig.
@@ -123,11 +151,11 @@ class UEGearManager:
 
         package_path = unreal.Paths.combine([cr_path, cr_name])
         if unreal.Paths.file_exists(package_path):
-            unreal.log_warning("Control Rig File already exists")
+            unreal.log_error("Control Rig File already exists")
             return None
 
         if not ue_assets.asset_exists(skm_package_path):
-            unreal.log_warning(f"Skeleton Mesh not found - {skm_package_path}")
+            unreal.log_error(f"Skeleton Mesh not found - {skm_package_path}")
             return None
 
         # Generates Control Rig Blueprint in place
@@ -135,19 +163,23 @@ class UEGearManager:
         blueprint = self._factory.create_control_rig_from_skeletal_mesh_or_skeleton(skm_obj)
 
         if blueprint is None:
-            unreal.log_warning(f"Failed to create Control Rig BP - {package_path}")
+            unreal.log_error(f"Failed to create Control Rig BP - {package_path}")
             return None
 
         # Move blueprint to correct location
         moved_success = unreal.EditorAssetLibrary.rename_asset(blueprint.get_path_name(), package_path)
         if not moved_success:
-            unreal.log_warning(f"Failed to rename Control Rig BP - {blueprint.get_path_name()}")
+            unreal.log_error(f"Failed to rename Control Rig BP - {blueprint.get_path_name()}")
             # Deletes invalid CRBP which is now stale, and should not exist in this location.
             unreal.EditorAssetLibrary.delete_asset(blueprint.get_path_name())
             return None
 
         if set_default:
             self._active_blueprint = blueprint
+
+        # TODO: Create Creation Solve Node
+        # TODO: Create Backwards Solve Node
+
 
         return blueprint
 
@@ -219,3 +251,8 @@ class UEGearManager:
         graph = self.get_graph()
         return graph.get_select_nodes()
 
+
+def get_forward_solve(manager:UEGearManager):
+    manager.active_control_rig.get_controller_by_name('RigVMModel').set_node_selection(['RigUnit_BeginExecution'])
+    # manager.active_control_rig.get_controller_by_name('RigVMModel').get
+    raise NotImplementedError

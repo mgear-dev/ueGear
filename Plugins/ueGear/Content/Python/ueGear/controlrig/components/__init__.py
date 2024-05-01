@@ -6,7 +6,7 @@ from ueGear.controlrig.components import base_component, test_fk
 __all__ = [base_component, test_fk, 'lookup_mgear_component']
 
 
-def lookup_mgear_component(mg_component_name: str):
+def lookup_mgear_component(mg_component_name: str) -> [base_component.UEComponent]:
     """
     Looks up the class components that match the mgear_component name.
 
