@@ -104,8 +104,9 @@ class UEGearManager:
 
         self.uegear_components.append(ueg_comp)
 
-        print(f"BUILDING COMPONENT: {name}")
-        print("--------------------")
+        print("------------------------------")
+        print(f" BUILDING COMPONENT: {name}")
+        print("------------------------------")
         print(ueg_comp)
         print(f"      NAME : {ueg_comp.name}")
         print(f"mGear Comp : {ueg_comp.mgear_component}")
@@ -117,56 +118,57 @@ class UEGearManager:
         bp_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
 
 
-        # Function Nodes Setup
+        # Setup Function Nodes
         ueg_comp.create_functions(bp_controller)
 
-        # for evaluation_path in ueg_comp.functions.keys():
-        #     for cr_func in ueg_comp.functions[evaluation_path]:
-        #         new_node_name = f"{guide_name}_{ueg_comp.name}_{cr_func}"
-        #
-        #         # Check if component exists
-        #         ue_cr_node = self.get_node(new_node_name)
-        #
-        #         # Create Component If doesn't exist
-        #         if ue_cr_node is None:
-        #             print("Generating CR Node...")
-        #             print(new_node_name)
-        #             ue_cr_ref_node = bp_controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
-        #                                                                                 cr_func,
-        #                                                                                 unreal.Vector2D(0.0, 0.0),
-        #                                                                                 node_name=new_node_name)
-        #             # In Unreal, Ref Node inherits from Node
-        #             ue_cr_node = ue_cr_ref_node
-        #
-        #         print(ue_cr_node)
-        #         ueg_comp.nodes[evaluation_path].append(ue_cr_node)
-
-        print(ueg_comp.nodes)
-
-        print("-----")
-        for comp in self.uegear_components:
-            print(comp.name)
-        print("-----")
-
-        # Joint Setup
+        # Setup Driven Joint
         bones = get_driven_joints(self, ueg_comp)
         ueg_comp.populate_bones(bones, bp_controller)
 
         # Parent Setup
         if ueg_comp.metadata.parent_fullname:
-
             parent_comp_name = ueg_comp.metadata.parent_fullname
-            print("Finding Parent Component")
-            print(f"    {parent_comp_name}")
+
+            print("---------------------------------")
+            print(" Initialising Parent Connections")
+            print("---------------------------------")
+            print(f" Finding parent component: {parent_comp_name}")
+
             # parent_comp = self.mg_rig.components.get(parent_comp_name, None)
             parent_component = self.get_uegear_component(parent_comp_name)
             if parent_component is None:
                 print(f"    Could not find parent component > {parent_comp_name}")
                 return
 
+            print(" Parent Component Found")
             print(parent_component)
-            print(parent_component.metadata)
+            # print(parent_component.metadata)
 
+            #!!! This cannot be assumed as they may be multiple functions in a node classification
+            parent_node = parent_component.nodes["construction_functions"][0]
+            child_node = ueg_comp.nodes["construction_functions"][0]
+
+            print(parent_node)
+            parent_construct_func_name = parent_node.get_name()
+            child_construct_func_name = child_node.get_name()
+            print(parent_construct_func_name)
+            print(child_construct_func_name)
+
+            bp_controller.add_link(f'{parent_construct_func_name}.ExecuteContext',
+                                    f'{child_construct_func_name}.ExecuteContext')
+
+            if len(parent_component.nodes["forward_functions"]) > 0:
+                parent_node = parent_component.nodes["forward_functions"][0]
+                child_node = ueg_comp.nodes["forward_functions"][0]
+
+                print(parent_node)
+                parent_construct_func_name = parent_node.get_name()
+                child_construct_func_name = child_node.get_name()
+                print(parent_construct_func_name)
+                print(child_construct_func_name)
+
+                bp_controller.add_link(f'{parent_construct_func_name}.ExecuteContext',
+                                       f'{child_construct_func_name}.ExecuteContext')
 
     def get_uegear_component(self, name) -> components.base_component.UEComponent:
         """Find the ueGear component that has been created.

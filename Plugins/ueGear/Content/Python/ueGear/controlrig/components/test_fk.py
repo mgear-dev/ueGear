@@ -11,6 +11,8 @@ class fkComponent(UEComponent):
     name = "test_FK"
     mgear_component = "EPIC_control_01"
 
+    # skeleton_joints = None
+    # skeleton_array_node = None
 
     def __init__(self):
         super().__init__()
@@ -21,22 +23,7 @@ class fkComponent(UEComponent):
                           }
         self.cr_variables = {}
 
-    """
-    Brain fart!
-    looking into each component being a recipe, that can do its own creation / rewiring
-    
-    The biggest issue is the interconnected nodes and order of evaluation required for 
-    input and output driven plugs.
-    """
 
-    skeleton_joints = None
-    skeleton_array_node = None
-
-    def _pre_skeleton_connection(self):
-        pass
-
-    def skeleton_connection(self):
-        pass
 
     def create_functions(self, controller: unreal.RigVMController = None):
         if controller is None:
@@ -48,6 +35,11 @@ class fkComponent(UEComponent):
 
         # Generate Function Nodes
         for evaluation_path in self.functions.keys():
+
+            # Skip the forward function creation if no joints are needed to be driven
+            if evaluation_path == 'forward_functions' and self.metadata.joints is None:
+                continue
+
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
@@ -67,7 +59,7 @@ class fkComponent(UEComponent):
                     ue_cr_node = ue_cr_ref_node
                 else:
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
-                    continue
+                    return
 
                 print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
@@ -79,11 +71,6 @@ class fkComponent(UEComponent):
         controller.set_pin_default_value(construct_func.get_name() + '.control_name',
                                          self.metadata.controls[0],
                                          False)
-
-        # TODO: Working here! add the ability to generate the fucntions and populate them with custom data specific to the component
-
-        print("...init controls")
-        print(self.metadata.controls)
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         if bones is None or len(bones) > 1:
