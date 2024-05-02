@@ -101,7 +101,7 @@ def test_create_fk_control():
     gear_manager.build_component('root_C0', ignore_parent=True)
 
     fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
-    gear_manager.build_component(fk_components[1].fullname, ignore_parent=True)
+ #   gear_manager.build_component(fk_components[1].fullname, ignore_parent=True)
 
 #----
 

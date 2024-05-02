@@ -109,32 +109,37 @@ class UEGearManager:
         print(ueg_comp)
         print(f"      NAME : {ueg_comp.name}")
         print(f"mGear Comp : {ueg_comp.mgear_component}")
-        print(f" Functions :{ueg_comp.functions}")
+        print(f" Functions : {ueg_comp.functions}")
+        print(f"Guide Name : {guide_name}")
         print(f"  metadata :\n {ueg_comp.metadata}")
         print("--------------------")
 
         bp_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
 
-        for evaluation_path in ueg_comp.functions.keys():
-            for cr_func in ueg_comp.functions[evaluation_path]:
-                new_node_name = f"{guide_name}_{ueg_comp.name}_{cr_func}"
 
-                # Check if component exists
-                ue_cr_node = self.get_node(new_node_name)
+        # Function Nodes Setup
+        ueg_comp.create_functions(bp_controller)
 
-                # Create Component If doesn't exist
-                if ue_cr_node is None:
-                    print("Generating CR Node...")
-                    print(new_node_name)
-                    ue_cr_ref_node = bp_controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
-                                                                                        cr_func,
-                                                                                        unreal.Vector2D(0.0, 0.0),
-                                                                                        node_name=new_node_name)
-                    # In Unreal, Ref Node inherits from Node
-                    ue_cr_node = ue_cr_ref_node
-
-                print(ue_cr_node)
-                ueg_comp.nodes[evaluation_path].append(ue_cr_node)
+        # for evaluation_path in ueg_comp.functions.keys():
+        #     for cr_func in ueg_comp.functions[evaluation_path]:
+        #         new_node_name = f"{guide_name}_{ueg_comp.name}_{cr_func}"
+        #
+        #         # Check if component exists
+        #         ue_cr_node = self.get_node(new_node_name)
+        #
+        #         # Create Component If doesn't exist
+        #         if ue_cr_node is None:
+        #             print("Generating CR Node...")
+        #             print(new_node_name)
+        #             ue_cr_ref_node = bp_controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
+        #                                                                                 cr_func,
+        #                                                                                 unreal.Vector2D(0.0, 0.0),
+        #                                                                                 node_name=new_node_name)
+        #             # In Unreal, Ref Node inherits from Node
+        #             ue_cr_node = ue_cr_ref_node
+        #
+        #         print(ue_cr_node)
+        #         ueg_comp.nodes[evaluation_path].append(ue_cr_node)
 
         print(ueg_comp.nodes)
 
@@ -145,13 +150,9 @@ class UEGearManager:
 
         # Joint Setup
         bones = get_driven_joints(self, ueg_comp)
-        print("BONES:")
-        print(bones)
-
         ueg_comp.populate_bones(bones, bp_controller)
 
         # Parent Setup
-
         if ueg_comp.metadata.parent_fullname:
 
             parent_comp_name = ueg_comp.metadata.parent_fullname
@@ -166,50 +167,6 @@ class UEGearManager:
             print(parent_component)
             print(parent_component.metadata)
 
-
-        # This early return has been added here as the code after it should be refactored
-        return
-
-        # No parent was specified so we will grab the root joint and use that to drive the nodes
-        if ueg_comp.metadata.parent_fullname is None:
-            print("Parent to root joint")
-
-            skeleton_array_node_name = f"{ueg_comp.metadata.fullname}_RigUnit_ItemArray"
-            print(f"  NEW Array Node: {skeleton_array_node_name}")
-
-            found = self.get_node(skeleton_array_node_name)
-
-            # TODO: Should also check that if it is found, has it been connected, and dont assume it has been connected to other nodes.
-            if found:
-                return
-
-            # Gets the skeleton hierarchy and retrieves the root bone.
-            rig_hierarchy = self.active_control_rig.hierarchy
-            root_bone = rig_hierarchy.get_bones()[0]
-            root_bone_name = root_bone.name
-
-            # Creates an Item Array Node
-            bp_controller.add_unit_node_from_struct_path(
-                '/Script/ControlRig.RigUnit_ItemArray',
-                'Execute',
-                unreal.Vector2D(-54.908936, 204.649109),
-                skeleton_array_node_name)
-
-            # Populates the Item Array Node
-            bp_controller.insert_array_pin(f'{skeleton_array_node_name}.Items', -1, '')
-            bp_controller.set_pin_default_value(f'{skeleton_array_node_name}.Items.0',
-                                                f'(Type=Bone,Name="{root_bone_name}")',
-                                                True)
-            bp_controller.set_pin_expansion(f'{skeleton_array_node_name}.Items.0', True)
-            bp_controller.set_pin_expansion(f'{skeleton_array_node_name}.Items', True)
-
-            # Connects the Item Array Node to the functions.
-            # ASSUMPTION: Every function node uses the same skeleton array. What would happen if you didn't this would need to be overwritten.
-
-            for evaluation_path in ueg_comp.nodes.keys():
-                for function_node in ueg_comp.nodes[evaluation_path]:
-                    bp_controller.add_link(f'{skeleton_array_node_name}.Items',
-                                           f'{function_node.get_name()}.Array')
 
     def get_uegear_component(self, name) -> components.base_component.UEComponent:
         """Find the ueGear component that has been created.

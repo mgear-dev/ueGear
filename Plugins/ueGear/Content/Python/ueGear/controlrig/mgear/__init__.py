@@ -49,7 +49,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         for ctrl in controls:
             if mgear_component.controls is None:
                 mgear_component.controls = []
-            mgear_component.joints.append(ctrl["Name"])
+            mgear_component.controls.append(ctrl["Name"])
 
         # Stores all the joints associated with this component
         for jnt in joints:

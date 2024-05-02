@@ -43,5 +43,6 @@ class mgComponent:
         msg += f"|  Parent Component : {self.parent_fullname}\n"
         msg += f"|      Attach Point : {self.parent_localname}\n"
         msg += f"|     Joints : {self.joints}\n"
+        msg += f"|   Controls : {self.controls}\n"
 
         return msg
