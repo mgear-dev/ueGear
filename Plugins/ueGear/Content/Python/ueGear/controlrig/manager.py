@@ -143,6 +143,15 @@ class UEGearManager:
             print(comp.name)
         print("-----")
 
+        # Joint Setup
+        bones = get_driven_joints(self, ueg_comp)
+        print("BONES:")
+        print(bones)
+
+        ueg_comp.populate_bones(bones, bp_controller)
+
+        # Parent Setup
+
         if ueg_comp.metadata.parent_fullname:
 
             parent_comp_name = ueg_comp.metadata.parent_fullname
@@ -152,8 +161,14 @@ class UEGearManager:
             parent_component = self.get_uegear_component(parent_comp_name)
             if parent_component is None:
                 print(f"    Could not find parent component > {parent_comp_name}")
+                return
+
+            print(parent_component)
+            print(parent_component.metadata)
 
 
+        # This early return has been added here as the code after it should be refactored
+        return
 
         # No parent was specified so we will grab the root joint and use that to drive the nodes
         if ueg_comp.metadata.parent_fullname is None:
@@ -196,12 +211,13 @@ class UEGearManager:
                     bp_controller.add_link(f'{skeleton_array_node_name}.Items',
                                            f'{function_node.get_name()}.Array')
 
-    def get_uegear_component(self, name):
+    def get_uegear_component(self, name) -> components.base_component.UEComponent:
         """Find the ueGear component that has been created.
         If the component cannot be found it means that it has not been generated yet.
 
-        attr
-        name : The name of the ueGear component you wish to find
+        :param str name: The name of the ueGear component you wish to find.
+        :return: The UEComponent that exists with the matching name.
+        :rtype: components.base_component.UEComponent or None
         """
         for ue_component in self.uegear_components:
             if ue_component.name == name:
@@ -410,3 +426,27 @@ def get_forward_solve(manager: UEGearManager):
     manager.active_control_rig.get_controller_by_name('RigVMModel').set_node_selection(['RigUnit_BeginExecution'])
     # manager.active_control_rig.get_controller_by_name('RigVMModel').get
     raise NotImplementedError
+
+
+def get_driven_joints(manager:UEGearManager, ueg_component:components.base_component.UEComponent):
+    """
+    Finds all the bones is they exist that populate the ueGear metadata joint property.
+    """
+    joint_names = ueg_component.metadata.joints
+
+    if joint_names is None:
+        return
+
+    rig_hierarchy = manager.active_control_rig.hierarchy
+
+    found_bones = []
+
+    for name in joint_names:
+        rek = unreal.RigElementKey()
+        rek.name = name
+        rek.type = unreal.RigElementType.BONE
+        bone = rig_hierarchy.find_bone(rek)
+        if bone:
+            found_bones.append(bone)
+
+    return found_bones

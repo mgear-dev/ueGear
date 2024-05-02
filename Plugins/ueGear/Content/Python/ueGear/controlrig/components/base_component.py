@@ -41,6 +41,14 @@ class UEComponent(object):
     def find_parent(self):
         pass
 
+
+    def populate_bones(self):
+        """OVERLOAD THIS METHOD
+
+        This method should handle the population of bones into the functions
+        """
+        pass
+
     # DEVELOPMENT!!!!!!!
 
     def repr(self):

@@ -34,6 +34,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         component_fullname = data_component["FullName"]
         data_contrat = data_component["DataContracts"]
         joints = data_component["Joints"]
+        controls = data_component["Controls"]
 
         mgear_component = mgComponent()
         mgear_component.name = component_name
@@ -43,6 +44,12 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         mgear_component.parent_fullname = data_component['parent_fullName']
         mgear_component.parent_localname = data_component['parent_localName']
         mgear_component.data_contracts = {}
+
+        # Stores all the controls associated with this component
+        for ctrl in controls:
+            if mgear_component.controls is None:
+                mgear_component.controls = []
+            mgear_component.joints.append(ctrl["Name"])
 
         # Stores all the joints associated with this component
         for jnt in joints:
