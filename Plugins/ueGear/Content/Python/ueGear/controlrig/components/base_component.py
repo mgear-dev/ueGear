@@ -1,6 +1,6 @@
 __all__ = ['UEComponent']
 
-from ..mComponents import MGComponent
+from ..mgear import mgComponent
 
 
 class UEComponent(object):
@@ -31,7 +31,7 @@ class UEComponent(object):
                    }
 
     # Stores the mgear metadata component, so this uegear component knows what it relates too.
-    metadata: MGComponent = None
+    metadata: mgComponent = None
 
     # Component is made up of multiple nodes
     # Each node can have multiple inputs and outputs

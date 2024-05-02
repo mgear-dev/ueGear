@@ -1,7 +1,7 @@
 import unreal
 
 from ueGear import assets as ue_assets
-from ueGear.controlrig import mComponents
+from ueGear.controlrig import mgear
 from ueGear.controlrig import components
 
 CONTROL_RIG_FUNCTION_PATH = '/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C'
@@ -19,7 +19,7 @@ class UEGearManager:
 
     _ue_gear_standard_library = None
 
-    mg_rig: mComponents.mgRig = None
+    mg_rig: mgear.mgRig = None
     """The mGear rig description, that is used to generate the ueGear 'Control Rig'"""
 
     @property
@@ -299,7 +299,7 @@ class UEGearManager:
 
         return self._active_blueprint
 
-    def load_rig(self, mgear_rig: mComponents.mgRig):
+    def load_rig(self, mgear_rig: mgear.mgRig):
         """
         Loads the mgear rig object into the manager, so the manager can generate the control rig and its components.
         """

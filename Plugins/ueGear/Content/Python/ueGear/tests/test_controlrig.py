@@ -2,7 +2,7 @@ import os
 
 import unreal
 
-from ueGear.controlrig import mComponents
+from ueGear.controlrig import mgear
 from ueGear.controlrig.manager import UEGearManager
 from ueGear import assets
 
@@ -11,15 +11,19 @@ from ueGear import assets
 import importlib
 from ueGear.controlrig import manager as ueM
 from ueGear.controlrig.components import base_component, test_fk
+from ueGear.controlrig.mgear import component, rig
+importlib.reload(mgear)
+importlib.reload(component)
+importlib.reload(rig)
+
 importlib.reload(ueM)
-importlib.reload(mComponents)
 importlib.reload(base_component)
 importlib.reload(test_fk)
 # ---
 
 def test_build_component_count():
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
-    mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+    mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
     if len(mgear_rig.components) == 55:
         print("Test: Component Count Correct: 55 Components")
     else:
@@ -28,7 +32,7 @@ def test_build_component_count():
 
 def test_build_fk_count():
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
-    mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+    mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
     fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
     if len(fk_components) == 19:
         print("Test: FK Component Count Correct: 19 Found")
@@ -71,7 +75,7 @@ def test_create_fk_control():
     TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
 
     # Converts teh json data into a class based structure, filters out non-required metadata.
-    mgear_rig = mComponents.convert_json_to_mg_rig(TEST_BUILD_JSON)
+    mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
 
     gear_manager = UEGearManager()
     gear_manager.load_rig(mgear_rig)

@@ -1,0 +1,35 @@
+class mgComponent:
+    """
+    Simple Component object that wraps the MGear Maya component data, for easy access
+    """
+
+    fullname: str = ""
+    """Components Fullname, this is usually used as the default name"""
+    name: str = ""
+    """Name of the Component."""
+    side: str = ""
+    """The side that the component exists on. L(left), R(right) C(center)."""
+    comp_type: str = ""
+    """The mGear Component Type, that was used in Maya to generate it."""
+    data_contracts: dict = None
+
+    # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
+
+    """Name of the guide component that is the parent of this guide component"""
+    parent_fullname: str = None
+    """Name of the guide control that drives this guide component"""
+    parent_localname: str = None
+
+    def __init__(self) -> None:
+        pass
+
+    def __repr__(self) -> str:
+        msg = "\n"
+        msg += f"|  Full Name : {self.fullname}\n"
+        msg += f"|       Name : {self.name}\n"
+        msg += f"|       Side : {self.side}\n"
+        msg += f"|       Type : {self.comp_type}\n"
+        msg += f"|  Contracts : {self.data_contracts}\n"
+        msg += f"|  Parent Component : {self.parent_fullname}\n"
+        msg += f"|      Attach Point : {self.parent_localname}\n"
+        return msg
