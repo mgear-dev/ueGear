@@ -6,9 +6,10 @@ from ..mgear import mgComponent
 class UEComponent(object):
     name: str = ""
     """Name of the ueGear Component"""
-    mgear_component: str = ""
 
-    """List of Control Rig functions that make up this ueComponent"""
+    mgear_component: str = ""
+    """The mGear Component that this ueGear component relates too"""
+
     cr_variables: dict = {}
     """Control Rig Variables that will be generated on the control rig 
     Variable list. This is required for some part of the CR to evaluate 
@@ -16,11 +17,12 @@ class UEComponent(object):
 
     # DEVELOPMENT!!!!!!!
 
-    """The mGear Component that this ueGear component relates too"""
+
     functions: dict = {'construction_functions': [],
                        'forward_functions': [],
                        'backwards_functions': [],
                        }
+    """List of Control Rig functions that make up this ueComponent"""
 
     connection: dict = {}
 
@@ -36,6 +38,9 @@ class UEComponent(object):
     # Component is made up of multiple nodes
     # Each node can have multiple inputs and outputs
     # Components can be in one of 3 streams
+
+    def find_parent(self):
+        pass
 
     # DEVELOPMENT!!!!!!!
 

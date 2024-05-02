@@ -24,7 +24,7 @@ class mgRig():
 
         return self.components.get(name, None)
 
-    def get_component_by_type(self, type_name: str) -> list:
+    def get_component_by_type(self, type_name: str) -> list[mgComponent]:
         """
         Gets all components that match the type specified.
         """

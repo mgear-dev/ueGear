@@ -22,6 +22,10 @@ class UEGearManager:
     mg_rig: mgear.mgRig = None
     """The mGear rig description, that is used to generate the ueGear 'Control Rig'"""
 
+    uegear_components: list[components.base_component.UEComponent] = []
+    """Keeps track of all the created components that relate the the mGear Rig being created"""
+    # Thought: We could create a wrapper object that encompasses both mgear and ueGear rigs. keeping them more coupled, for easier data manipulation. but this will add to complexity.
+
     @property
     def active_control_rig(self):
         return self._active_blueprint
@@ -96,6 +100,10 @@ class UEGearManager:
         ueg_comp = ue_comp_classes[0]()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
 
+        ueg_comp.name = guide_component.fullname
+
+        self.uegear_components.append(ueg_comp)
+
         print(f"BUILDING COMPONENT: {name}")
         print("--------------------")
         print(ueg_comp)
@@ -130,11 +138,29 @@ class UEGearManager:
 
         print(ueg_comp.nodes)
 
+        print("-----")
+        for comp in self.uegear_components:
+            print(comp.name)
+        print("-----")
+
+        if ueg_comp.metadata.parent_fullname:
+
+            parent_comp_name = ueg_comp.metadata.parent_fullname
+            print("Finding Parent Component")
+            print(f"    {parent_comp_name}")
+            # parent_comp = self.mg_rig.components.get(parent_comp_name, None)
+            parent_component = self.get_uegear_component(parent_comp_name)
+            if parent_component is None:
+                print(f"    Could not find parent component > {parent_comp_name}")
+
+
+
         # No parent was specified so we will grab the root joint and use that to drive the nodes
         if ueg_comp.metadata.parent_fullname is None:
             print("Parent to root joint")
 
-            skeleton_array_node_name = "RigUnit_ItemArray"
+            skeleton_array_node_name = f"{ueg_comp.metadata.fullname}_RigUnit_ItemArray"
+            print(f"  NEW Array Node: {skeleton_array_node_name}")
 
             found = self.get_node(skeleton_array_node_name)
 
@@ -169,6 +195,18 @@ class UEGearManager:
                 for function_node in ueg_comp.nodes[evaluation_path]:
                     bp_controller.add_link(f'{skeleton_array_node_name}.Items',
                                            f'{function_node.get_name()}.Array')
+
+    def get_uegear_component(self, name):
+        """Find the ueGear component that has been created.
+        If the component cannot be found it means that it has not been generated yet.
+
+        attr
+        name : The name of the ueGear component you wish to find
+        """
+        for ue_component in self.uegear_components:
+            if ue_component.name == name:
+                return ue_component
+        return None
 
     # SUB MODULE - Control Rig Interface. -------------
     #   This may be abstracting away to much
