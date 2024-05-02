@@ -17,7 +17,6 @@ class UEComponent(object):
 
     # DEVELOPMENT!!!!!!!
 
-
     functions: dict = {'construction_functions': [],
                        'forward_functions': [],
                        'backwards_functions': [],
