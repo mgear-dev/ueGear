@@ -2,10 +2,9 @@ __all__ = ['fkComponent']
 
 import unreal
 
-from ..components import base_component
-from .base_component import UEComponent
-from ..manager import CONTROL_RIG_FUNCTION_PATH
-
+from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
+from ueGear.controlrig.components import base_component
+from ueGear.controlrig.components.base_component import UEComponent
 
 class fkComponent(UEComponent):
     name = "test_FK"

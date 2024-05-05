@@ -2,7 +2,7 @@ __all__ = ['UEComponent']
 
 import unreal
 
-from ..mgear import mgComponent
+from ueGear.controlrig.mgear import mgComponent
 
 
 class UEComponent(object):

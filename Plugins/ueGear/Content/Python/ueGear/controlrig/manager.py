@@ -4,8 +4,6 @@ from ueGear import assets as ue_assets
 from ueGear.controlrig import mgear
 from ueGear.controlrig import components
 
-CONTROL_RIG_FUNCTION_PATH = '/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C'
-
 
 class UEGearManager:
     _factory: unreal.ControlRigBlueprintFactory = None
@@ -24,6 +22,7 @@ class UEGearManager:
 
     uegear_components: list[components.base_component.UEComponent] = []
     """Keeps track of all the created components that relate the the mGear Rig being created"""
+
     # Thought: We could create a wrapper object that encompasses both mgear and ueGear rigs. keeping them more coupled, for easier data manipulation. but this will add to complexity.
 
     @property
@@ -115,10 +114,9 @@ class UEGearManager:
         print(f"  metadata :\n {ueg_comp.metadata}")
         print("--------------------")
 
-        bp_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
+        bp_controller = self.get_active_controller()
 
-
-        # Setup Function Nodes
+        # Create Function Nodes
         ueg_comp.create_functions(bp_controller)
 
         # Setup Driven Joint
@@ -126,6 +124,7 @@ class UEGearManager:
         ueg_comp.populate_bones(bones, bp_controller)
 
         # Parent Setup
+        # TODO: WORKING HERE!!! trying to figure out the best way to handle connectivity between components
         if ueg_comp.metadata.parent_fullname:
             parent_comp_name = ueg_comp.metadata.parent_fullname
 
@@ -144,7 +143,7 @@ class UEGearManager:
             print(parent_component)
             # print(parent_component.metadata)
 
-            #!!! This cannot be assumed as they may be multiple functions in a node classification
+            # !!! This cannot be assumed as they may be multiple functions in a node classification
             parent_node = parent_component.nodes["construction_functions"][0]
             child_node = ueg_comp.nodes["construction_functions"][0]
 
@@ -155,7 +154,7 @@ class UEGearManager:
             print(child_construct_func_name)
 
             bp_controller.add_link(f'{parent_construct_func_name}.ExecuteContext',
-                                    f'{child_construct_func_name}.ExecuteContext')
+                                   f'{child_construct_func_name}.ExecuteContext')
 
             if len(parent_component.nodes["forward_functions"]) > 0:
                 parent_node = parent_component.nodes["forward_functions"][0]
@@ -259,11 +258,10 @@ class UEGearManager:
             return None
 
         if set_default:
-            self._active_blueprint = blueprint
+            self.set_active_blueprint(blueprint)
 
         # Create Forwards, Backwards and Construction Solve Node
         self.create_solves()
-
 
         return blueprint
 
@@ -325,9 +323,34 @@ class UEGearManager:
         https://docs.unrealengine.com/5.3/en-US/PythonAPI/class/RigVMGraph.html#unreal.RigVMGraph
 
         """
+        print("-----------------------------------------------------------")
+        print("GET GRAPH")
+
         rig_vm_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
+
+        if rig_vm_controller is None:
+            # If Controller cannot be found, create a new controller
+            rig_vm_controller = self._active_blueprint.get_or_create_controller()
+
         active_cr_graph = rig_vm_controller.get_graph()
+
+        print("-----------------------------------------------------------")
+
         return active_cr_graph
+
+    def get_active_controller(self, name: str = "RigVMModel") -> unreal.RigVMController:
+        """
+        Returns the active control rig blue print controller.
+
+        name:str = The name of the blueprint controller.
+        """
+        rig_vm_controller = self._active_blueprint.get_controller_by_name(name)
+
+        # If Controller cannot be found, create a new controller
+        if rig_vm_controller is None:
+            rig_vm_controller = self._active_blueprint.get_or_create_controller()
+
+        return rig_vm_controller
 
     def get_selected_nodes(self) -> list[str]:
         if self._active_blueprint is None:
@@ -342,7 +365,7 @@ class UEGearManager:
         - Construction
         """
 
-        rig_vm_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
+        rig_vm_controller = self.get_active_controller()
 
         # Forward
         if not self.get_node("BeginExecution"):
@@ -382,12 +405,13 @@ class UEGearManager:
 
 
 def get_forward_solve(manager: UEGearManager):
-    manager.active_control_rig.get_controller_by_name('RigVMModel').set_node_selection(['RigUnit_BeginExecution'])
+    controller = manager.get_active_controller()
+    controller.set_node_selection(['RigUnit_BeginExecution'])
     # manager.active_control_rig.get_controller_by_name('RigVMModel').get
     raise NotImplementedError
 
 
-def get_driven_joints(manager:UEGearManager, ueg_component:components.base_component.UEComponent):
+def get_driven_joints(manager: UEGearManager, ueg_component: components.base_component.UEComponent):
     """
     Finds all the bones is they exist that populate the ueGear metadata joint property.
     """

@@ -1,4 +1,4 @@
-from .component import mgComponent
+from ueGear.controlrig.mgear.component import mgComponent
 
 class mgRig():
     """

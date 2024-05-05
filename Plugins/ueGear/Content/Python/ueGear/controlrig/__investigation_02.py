@@ -181,7 +181,7 @@ gear_manager = UEGearManager()
 # gear_manager.load_rig(mgear_rig)
 # gear_manager.set_active_control_rig(TEST_CR_PATH)
 
-# rig_vm_controller = gear_manager.active_control_rig.get_controller_by_name('RigVMModel')
+# rig_vm_controller = gear_manager.get_active_controller()
 # active_cr_graph = rig_vm_controller.get_graph()
 
 # neck_component = gear_manager.mg_rig.components["neck_C0"]
