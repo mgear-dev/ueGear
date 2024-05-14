@@ -5,6 +5,9 @@ class mgRig():
     Simple Component object that wraps the mGear Maya Rig
     """
 
+    settings = None
+    """Dictionary that stores all the 'Main Settings' """
+
     components: dict[str, mgComponent] = {}
     """Dictionary of all the components with the key being the component name"""
 

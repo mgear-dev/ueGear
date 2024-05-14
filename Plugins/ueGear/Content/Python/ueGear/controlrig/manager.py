@@ -75,6 +75,42 @@ class UEGearManager:
         """
         self._active_blueprint = bp
 
+    def build_world_control(self, force_build=False):
+        """
+        Generates the world contol. The control will come in at world origin
+         - Control is also world aligned.
+
+        :return:
+        """
+
+        create_ctrl = self.mg_rig.settings["worldCtl"]
+        name = self.mg_rig.settings["world_ctl_name"]
+
+        if force_build:
+            create_ctrl = True
+            name.get("world_ctl_name", "world_ctl")
+
+        if not create_ctrl:
+            return
+
+        # Creates the Forward,Backwards and Construction event
+        self.create_solves()
+
+        # As the world control is not a specific component in mGear, we create a psudo
+        # component for it.
+        placeholder_component = mgear.mgComponent()
+        placeholder_component.controls = [name]
+        placeholder_component.joints = None
+
+        ueg_comp = components.test_fk.fkComponent()
+        ueg_comp.metadata = placeholder_component
+        ueg_comp.name = name
+
+        self.uegear_components.append(ueg_comp)
+
+        ueg_comp.create_functions(self.get_active_controller())
+
+
     def build_component(self, name, ignore_parent=True):
         """Create an individual component from the mgear scene desciptor file.
 

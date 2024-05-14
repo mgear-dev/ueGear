@@ -26,6 +26,9 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
 
     rig = mgRig()
 
+    # Dumps the entire MainSettings dictionary into the rig.settings
+    rig.settings = data["MainSettings"]
+
     for data_component in data["Components"]:
 
         component_type = data_component["Type"]

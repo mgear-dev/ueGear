@@ -96,6 +96,8 @@ def test_create_fk_control():
 
     # At this point we now have The Manager, with an empty Control Rig BP
 
+    gear_manager.build_world_control()
+
     # [ ] Trying to get one component to be created
     gear_manager.build_component('global_C0', ignore_parent=True)
 
