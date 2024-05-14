@@ -6,6 +6,14 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 from ueGear.controlrig.components.base_component import UEComponent
 
+# class mfkComponent(fkComponent):
+# # When building Maya use this node
+#     def create_functions(self, controller: unreal.RigVMController = None):
+#         fkComponent.create_functions()
+#
+#         # inject matrix data and orientation
+#
+
 class fkComponent(UEComponent):
     name = "test_FK"
     mgear_component = "EPIC_control_01"
@@ -22,6 +30,19 @@ class fkComponent(UEComponent):
                           }
         self.cr_variables = {}
 
+        self.inputs = {'construction_functions': ['parent'],
+                       'forward_functions': [],
+                       'backwards_functions': [],
+                       }
+
+        self.output = {'construction_functions': ['Item'],
+                       'forward_functions': [],
+                       'backwards_functions': [],
+                       }
+
+        # parent = root
+        # Item = root
+        # root = parent + Item
 
 
     def create_functions(self, controller: unreal.RigVMController = None):
@@ -70,6 +91,9 @@ class fkComponent(UEComponent):
         controller.set_pin_default_value(construct_func.get_name() + '.control_name',
                                          self.metadata.controls[0],
                                          False)
+
+        # TODO: Convert Maya Space to Unreal Space and inject the orientation onto the control
+        # TODO: Use joint orientation
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         if bones is None or len(bones) > 1:

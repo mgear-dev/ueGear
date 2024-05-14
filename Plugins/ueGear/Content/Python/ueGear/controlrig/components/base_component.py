@@ -34,6 +34,11 @@ class UEComponent(object):
     # Each node can have multiple inputs and outputs
     # Components can be in one of 3 streams
 
+    parent_node = None
+    """Stores the mGear component that is the parent"""
+    children_node = None
+    """Stores the child mGear components"""
+
     def __init__(self):
         self.functions = {'construction_functions': [],
                           'forward_functions': [],
@@ -46,8 +51,60 @@ class UEComponent(object):
         self.cr_variables = {}
         self.connection = {}
 
-    def find_parent(self):
-        pass
+        self.children_node = []
+
+    def add_child(self, child_comp):
+
+        # Checks if node about to be added as a child exist as a child of another node,
+        # if so removed itself
+        if child_comp.parent_node:
+            child_comp.parent_node.remove_child(node=child_comp)
+
+        self.children_node.append(child_comp)
+        child_comp.parent_node = self
+
+    def get_children(self, name):
+        found_nodes = []
+        for node in self.children_node:
+            if node.name == name:
+                found_nodes.append(node)
+
+        return found_nodes
+
+    def remove_child(self, name=None, node=None):
+        child_count = len(self.children_node)
+
+        if name is None or node is None or child_count == 0:
+            return False
+
+        if name:
+            child_count = len(self.children_node)
+            for i in reversed(range(child_count)):
+                if self.children_node[i].name == name:
+                    child_node = self.children_node.pop(i)
+                    child_node.parent_node = None
+
+        if node:
+            child_count = len(self.children_node)
+            for i in reversed(range(child_count)):
+                if self.children_node[i] == node:
+                    child_node = self.children_node.pop(i)
+                    child_node.parent_node = None
+
+        return True
+
+    def set_parent(self, parent_comp):
+        self.remove_parent()
+        self.parent_node = parent_comp
+        self.parent_node.children_node.append(parent_comp)
+
+    def remove_parent(self):
+        if self.parent_node is None:
+            return
+
+        parent_node = self.parent_node
+        self.parent_node = None
+        parent_node.remove_child(node=self)
 
     def create_functions(self):
         """OVERLOAD THIS METHOD
@@ -66,8 +123,9 @@ class UEComponent(object):
 
     # DEVELOPMENT!!!!!!!
 
-    def repr(self):
-        return " : ".join(["UEG Component  ", self.name, self.mgear_component, self.functions, self.cr_variables])
+    def __repr__(self):
+        data = f"Component Name : {self.name}"
+        return data
 
 
 def get_construction_node(comp: UEComponent, name) -> unreal.RigVMNode:

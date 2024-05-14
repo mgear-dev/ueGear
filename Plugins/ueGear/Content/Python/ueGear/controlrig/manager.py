@@ -101,6 +101,7 @@ class UEGearManager:
         placeholder_component = mgear.mgComponent()
         placeholder_component.controls = [name]
         placeholder_component.joints = None
+        placeholder_component.comp_type = "world_ctrl"
 
         ueg_comp = components.test_fk.fkComponent()
         ueg_comp.metadata = placeholder_component
@@ -109,7 +110,6 @@ class UEGearManager:
         self.uegear_components.append(ueg_comp)
 
         ueg_comp.create_functions(self.get_active_controller())
-
 
     def build_component(self, name, ignore_parent=True):
         """Create an individual component from the mgear scene desciptor file.
@@ -175,9 +175,11 @@ class UEGearManager:
                 print(f"    Could not find parent component > {parent_comp_name}")
                 return
 
-            print(" Parent Component Found")
-            print(parent_component)
-            # print(parent_component.metadata)
+            # print(" Parent Component Found")
+            # ueg_comp.set_parent(parent_component)
+            # ueg_comp.parent_node
+
+            return
 
             # !!! This cannot be assumed as they may be multiple functions in a node classification
             parent_node = parent_component.nodes["construction_functions"][0]
@@ -204,6 +206,57 @@ class UEGearManager:
 
                 bp_controller.add_link(f'{parent_construct_func_name}.ExecuteContext',
                                        f'{child_construct_func_name}.ExecuteContext')
+
+
+    # TODO: WORKING ON CONNECTIONS
+    def connect_components(self):
+        """Connects all the built components"""
+
+        print("---------------------------------")
+        print("     Connecting Components       ")
+        print("---------------------------------")
+
+        # Find the world component if it exists
+        root_comp = self.get_uegear_world_component()
+
+        # Find new root component
+#        if root_comp is None:
+#            for comp in self.uegear_components:
+
+                # want a way to easily access the input / output plugs for the component
+                #comp.metadata.input
+                #comp.metadata.output
+
+        for comp in self.uegear_components:
+
+            # ignore world control
+            if comp.metadata.comp_type == "world_ctrl":
+                continue
+            if root_comp == comp:
+                continue
+
+            print(comp.metadata.parent_fullname)
+            print(comp.metadata.parent_localname)
+
+            # Component has no root parent, then it is a child of the world_ctrl or should be the root.
+            if comp.metadata.parent_fullname is None:
+                root_comp.add_child(comp)
+
+
+
+
+            parent_component = self.get_uegear_component(comp.metadata.parent_fullname)
+            print(parent_component)
+
+
+        # loop over components
+        # if world exists then it is the master root
+        # if no world exists then we might have to seach for parents and see what is available
+
+    def get_uegear_world_component(self) -> components.base_component.UEComponent:
+        for comp in self.uegear_components:
+            if comp.metadata.comp_type == "world_ctrl":
+                return comp
 
     def get_uegear_component(self, name) -> components.base_component.UEComponent:
         """Find the ueGear component that has been created.

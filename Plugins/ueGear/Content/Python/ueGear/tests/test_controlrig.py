@@ -98,7 +98,6 @@ def test_create_fk_control():
 
     gear_manager.build_world_control()
 
-    # [ ] Trying to get one component to be created
     gear_manager.build_component('global_C0', ignore_parent=True)
 
     fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
@@ -106,6 +105,9 @@ def test_create_fk_control():
 
     gear_manager.build_component('root_C0', ignore_parent=True)
 
+    # At this point there are many components created, but not connected to one another
+
+    gear_manager.connect_components()
 
 #----
 
