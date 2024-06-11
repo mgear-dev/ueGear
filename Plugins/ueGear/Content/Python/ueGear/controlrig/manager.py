@@ -251,6 +251,85 @@ class UEGearManager:
                 comp.set_parent(world_component)
 
 
+    def connect_execution(self):
+        """Connects the individual functions in order of parent hierarchy"""
+
+        keys = ['construction_functions',
+                'forward_functions',
+                'backwards_functions']
+
+        bp_controller = self.get_active_controller()
+
+        for func_key in keys:
+            print(f"Node Type : {func_key}")
+
+            for comp in self.uegear_components:
+                if comp.parent_node is None:
+                    # if parent node is none, then we connect it to the master function for the solve
+
+                    start_node_name = solve[func_key].get_name()
+                    comp_nodes = comp.nodes[func_key]
+
+                    if len(comp_nodes) == 0:
+                        continue
+
+                    if len(comp_nodes) > 1:
+                        unreal.log_error(f"There should not be more then one node per a function > {comp.name}")
+
+                    c_func = comp_nodes[0].get_name()
+
+                    bp_controller.add_link(f'{start_node_name}.ExecuteContext',
+                                           f'{c_func}.ExecuteContext')
+
+                    continue
+
+                parent_nodes = comp.parent_node.nodes[func_key]
+                comp_nodes = comp.nodes[func_key]
+
+                # check parent node and comp node should always only be one node
+                if len(parent_nodes) > 1 or len(comp_nodes) > 1:
+                    unreal.log_error(f"There should not be more then one node per a function > {comp.name}, "
+                                     f"{comp.parent_node.name}")
+
+                # TODO: Need to recursively look at the parents till a parent is found or none is returned
+                if len(parent_nodes) == 0:
+                    continue
+
+                p_func = parent_nodes[0].get_name()
+                c_func = comp_nodes[0].get_name()
+
+                bp_controller.add_link(f'{p_func}.ExecuteContext',
+                                       f'{c_func}.ExecuteContext')
+
+
+    def _find_parent_node_function(self, component, function_name:str):
+        """Recursilvly looks at the function, then if one does not exist looks for
+        the next one in the parent/child hierarchy
+
+        function_name : is the name of the evaluation function, forward, backwards, construction.
+        """
+
+        solve = {'construction_functions': self.get_construction_node(),
+                'forward_functions':self.get_forward_node(),
+                'backwards_functions':self.get_backwards_node()
+                }
+
+        parent_comp = component.parent_node
+
+        if parent_comp is None:
+            return solve[function_name]
+
+        comp_nodes = parent_comp.nodes[function_name]
+
+        if len(comp_nodes) > 1:
+            unreal.log_error(f"There should not be more then one node per a function > {parent_comp.name}")
+
+        if len(comp_nodes) == 0:
+            return self._find_parent_node_function(parent_comp, function_name)
+
+        return comp_nodes[0]
+
+
 
     def connect_components(self):
         """Connects all the built components"""
