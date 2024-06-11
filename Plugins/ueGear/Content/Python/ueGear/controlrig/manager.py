@@ -209,6 +209,49 @@ class UEGearManager:
 
 
     # TODO: WORKING ON CONNECTIONS
+
+    def populate_parents(self):
+        """
+        Assigns all the ueGear components parent child relationships.
+        It does this by searching for the associated component by name.
+        """
+        print("---------------------------------")
+        print(" Finding Parent Associations")
+        print("---------------------------------")
+
+        # Find the world component if it exists
+        world_component = self.get_uegear_world_component()
+
+        for comp in self.uegear_components:
+            # Ignore world control
+            if comp.metadata.comp_type == "world_ctrl":
+                continue
+            # Ignore root component
+            if world_component == comp:
+                continue
+
+            if comp.metadata.parent_fullname:
+                parent_comp_name = comp.metadata.parent_fullname
+
+                print(f" {comp.name} > Finding parent component: {parent_comp_name}")
+
+                # parent_comp = self.mg_rig.components.get(parent_comp_name, None)
+                parent_component = self.get_uegear_component(parent_comp_name)
+                if parent_component is None:
+                    print(f"    Could not find parent component > {parent_comp_name}")
+                    return
+
+                print(f"      > Found parent component: {parent_comp_name}")
+                comp.set_parent(parent_component)
+
+            elif comp.metadata.parent_fullname is None and world_component:
+                # Component has no parent specified, and a World Component exists
+                # Set the World Component as the parent
+                print(f" {comp.name} > Has no parent, World Component Exists")
+                comp.set_parent(world_component)
+
+
+
     def connect_components(self):
         """Connects all the built components"""
 
