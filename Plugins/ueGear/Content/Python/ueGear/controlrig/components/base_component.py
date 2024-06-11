@@ -26,6 +26,7 @@ class UEComponent(object):
 
     # nodes are the generated control rig functions that relate to the component
     nodes: dict = None
+    """Stores the generated Control Rig Nodes(functions)"""
 
     # Stores the mgear metadata component, so this uegear component knows what it relates too.
     metadata: mgComponent = None
@@ -38,6 +39,14 @@ class UEComponent(object):
     """Stores the mGear component that is the parent"""
     children_node = None
     """Stores the child mGear components"""
+
+    inputs = None
+    """List of inputs into the mgear component"""
+    outputs = None
+    """List of outputs from the mgear component"""
+
+    bones = None
+    """Storing all the SKM bones that have been found using Control Rig"""
 
     def __init__(self):
         self.functions = {'construction_functions': [],
@@ -52,6 +61,9 @@ class UEComponent(object):
         self.connection = {}
 
         self.children_node = []
+
+        self.inputs = []
+        self.outputs = []
 
     def add_child(self, child_comp):
 

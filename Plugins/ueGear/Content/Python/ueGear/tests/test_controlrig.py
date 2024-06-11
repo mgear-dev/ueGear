@@ -82,6 +82,7 @@ def test_create_fk_control():
 
     # Creates an asset path
     cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
+    # Control Rig Blueprint
     cr_bp = assets.get_asset_object(cr_path)
 
     if cr_bp is None:
@@ -96,8 +97,10 @@ def test_create_fk_control():
 
     # At this point we now have The Manager, with an empty Control Rig BP
 
+    # Builds the world control if it has been enabled in the Main Settings
     gear_manager.build_world_control()
 
+    # Builds component by name
     gear_manager.build_component('global_C0', ignore_parent=True)
 
     fk_components = mgear_rig.get_component_by_type("EPIC_control_01")
@@ -106,6 +109,8 @@ def test_create_fk_control():
     gear_manager.build_component('root_C0', ignore_parent=True)
 
     # At this point there are many components created, but not connected to one another
+
+    gear_manager.populate_parents()
 
     gear_manager.connect_components()
 

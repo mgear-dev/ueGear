@@ -134,7 +134,6 @@ class UEGearManager:
         ue_comp_classes = components.lookup_mgear_component(guide_type)
         ueg_comp = ue_comp_classes[0]()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
-
         ueg_comp.name = guide_component.fullname
 
         self.uegear_components.append(ueg_comp)
@@ -158,54 +157,6 @@ class UEGearManager:
         # Setup Driven Joint
         bones = get_driven_joints(self, ueg_comp)
         ueg_comp.populate_bones(bones, bp_controller)
-
-        # Parent Setup
-        # TODO: WORKING HERE!!! trying to figure out the best way to handle connectivity between components
-        if ueg_comp.metadata.parent_fullname:
-            parent_comp_name = ueg_comp.metadata.parent_fullname
-
-            print("---------------------------------")
-            print(" Initialising Parent Connections")
-            print("---------------------------------")
-            print(f" Finding parent component: {parent_comp_name}")
-
-            # parent_comp = self.mg_rig.components.get(parent_comp_name, None)
-            parent_component = self.get_uegear_component(parent_comp_name)
-            if parent_component is None:
-                print(f"    Could not find parent component > {parent_comp_name}")
-                return
-
-            # print(" Parent Component Found")
-            # ueg_comp.set_parent(parent_component)
-            # ueg_comp.parent_node
-
-            return
-
-            # !!! This cannot be assumed as they may be multiple functions in a node classification
-            parent_node = parent_component.nodes["construction_functions"][0]
-            child_node = ueg_comp.nodes["construction_functions"][0]
-
-            print(parent_node)
-            parent_construct_func_name = parent_node.get_name()
-            child_construct_func_name = child_node.get_name()
-            print(parent_construct_func_name)
-            print(child_construct_func_name)
-
-            bp_controller.add_link(f'{parent_construct_func_name}.ExecuteContext',
-                                   f'{child_construct_func_name}.ExecuteContext')
-
-            if len(parent_component.nodes["forward_functions"]) > 0:
-                parent_node = parent_component.nodes["forward_functions"][0]
-                child_node = ueg_comp.nodes["forward_functions"][0]
-
-                print(parent_node)
-                parent_construct_func_name = parent_node.get_name()
-                child_construct_func_name = child_node.get_name()
-                print(parent_construct_func_name)
-                print(child_construct_func_name)
-
-                bp_controller.add_link(f'{parent_construct_func_name}.ExecuteContext',
-                                       f'{child_construct_func_name}.ExecuteContext')
 
 
     # TODO: WORKING ON CONNECTIONS
@@ -252,7 +203,7 @@ class UEGearManager:
 
 
     def connect_execution(self):
-        """Connects the individual functions in order of parent hierarchy"""
+        """Connects the individual functions Execution port, in order of parent hierarchy"""
 
         keys = ['construction_functions',
                 'forward_functions',
@@ -261,41 +212,20 @@ class UEGearManager:
         bp_controller = self.get_active_controller()
 
         for func_key in keys:
-            print(f"Node Type : {func_key}")
 
             for comp in self.uegear_components:
-                if comp.parent_node is None:
-                    # if parent node is none, then we connect it to the master function for the solve
 
-                    start_node_name = solve[func_key].get_name()
-                    comp_nodes = comp.nodes[func_key]
-
-                    if len(comp_nodes) == 0:
-                        continue
-
-                    if len(comp_nodes) > 1:
-                        unreal.log_error(f"There should not be more then one node per a function > {comp.name}")
-
-                    c_func = comp_nodes[0].get_name()
-
-                    bp_controller.add_link(f'{start_node_name}.ExecuteContext',
-                                           f'{c_func}.ExecuteContext')
-
-                    continue
-
-                parent_nodes = comp.parent_node.nodes[func_key]
+                parent_nodes = self._find_parent_node_function(comp, func_key)
                 comp_nodes = comp.nodes[func_key]
 
-                # check parent node and comp node should always only be one node
-                if len(parent_nodes) > 1 or len(comp_nodes) > 1:
-                    unreal.log_error(f"There should not be more then one node per a function > {comp.name}, "
-                                     f"{comp.parent_node.name}")
-
-                # TODO: Need to recursively look at the parents till a parent is found or none is returned
-                if len(parent_nodes) == 0:
+                if len(comp_nodes) == 0:
                     continue
 
-                p_func = parent_nodes[0].get_name()
+                # check parent node and comp node should always only be one node
+                if len(comp_nodes) > 1:
+                    unreal.log_error(f"There should not be more then one node per a function > {comp.name}")
+
+                p_func = parent_nodes.get_name()
                 c_func = comp_nodes[0].get_name()
 
                 bp_controller.add_link(f'{p_func}.ExecuteContext',
@@ -303,7 +233,7 @@ class UEGearManager:
 
 
     def _find_parent_node_function(self, component, function_name:str):
-        """Recursilvly looks at the function, then if one does not exist looks for
+        """Recursively looks at the function, then if one does not exist looks for
         the next one in the parent/child hierarchy
 
         function_name : is the name of the evaluation function, forward, backwards, construction.
@@ -334,6 +264,8 @@ class UEGearManager:
     def connect_components(self):
         """Connects all the built components"""
 
+        self.connect_execution()
+
         print("---------------------------------")
         print("     Connecting Components       ")
         print("---------------------------------")
@@ -349,26 +281,44 @@ class UEGearManager:
                 #comp.metadata.input
                 #comp.metadata.output
 
+        # Connecting Execution Order
         for comp in self.uegear_components:
 
-            # ignore world control
+            # Ignore world control
             if comp.metadata.comp_type == "world_ctrl":
                 continue
+            # Ignore root component
             if root_comp == comp:
                 continue
 
-            print(comp.metadata.parent_fullname)
-            print(comp.metadata.parent_localname)
+            if comp.parent_node is None and root_comp:
+                print("Parent Node needs to be connected to World Control")
+
+
+
+        return
+
+        for comp in self.uegear_components:
+
+            # Ignore world control
+            if comp.metadata.comp_type == "world_ctrl":
+                continue
+            # Ignore root component
+            if root_comp == comp:
+                continue
+
+            print(f" -- {comp.name} --")
+
+            print(f"  parent: {comp.metadata.parent_fullname}")
+            print(f"  parent port: {comp.metadata.parent_localname}")
 
             # Component has no root parent, then it is a child of the world_ctrl or should be the root.
-            if comp.metadata.parent_fullname is None:
+            if comp.metadata.parent_fullname is None and root_comp is not None :
                 root_comp.add_child(comp)
 
-
-
-
+            # Finds the parent component of the current component
             parent_component = self.get_uegear_component(comp.metadata.parent_fullname)
-            print(parent_component)
+            print(f"  parent component: {parent_component}")
 
 
         # loop over components
@@ -572,7 +522,8 @@ class UEGearManager:
     def create_solves(self):
         """
         Creates the Execution Nodes, for the following paths, as they are not created by default.
-        - Backwards / Inverse
+        - Forward
+        - Backwards (Inverse)
         - Construction
         """
 
@@ -642,5 +593,7 @@ def get_driven_joints(manager: UEGearManager, ueg_component: components.base_com
         bone = rig_hierarchy.find_bone(rek)
         if bone:
             found_bones.append(bone)
+
+    ueg_component.bones = found_bones
 
     return found_bones

@@ -25,10 +25,15 @@ class mgComponent:
 
     # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
 
-    """Name of the guide component that is the parent of this guide component"""
     parent_fullname: str = None
-    """Name of the guide control that drives this guide component"""
+    """Name of the guide component that is the parent of this guide component"""
+
     parent_localname: str = None
+    """Name of the guide control that drives this guide component"""
+
+    outputs: list = None
+    """List of attachpoints that another component can be parented by, or in the case of
+    ueGear driven by"""
 
     def __init__(self) -> None:
         pass

@@ -30,15 +30,24 @@ class fkComponent(UEComponent):
                           }
         self.cr_variables = {}
 
-        self.inputs = {'construction_functions': ['parent'],
+        # Control Rig Inputs
+        self.cr_inputs = {'construction_functions': ['parent'],
                        'forward_functions': [],
                        'backwards_functions': [],
                        }
 
-        self.output = {'construction_functions': ['Item'],
+        # Control Rig Outputs
+        self.cr_output = {'construction_functions': ['Item'],
                        'forward_functions': [],
                        'backwards_functions': [],
                        }
+
+        # mGear
+        self.inputs = []
+        self.outputs = []
+
+        # ---- TESTING
+        self.bones = []
 
         # parent = root
         # Item = root
@@ -78,13 +87,17 @@ class fkComponent(UEComponent):
                     # In Unreal, Ref Node inherits from Node
                     ue_cr_node = ue_cr_ref_node
                 else:
+                    # if exists, add it to the nodes
+                    self.nodes[evaluation_path].append(ue_cr_node)
+
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
-                    return
+                    continue
 
                 print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
-        # Setup the control name
+        # Gets the Construction Function Node and sets the control name
+
         construct_func = base_component.get_construction_node(self, f"{self.name}_construct_FK_singleton")
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
@@ -96,6 +109,9 @@ class fkComponent(UEComponent):
         # TODO: Use joint orientation
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
+        """
+        Generates the Bone array node that will be utilised by control rig to drive the component
+        """
         if bones is None or len(bones) > 1:
             return
         if controller is None:
