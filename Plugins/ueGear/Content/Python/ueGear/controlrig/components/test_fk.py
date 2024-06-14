@@ -37,7 +37,7 @@ class fkComponent(UEComponent):
                        }
 
         # Control Rig Outputs
-        self.cr_output = {'construction_functions': ['Item'],
+        self.cr_output = {'construction_functions': ['root'],
                        'forward_functions': [],
                        'backwards_functions': [],
                        }

@@ -259,6 +259,110 @@ class UEGearManager:
 
         return comp_nodes[0]
 
+    def pin_exists(self, function: unreal.RigVMNode, pin_name: str, input_pin:bool=True) -> bool:
+        """Checks if a pin exists as in input our output
+        function
+        """
+        for pin in function.get_pins():
+            name = pin.get_display_name()
+
+            if name != pin_name:
+                continue
+
+            pin_direction = pin.get_direction()
+            if pin_direction == unreal.RigVMPinDirection.INPUT and input_pin:
+                return True
+            elif pin_direction == unreal.RigVMPinDirection.OUTPUT and not input_pin:
+                return True
+        return False
+
+    def connect_construction_functions(self):
+        """Connects all the construction functions in control rig"""
+        construction_key = 'construction_functions'
+
+        bp_controller = self.get_active_controller()
+
+        # Find the world component if it exists
+        root_comp = self.get_uegear_world_component()
+
+        for comp in self.uegear_components:
+
+            # Ignore world control
+            if comp.metadata.comp_type == "world_ctl":
+                continue
+            # Ignore root component
+            if root_comp == comp:
+                continue
+
+            parent_comp_name = comp.metadata.parent_fullname
+            parent_pin_name = comp.metadata.parent_localname
+
+            print(f" -- {comp.name} --")
+
+            print(f"  parent: {parent_comp_name}")
+            print(f"  parent port: {parent_pin_name}")
+            print(f"  Relationship Parent: {comp.parent_node.name}")
+
+            if comp.metadata.parent_fullname is None and comp.parent_node.name == "world_ctl":
+                # Defaulting to the world control, the output pin is "root"
+                parent_pin_name = "root"
+
+                print("    Connect to World Control")
+                print(f"      Parent Pin: {parent_pin_name}")
+
+                parent_comp = comp.parent_node
+
+                comp_functions = comp.nodes[construction_key]
+                parent_functions = parent_comp.nodes[construction_key]
+
+                # If the component or parent has no functions then skip the function
+                # TODO: This should walk up the ueGear node parent relationship to see what is available to connect to
+                if len(comp_functions) == 0 or len(parent_functions) == 0:
+                    continue
+
+                comp_function = comp_functions[0]
+                parent_function = parent_functions[0]
+
+                print(parent_function)
+
+                # Connects the parent function node to the chile function node..
+                p_func_name = parent_function.get_name()
+                c_func_name = comp_function.get_name()
+
+                bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
+                                       f"{c_func_name}.parent")
+
+
+            elif comp.metadata.parent_fullname == comp.parent_node.name:
+                print("  Connect via relationships/Association")
+                print(f"      Parent Pin: {parent_pin_name}")
+
+                parent_comp = comp.parent_node
+
+                comp_functions = comp.nodes[construction_key]
+                parent_functions = parent_comp.nodes[construction_key]
+
+                # If the component or parent has no functions then skip the function
+                # TODO: This should walk up the ueGear node parent relationship to see what is available to connect to
+                if len(comp_functions) == 0 or len(parent_functions) == 0:
+                    continue
+
+                comp_function = comp_functions[0]
+                parent_function = parent_functions[0]
+
+                print(parent_function)
+
+                # Connects the parent function node to the chile function node..
+                p_func_name = parent_function.get_name()
+                c_func_name = comp_function.get_name()
+
+                bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
+                                       f"{c_func_name}.parent")
+
+
+            else:
+                unreal.log_error(f"Invalid relationship data found: {comp.name}")
+
 
 
     def connect_components(self):
@@ -270,38 +374,19 @@ class UEGearManager:
         print("     Connecting Components       ")
         print("---------------------------------")
 
-        # Find the world component if it exists
-        root_comp = self.get_uegear_world_component()
-
-        # Find new root component
-#        if root_comp is None:
-#            for comp in self.uegear_components:
-
-                # want a way to easily access the input / output plugs for the component
-                #comp.metadata.input
-                #comp.metadata.output
-
-        # Connecting Execution Order
-        for comp in self.uegear_components:
-
-            # Ignore world control
-            if comp.metadata.comp_type == "world_ctrl":
-                continue
-            # Ignore root component
-            if root_comp == comp:
-                continue
-
-            if comp.parent_node is None and root_comp:
-                print("Parent Node needs to be connected to World Control")
-
-
+        self.connect_construction_functions()
 
         return
 
+        bp_controller = self.get_active_controller()
+
+        # Find the world component if it exists
+        root_comp = self.get_uegear_world_component()
+
         for comp in self.uegear_components:
 
             # Ignore world control
-            if comp.metadata.comp_type == "world_ctrl":
+            if comp.metadata.comp_type == "world_ctl":
                 continue
             # Ignore root component
             if root_comp == comp:
@@ -311,14 +396,53 @@ class UEGearManager:
 
             print(f"  parent: {comp.metadata.parent_fullname}")
             print(f"  parent port: {comp.metadata.parent_localname}")
+            print(f"  Relationship Parent: {comp.parent_node.name}")
 
-            # Component has no root parent, then it is a child of the world_ctrl or should be the root.
-            if comp.metadata.parent_fullname is None and root_comp is not None :
-                root_comp.add_child(comp)
+            if comp.metadata.parent_fullname is None and comp.parent_node.name == "world_ctl":
+                print("   Connect to World Control")
 
-            # Finds the parent component of the current component
-            parent_component = self.get_uegear_component(comp.metadata.parent_fullname)
-            print(f"  parent component: {parent_component}")
+                keys = ['construction_functions',
+                        'forward_functions',
+                        'backwards_functions']
+
+                parent_comp = comp.parent_node
+
+                for evaluation_key in keys:
+                    comp_functions = comp.nodes[evaluation_key]
+                    parent_functions = parent_comp.nodes[evaluation_key]
+
+                    # If the component or parent has no functions then skip the function
+                    # TODO: This should walk up the ueGear node parent relationship to see what is available to connect to
+                    if len(comp_functions) == 0 or len(parent_functions) == 0:
+                        continue
+
+                    comp_function = comp_functions[0]
+                    parent_function = parent_functions[0]
+
+                    print(f"   Function Name: {comp_function}")
+                    # print(comp_function.get_pins())  # Gets all the pins that are available on the function
+                    for pin in comp_function.get_pins():
+                        pin_name = pin.get_display_name()
+                        pin_direction = pin.get_direction()
+                        print(f"      {pin_name} : {pin_direction}")
+
+
+                    print(parent_function)
+
+                    # Connects the parent function node to the chile function node..
+
+                    # This implementation is assumin to much, needs to be more generic
+                    p_func_name = parent_function.get_name()
+                    c_func_name = comp_function.get_name()
+
+                    bp_controller.add_link(f"{p_func_name}.root",
+                                            f"{c_func_name}.parent")
+
+
+            elif comp.metadata.parent_fullname == comp.parent_node.name:
+                print("  Connect via relationships/Association")
+            else:
+                unreal.log_error(f"Invalid relationship data found: {comp.name}")
 
 
         # loop over components

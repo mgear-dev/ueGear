@@ -1,4 +1,4 @@
-from ueGear.controlrig import components
+# from ueGear.controlrig import components
 import ueGear.controlrig.mgear as mgear
 
 if __name__ == "__main__":
@@ -9,5 +9,5 @@ if __name__ == "__main__":
 # Test basic component
 cf_lookup_component = {}
 
-available_components = components.lookup_mgear_component("EPIC_control_01")
-print(available_components)
+# available_components = components.lookup_mgear_component("EPIC_control_01")
+# print(available_components)

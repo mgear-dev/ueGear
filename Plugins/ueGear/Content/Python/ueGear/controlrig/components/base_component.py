@@ -26,7 +26,7 @@ class UEComponent(object):
 
     # nodes are the generated control rig functions that relate to the component
     nodes: dict = None
-    """Stores the generated Control Rig Nodes(functions)"""
+    """Stores the generated Control Rig Nodes [Function Nodes]"""
 
     # Stores the mgear metadata component, so this uegear component knows what it relates too.
     metadata: mgComponent = None
