@@ -18,6 +18,39 @@ def load_json_file(file_path: str):
     return data
 
 
+def _conversion_matrix_space(matrix: unreal.Matrix) -> unreal.Transform:
+    """Converts from Maya Y up to Unreals
+
+    matrix - is the matrix that needs to be converted into unreal space
+
+    returns a transform
+    """
+    convertion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                                   y_plane=[0, 0, -1, 0],
+                                   z_plane=[0, 1, 0, 0],
+                                   w_plane=[0, 0, 0, 1]
+                                   )
+
+
+    corrected_mtx = convertion_mtx * matrix * convertion_mtx.get_inverse()
+    # update Rotation
+    euler = matrix.transform().rotation.euler()
+    quat = unreal.Quat()
+    # quat.set_from_euler(unreal.Vector(euler.x + 90, euler.y, euler.z))
+    quat.set_from_euler(unreal.Vector(euler.x, euler.y, euler.z))
+    trans = corrected_mtx.transform()
+    trans.rotation = quat
+
+    # Update Position
+    pos = trans.translation
+    # pos_y = pos.y
+    # pos_z = pos.z
+    # pos.y = pos_z
+    # pos.z = -pos_y
+    trans.translation = pos
+
+    return trans
+
 def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
     """
     Converts the mGear build json file into a mgRig object.
@@ -64,10 +97,14 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             ue_trans = unreal.Transform()
             ue_quaternion = unreal.Quat()
 
-            world_pos = [world_pos['x'], world_pos['z'], world_pos['y']] # reordering for orientation change
+            world_pos = [world_pos['x'], world_pos['y'], world_pos['z']] # reordering for orientation change
             ue_quaternion.set_from_euler(world_rot)
             ue_trans.set_editor_property("translation", world_pos)
             ue_trans.set_editor_property("rotation", ue_quaternion)
+
+            # Converts from Maya space to Unreal Space
+            maya_mtx = ue_trans.to_matrix()
+            ue_trans = _conversion_matrix_space(maya_mtx)
 
             if mgear_component.control_transforms is None:
                 mgear_component.control_transforms = {}

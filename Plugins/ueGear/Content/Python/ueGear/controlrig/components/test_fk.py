@@ -154,6 +154,9 @@ class fkComponent(UEComponent):
                                     f'{function_node.get_name()}.Array')
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        """Updates the transform data for the controls generated, with the data from the mgear json
+        file.
+        """
 
         control_name = self.metadata.controls[0]
         control_transform = self.metadata.control_transforms[control_name]
