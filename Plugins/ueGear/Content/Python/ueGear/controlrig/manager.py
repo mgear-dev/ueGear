@@ -158,8 +158,24 @@ class UEGearManager:
         bones = get_driven_joints(self, ueg_comp)
         ueg_comp.populate_bones(bones, bp_controller)
 
+        # populate control positions
+        # TODO: Setting up control data population
 
-    # TODO: WORKING ON CONNECTIONS
+        ueg_comp.populate_control_transforms(bp_controller)
+
+
+
+    def build_components(self, ignore_component_names:list=None, ignore_component_types:list=None):
+        """Builds all components
+
+        ignore_component_names : list(str) - list of names that will be ignored if the name of the component matches
+        ignore_component_type : list(str) - list of types that will not be build, if found component matches
+        """
+
+        for comp in self.mg_rig.components.values():
+            print(comp.name)
+            print(comp.comp_type)
+
 
     def populate_parents(self):
         """
@@ -608,9 +624,6 @@ class UEGearManager:
         https://docs.unrealengine.com/5.3/en-US/PythonAPI/class/RigVMGraph.html#unreal.RigVMGraph
 
         """
-        print("-----------------------------------------------------------")
-        print("GET GRAPH")
-
         rig_vm_controller = self._active_blueprint.get_controller_by_name('RigVMModel')
 
         if rig_vm_controller is None:
@@ -618,9 +631,6 @@ class UEGearManager:
             rig_vm_controller = self._active_blueprint.get_or_create_controller()
 
         active_cr_graph = rig_vm_controller.get_graph()
-
-        print("-----------------------------------------------------------")
-
         return active_cr_graph
 
     def get_active_controller(self, name: str = "RigVMModel") -> unreal.RigVMController:
@@ -654,7 +664,7 @@ class UEGearManager:
         rig_vm_controller = self.get_active_controller()
 
         # Forward
-        if not self.get_node("BeginExecution"):
+        if not self.get_node("BeginExecution") and not self.get_node("RigUnit_BeginExecution"):
             rig_vm_controller.add_unit_node_from_struct_path(
                 '/Script/ControlRig.RigUnit_BeginExecution',
                 'Execute',

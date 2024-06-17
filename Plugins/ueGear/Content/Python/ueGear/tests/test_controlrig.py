@@ -114,10 +114,112 @@ def test_create_fk_control():
 
     gear_manager.connect_components()
 
+
+def test_create_spine_shoulders_control():
+    """
+    Test will check to see if a control is generated and added to the correct Construction, Forward and Backwards Solve.
+
+    - No active control rig is set, so it should generate a new control rig
+    """
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    TEST_CONTROLRIG_PATH = "/Game/TEST"
+    TEST_CONTROLRIG_NAME = "test_create_fk_control"
+    TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
+
+    # Converts teh json data into a class based structure, filters out non-required metadata.
+    mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
+
+    gear_manager = UEGearManager()
+    gear_manager.load_rig(mgear_rig)
+
+    # Creates an asset path
+    cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
+    # Control Rig Blueprint
+    cr_bp = assets.get_asset_object(cr_path)
+
+    if cr_bp is None:
+        cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_SKM)
+    else:
+        gear_manager.set_active_blueprint(cr_bp)
+
+    if cr_bp is None:
+        unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
+        unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
+        return None
+
+    # At this point we now have The Manager, with an empty Control Rig BP
+
+    # Builds the world control if it has been enabled in the Main Settings
+    gear_manager.build_world_control()
+
+    # Builds component by name
+    gear_manager.build_component('global_C0', ignore_parent=True)
+    gear_manager.build_component('local_C0', ignore_parent=True)
+    gear_manager.build_component('root_C0', ignore_parent=True)
+    gear_manager.build_component('body_C0', ignore_parent=True)
+    # gear_manager.build_component('spine_C0', ignore_parent=True)
+    # gear_manager.build_component('shoulder_L0', ignore_parent=True)
+    # gear_manager.build_component('shoulder_R0', ignore_parent=True)
+
+    # At this point there are many components created, but not connected to one another
+
+    gear_manager.populate_parents()
+
+    gear_manager.connect_components()
+
+
+
+def test_build_mgRig():
+    """
+    Test to build an entire mgear rig from the JSON file
+
+    - No active control rig is set, so it should generate a new control rig
+    """
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    TEST_CONTROLRIG_PATH = "/Game/TEST"
+    TEST_CONTROLRIG_NAME = "test_create_fk_control"
+    TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
+
+    # Converts teh json data into a class based structure, filters out non-required metadata.
+    mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
+
+    gear_manager = UEGearManager()
+    gear_manager.load_rig(mgear_rig)
+
+    # Creates an asset path
+    cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
+    # Control Rig Blueprint
+    cr_bp = assets.get_asset_object(cr_path)
+
+    if cr_bp is None:
+        cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_SKM)
+    else:
+        gear_manager.set_active_blueprint(cr_bp)
+
+    if cr_bp is None:
+        unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
+        unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
+        return None
+
+    # At this point we now have The Manager, with an empty Control Rig BP
+
+    # Builds the world control if it has been enabled in the Main Settings
+    gear_manager.build_world_control()
+
+    # Builds all components
+    gear_manager.build_components()
+
+    # gear_manager.populate_parents()
+
+    # gear_manager.connect_components()
+
 #----
 
 # test_build_component_count()
 # test_build_fk_count()
 # test_create_control_rig_bp()
+# test_create_fk_control()
 
-test_create_fk_control()
+test_create_spine_shoulders_control()
+
+# test_build_mgRig()

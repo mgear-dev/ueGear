@@ -152,3 +152,19 @@ class fkComponent(UEComponent):
                 print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Array")
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{function_node.get_name()}.Array')
+
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+
+        control_name = self.metadata.controls[0]
+        control_transform = self.metadata.control_transforms[control_name]
+
+        const_func = self.nodes['construction_functions'][0].get_name()
+
+        quat = control_transform.rotation
+        pos = control_transform.translation
+
+        controller.set_pin_default_value(f"{const_func}.control_world_transform",
+            f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
+            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
+            True)

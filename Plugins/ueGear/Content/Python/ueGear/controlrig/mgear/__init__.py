@@ -1,5 +1,7 @@
 import json
 
+import unreal
+
 from .component import mgComponent
 from .rig import mgRig
 
@@ -53,6 +55,24 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             if mgear_component.controls is None:
                 mgear_component.controls = []
             mgear_component.controls.append(ctrl["Name"])
+
+            # Checks the controls transform data and records it as a Unreal.Transform
+
+            world_pos = ctrl["WorldPosition"]
+            world_rot = ctrl["WorldRotation"]
+
+            ue_trans = unreal.Transform()
+            ue_quaternion = unreal.Quat()
+
+            world_pos = [world_pos['x'], world_pos['z'], world_pos['y']] # reordering for orientation change
+            ue_quaternion.set_from_euler(world_rot)
+            ue_trans.set_editor_property("translation", world_pos)
+            ue_trans.set_editor_property("rotation", ue_quaternion)
+
+            if mgear_component.control_transforms is None:
+                mgear_component.control_transforms = {}
+
+            mgear_component.control_transforms[ctrl["Name"]] = ue_trans
 
         # Stores all the joints associated with this component
         for jnt in joints:
