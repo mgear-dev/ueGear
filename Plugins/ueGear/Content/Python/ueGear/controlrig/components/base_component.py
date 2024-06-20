@@ -48,6 +48,9 @@ class UEComponent(object):
     bones = None
     """Storing all the SKM bones that have been found using Control Rig"""
 
+    comment_node = None
+    """Stores a reference to the comment node that will be used to group functions together"""
+
     def __init__(self):
         self.functions = {'construction_functions': [],
                           'forward_functions': [],

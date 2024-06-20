@@ -1,4 +1,4 @@
-__all__ = ['fkComponent']
+__all__ = ['SpineComponent']
 
 import unreal
 
@@ -6,26 +6,16 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 from ueGear.controlrig.components.base_component import UEComponent
 
-# class mfkComponent(fkComponent):
-# # When building Maya use this node
-#     def create_functions(self, controller: unreal.RigVMController = None):
-#         fkComponent.create_functions()
-#
-#         # inject matrix data and orientation
-#
 
-class fkComponent(UEComponent):
-    name = "test_FK"
-    mgear_component = "EPIC_control_01"
-
-    # skeleton_joints = None
-    # skeleton_array_node = None
+class SpineComponent(UEComponent):
+    name = "test_Spine"
+    mgear_component = "EPIC_spine_02"
 
     def __init__(self):
         super().__init__()
 
-        self.functions = {'construction_functions': ['construct_FK_singleton'],
-                          'forward_functions': ['forward_FK_singleton'],
+        self.functions = {'construction_functions': ['construct_FK_hierarchy'],
+                          'forward_functions': ['forward_FK_hierarchy'],
                           'backwards_functions': [],
                           }
         self.cr_variables = {}
@@ -45,14 +35,6 @@ class fkComponent(UEComponent):
         # mGear
         self.inputs = []
         self.outputs = []
-
-        # ---- TESTING
-        self.bones = []
-
-        # parent = root
-        # Item = root
-        # root = parent + Item
-
 
     def create_functions(self, controller: unreal.RigVMController = None):
         if controller is None:
@@ -98,12 +80,19 @@ class fkComponent(UEComponent):
 
         # Gets the Construction Function Node and sets the control name
 
-        construct_func = base_component.get_construction_node(self, f"{self.name}_construct_FK_singleton")
+        func_name = self.functions['construction_functions'][0]
+
+        print(func_name)
+
+        construct_func = base_component.get_construction_node(self, f"{self.name}_{func_name}")
+        print(construct_func)
+
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
         controller.set_pin_default_value(construct_func.get_name() + '.control_name',
                                          self.metadata.controls[0],
                                          False)
+
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
@@ -154,6 +143,9 @@ class fkComponent(UEComponent):
         """Updates the transform data for the controls generated, with the data from the mgear json
         file.
         """
+
+        print("Still need to set this up")
+        return
 
         control_name = self.metadata.controls[0]
         control_transform = self.metadata.control_transforms[control_name]

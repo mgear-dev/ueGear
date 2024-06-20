@@ -116,6 +116,10 @@ class UEGearManager:
 
         """
 
+        print("------------------------------")
+        print(f" BUILDING COMPONENT: {name}")
+        print("------------------------------")
+
         if self._active_blueprint is None:
             unreal.log_error("ueGear Manager > Cannot create Control Rig Blueprint, please specify active blueprint.")
 
@@ -132,15 +136,19 @@ class UEGearManager:
 
         # Finds the ueGear Component class that matches the guide data class type.
         ue_comp_classes = components.lookup_mgear_component(guide_type)
+
+        # If component not found, report error and exit early
+        if ue_comp_classes is None or not ue_comp_classes:
+            unreal.log_error(f"Component not found : {guide_type}")
+            return
+
         ueg_comp = ue_comp_classes[0]()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname
 
         self.uegear_components.append(ueg_comp)
 
-        print("------------------------------")
-        print(f" BUILDING COMPONENT: {name}")
-        print("------------------------------")
+
         print(ueg_comp)
         print(f"      NAME : {ueg_comp.name}")
         print(f"mGear Comp : {ueg_comp.mgear_component}")

@@ -10,7 +10,7 @@ from ueGear import assets
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
-from ueGear.controlrig.components import base_component, test_fk
+from ueGear.controlrig.components import base_component, test_fk, test_spine
 from ueGear.controlrig.mgear import component, rig
 importlib.reload(mgear)
 importlib.reload(component)
@@ -19,6 +19,7 @@ importlib.reload(rig)
 importlib.reload(ueM)
 importlib.reload(base_component)
 importlib.reload(test_fk)
+importlib.reload(test_spine)
 # ---
 
 def test_build_component_count():
@@ -157,7 +158,7 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component('local_C0', ignore_parent=True)
     gear_manager.build_component('root_C0', ignore_parent=True)
     gear_manager.build_component('body_C0', ignore_parent=True)
-    # gear_manager.build_component('spine_C0', ignore_parent=True)
+    gear_manager.build_component('spine_C0', ignore_parent=True)
     # gear_manager.build_component('shoulder_L0', ignore_parent=True)
     # gear_manager.build_component('shoulder_R0', ignore_parent=True)
 
