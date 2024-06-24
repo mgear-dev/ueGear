@@ -48,7 +48,7 @@ class UEComponent(object):
     bones = None
     """Storing all the SKM bones that have been found using Control Rig"""
 
-    comment_node = None
+    comment_node: unreal.RigVMCommentNode = None
     """Stores a reference to the comment node that will be used to group functions together"""
 
     def __init__(self):
@@ -56,10 +56,11 @@ class UEComponent(object):
                           'forward_functions': [],
                           'backwards_functions': [],
                           }
-        self.nodes = {'construction_functions': [],
-                      'forward_functions': [],
-                      'backwards_functions': [],
-                      }
+        self.nodes: dict[str, list[unreal.RigVMNode]] = {
+            'construction_functions': [],
+            'forward_functions': [],
+            'backwards_functions': [],
+        }
         self.cr_variables = {}
         self.connection = {}
 
@@ -67,6 +68,31 @@ class UEComponent(object):
 
         self.inputs = []
         self.outputs = []
+
+
+    @property
+    def pos(self):
+        """Return the position of the comment block, that should encompass all the nodes
+        - The top left corner of the comment block.
+        """
+        if self.comment_node is None:
+            return
+
+        return self.comment_node.get_position()
+
+    @property
+    def size(self):
+        """Returns the size of the comment block"""
+        if self.comment_node is None:
+            return
+
+        return self.comment_node.get_size()
+
+    def component_size(self, size:unreal.Vector2D, controller:unreal.RigVMController):
+        """Sets the size of the comment block"""
+        if self.comment_node is None:
+            return
+        controller.set_node_size(self.comment_node,size)
 
     def add_child(self, child_comp):
 

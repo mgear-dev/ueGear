@@ -172,6 +172,28 @@ class UEGearManager:
         ueg_comp.populate_control_transforms(bp_controller)
 
 
+    def group_components(self):
+        """Loops over all components that have been created and generates a comment box and positions them in a
+        more human readilbe layout.
+        """
+
+        controller = self.get_active_controller()
+
+        for i, ue_comp in enumerate(self.uegear_components):
+
+            pos = unreal.Vector2D(i * 512, 0)
+
+            for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
+                node = ue_comp.nodes[flow_name]
+                for n in node:
+                    controller.set_node_position(n, pos)
+                    controller.set_node_position(ue_comp.comment_node, pos-unreal.Vector2D(0, 50))
+
+
+        # TODO: Rezise comment to encapsulate the entirety of control rig functions
+
+        # for i, ue_comp in enumerate(self.uegear_components):
+        #     ue_comp.comment_node
 
     def build_components(self, ignore_component_names:list=None, ignore_component_types:list=None):
         """Builds all components
@@ -386,8 +408,6 @@ class UEGearManager:
 
             else:
                 unreal.log_error(f"Invalid relationship data found: {comp.name}")
-
-
 
     def connect_components(self):
         """Connects all the built components"""

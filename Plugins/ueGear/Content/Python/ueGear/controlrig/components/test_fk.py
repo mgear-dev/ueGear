@@ -53,14 +53,98 @@ class fkComponent(UEComponent):
         # Item = root
         # root = parent + Item
 
+    def _init_comment(self, controller: unreal.RigVMController):
+        """Creates the comment node"""
 
-    def create_functions(self, controller: unreal.RigVMController = None):
+        graph = controller.get_graph()
+
+        if not graph:
+            return
+
+        comment_node_name = self.name
+        comment_text = f"ueComponent: {self.name}"
+        node = graph.find_node_by_name(comment_node_name)
+
+        if node:
+            self.comment_node = node
+            return
+
+        # Create the comment node in unreal
+        self.comment_node = controller.add_comment_node(comment_text, node_name=comment_node_name)
+
+    def _fit_comment(self, controller: unreal.RigVMController):
+        """Tries to fit the comment to the nodes that were generated"""
+
+        # [ ] Loop over all the nodes in the component
+        # [ ] Build a size map of all the components
+        # [ ] Move comment block outside of the size mapped
+
+        # Stores the smallest position, as that will be the top left
+        pos = None
+
+        height = 0
+        width = 0
+
+        node_count = 0
+        node_offset_x = 0
+        node_offset_y = 0
+
+        max_node_width = 0
+
+        pre_size = None
+        y_spacing = 10
+
+        for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
+            nodes = self.nodes[flow_name]
+
+            for node in nodes:
+                # start with the position equal to the first node
+                if pos is None:
+                    pos = node.get_position()
+
+                if pre_size:
+                    controller.set_node_position(node, unreal.Vector2D(pos.x, pos.y + pre_size + (y_spacing * node_count) ))
+
+
+                # Get top left most position
+                current_pos = node.get_position()
+
+                if current_pos.x < pos.x:
+                    pos.x = current_pos.x
+                if current_pos.y < pos.y:
+                    pos.y = current_pos.y
+
+                #stores the previous size
+                pre_size = node.get_size().y + pos.y
+
+                node_count += 1
+
+        for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
+            nodes = self.nodes[flow_name]
+            for node in nodes:
+
+                current_pos = node.get_position()
+                size = node.get_size()
+
+                height = height + size.y + 10
+
+                controller.set_node_position(node, unreal.Vector2D(pos.x, pos.y + height))
+
+
+
+
+
+
+
+    def create_functions(self, controller: unreal.RigVMController):
         if controller is None:
             return
 
         print("-------------------------------")
         print(" Create ControlRig Functions")
         print("-------------------------------")
+
+        self._init_comment(controller)
 
         # Generate Function Nodes
         for evaluation_path in self.functions.keys():
@@ -104,6 +188,8 @@ class fkComponent(UEComponent):
         controller.set_pin_default_value(construct_func.get_name() + '.control_name',
                                          self.metadata.controls[0],
                                          False)
+
+        # self._fit_comment(controller)
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
