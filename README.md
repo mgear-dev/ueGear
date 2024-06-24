@@ -97,3 +97,20 @@ Repo: `ueGear/Plugins/ueGear/Content/Python/ueGear/controlrig/ueGearFunctionLibr
 Unreal: `ueGear/Content/Python/ueGear/controlrig/ueGearFunctionLibrary.uasset`
 
 If you enable plugins in the Content Browser Settings, you will be able to see the folder.
+
+# Unreal meta data storing
+Blueprint class > Primary Dataset
+    - blueprint class
+    - can store a bunch of variables
+
+From blueprint > you can create a dataasset (instance)
+
+ControlRig > Asset User Data > 
+
+Can only read data fom a dataset in constructino event > read user data
+
+# Limitations
+
+## Unreal 5.3
+
+- Control Rig Functions do not return the size when queried. 

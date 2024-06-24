@@ -183,11 +183,19 @@ class UEGearManager:
 
             pos = unreal.Vector2D(i * 512, 0)
 
+            node_count = 0
+            comment_size = 0
+
             for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
                 node = ue_comp.nodes[flow_name]
                 for n in node:
-                    controller.set_node_position(n, pos)
-                    controller.set_node_position(ue_comp.comment_node, pos-unreal.Vector2D(0, 50))
+                    controller.set_node_position(n, pos + unreal.Vector2D(40, node_count * 300))
+                    controller.set_node_position(ue_comp.comment_node, pos - unreal.Vector2D(5, 50))
+                    node_count += 1
+
+            comment_size = unreal.Vector2D(500, node_count * 300)
+            print(f"Comment Size {comment_size}")
+            controller.set_node_size(ue_comp.comment_node, comment_size)
 
 
         # TODO: Rezise comment to encapsulate the entirety of control rig functions
@@ -691,12 +699,14 @@ class UEGearManager:
 
         rig_vm_controller = self.get_active_controller()
 
+        position_offset = unreal.Vector2D(-300,0)
+
         # Forward
         if not self.get_node("BeginExecution") and not self.get_node("RigUnit_BeginExecution"):
             rig_vm_controller.add_unit_node_from_struct_path(
                 '/Script/ControlRig.RigUnit_BeginExecution',
                 'Execute',
-                unreal.Vector2D(0.0, 0.0),
+                position_offset + unreal.Vector2D(0, 512),
                 'BeginExecution')
 
         # Backward
@@ -704,7 +714,7 @@ class UEGearManager:
             rig_vm_controller.add_unit_node_from_struct_path(
                 '/Script/ControlRig.RigUnit_InverseExecution',
                 'Execute',
-                unreal.Vector2D(0.0, 0.0),
+                position_offset + unreal.Vector2D(0, 1024),
                 'InverseExecution')
 
         # Construction
@@ -712,7 +722,7 @@ class UEGearManager:
             rig_vm_controller.add_unit_node_from_struct_path(
                 '/Script/ControlRig.RigUnit_PrepareForExecution',
                 'Execute',
-                unreal.Vector2D(0.0, 0.0),
+                position_offset,
                 'PrepareForExecution')
 
     def get_forward_node(self) -> unreal.RigVMNode:
