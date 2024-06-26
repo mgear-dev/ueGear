@@ -180,15 +180,24 @@ class SpineComponent(UEComponent):
         for bone in bones:
             bone_dict[str(bone.key.name)] = bone
 
-        # if not controller.get_graph().find_node_by_name(array_node_name):
-        #     return
+        # Checks if node exists, else creates node
+        found_node = controller.get_graph().find_node_by_name(array_node_name)
 
-        # Create the ItemArray node
-        controller.add_unit_node_from_struct_path(
-            '/Script/ControlRig.RigUnit_ItemArray',
-            'Execute',
-            unreal.Vector2D(0.0, 0.0),
-            array_node_name)
+
+        if not found_node:
+            # Create the ItemArray node
+            found_node = controller.add_unit_node_from_struct_path(
+                                                    '/Script/ControlRig.RigUnit_ItemArray',
+                                                    'Execute',
+                                                    unreal.Vector2D(0.0, 0.0),
+                                                    array_node_name)
+
+        # Do pins already exist on the node, if not then we will have to create them. Else we dont
+        existing_pins = found_node.get_pins()
+        generate_new_pins = True
+        if len(existing_pins) > 0:
+            generate_new_pins = False
+
 
         pin_index = 0
 
@@ -201,9 +210,10 @@ class SpineComponent(UEComponent):
                 unreal.log_error(f"[Init Output Joints] Cannot find bone {joint_name}")
                 continue
 
-            # Add new Item to array
-            controller.insert_array_pin(f'{array_node_name}.Items', -1, '')
-
+            # No pins are found then we add new pins on the array to populate
+            if generate_new_pins:
+                # Add new Item to array
+                controller.insert_array_pin(f'{array_node_name}.Items', -1, '')
 
             bone_name = joint_name
             # Set Item to be of bone type
@@ -220,7 +230,7 @@ class SpineComponent(UEComponent):
         file.
         """
 
-        print("Still need to set this up")
+        print("Populate Control Transforms: Still need to set this up")
         return
 
         control_name = self.metadata.controls[0]
