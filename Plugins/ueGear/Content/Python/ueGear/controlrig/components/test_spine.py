@@ -44,6 +44,14 @@ class SpineComponent(UEComponent):
         print(" Create ControlRig Functions")
         print("-------------------------------")
 
+        # calls the super method
+        super().create_functions(controller)
+
+        # TODO:
+        # [ ] Check how many bones exist, as that will drive the fk system
+        # [ ] Add input for ik
+        # [ ] Calculate output bones joints
+
         # Generate Function Nodes
         for evaluation_path in self.functions.keys():
 
@@ -98,46 +106,114 @@ class SpineComponent(UEComponent):
         """
         Generates the Bone array node that will be utilised by control rig to drive the component
         """
-        if bones is None or len(bones) > 1:
+        if bones is None or len(bones) < 3:
+            unreal.log_error("[Bone Populate] Failed no Bones found")
             return
         if controller is None:
+            unreal.log_error("[Bone Populate] Failed no Controller found")
             return
         print("-----------------")
         print(" Populate Bones")
         print("-----------------")
 
-        bone_name = bones[0].key.name
-        print(f"  {self.name} > {bone_name}")
-
         # Unique name for this skeleton node array
         array_node_name = f"{self.metadata.fullname}_RigUnit_ItemArray"
 
-        # node already exists
-        if controller.get_graph().find_node_by_name(array_node_name):
-            unreal.log_error("Cannot populate bones, node already exists!")
-            return
+        # node doesn't exists, create the joint node
+        if not controller.get_graph().find_node_by_name(array_node_name):
+            self._init_master_joint_node(controller, array_node_name, bones)
+
+            # Connects the Item Array Node to the functions.
+            for evaluation_path in self.nodes.keys():
+                for function_node in self.nodes[evaluation_path]:
+                    print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
+                    controller.add_link(f'{array_node_name}.Items',
+                                        f'{function_node.get_name()}.Joints')
+
+        outpu_joint_node_name = self._init_output_joints(controller, bones)
+
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        controller.add_link(f'{outpu_joint_node_name}.Items',
+                            f'{construction_func_name}.joint_outputs')
+
+    def _init_master_joint_node(self, controller, node_name:str, bones):
+        """Create the master bones node that will drive the creation of the joint, and be driven by the fk joints
+        """
+
+        print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
         controller.add_unit_node_from_struct_path(
             '/Script/ControlRig.RigUnit_ItemArray',
             'Execute',
             unreal.Vector2D(-54.908936, 204.649109),
+            node_name)
+
+        pin_index = 0 # stores the current pin index that is being updated
+
+        for bone in bones:
+            bone_name = str(bone.key.name)
+            print(f"  {self.name} > {bone_name}")
+
+            # Populates the Item Array Node
+            controller.insert_array_pin(f'{node_name}.Items', -1, '')
+            controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
+                                             f'(Type=Bone,Name="{bone_name}")',
+                                             True)
+            controller.set_pin_expansion(f'{node_name}.Items.{str(pin_index)}', True)
+            controller.set_pin_expansion(f'{node_name}.Items', True)
+
+            pin_index += 1
+
+
+    def _init_output_joints(self, controller:unreal.RigVMController, bones):
+        """Connects all the required joins to the output locations"""
+
+        print(" - Init Output Joints")
+
+        # Unique name for this skeleton output array
+        array_node_name = f"{self.metadata.fullname}_OutputSkeleton_RigUnit_ItemArray"
+
+        # Create a lookup table of the bones, to speed up interactions
+        bone_dict = {}
+        for bone in bones:
+            bone_dict[str(bone.key.name)] = bone
+
+        # if not controller.get_graph().find_node_by_name(array_node_name):
+        #     return
+
+        # Create the ItemArray node
+        controller.add_unit_node_from_struct_path(
+            '/Script/ControlRig.RigUnit_ItemArray',
+            'Execute',
+            unreal.Vector2D(0.0, 0.0),
             array_node_name)
 
-        # Populates the Item Array Node
-        controller.insert_array_pin(f'{array_node_name}.Items', -1, '')
-        controller.set_pin_default_value(f'{array_node_name}.Items.0',
-                                         f'(Type=Bone,Name="{bone_name}")',
-                                         True)
-        controller.set_pin_expansion(f'{array_node_name}.Items.0', True)
-        controller.set_pin_expansion(f'{array_node_name}.Items', True)
+        pin_index = 0
 
-        # Connects the Item Array Node to the functions.
-        for evaluation_path in self.nodes.keys():
-            for function_node in self.nodes[evaluation_path]:
-                print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Array")
-                controller.add_link(f'{array_node_name}.Items',
-                                    f'{function_node.get_name()}.Array')
+        # Loops over all the joint relatives to setup the array
+        for jnt_name, jnt_index in self.metadata.joint_relatives.items():
+            joint_name = self.metadata.joints[jnt_index]
+            found_bone = bone_dict.get(joint_name, None)
+
+            if found_bone is None:
+                unreal.log_error(f"[Init Output Joints] Cannot find bone {joint_name}")
+                continue
+
+            # Add new Item to array
+            controller.insert_array_pin(f'{array_node_name}.Items', -1, '')
+
+
+            bone_name = joint_name
+            # Set Item to be of bone type
+            controller.set_pin_default_value(f'{array_node_name}.Items.{pin_index}.Type', 'Bone', False)
+            # Set the pin to be a specific bone name
+            controller.set_pin_default_value(f'{array_node_name}.Items.{pin_index}.Name', bone_name, False)
+
+            pin_index += 1
+
+        return array_node_name
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json

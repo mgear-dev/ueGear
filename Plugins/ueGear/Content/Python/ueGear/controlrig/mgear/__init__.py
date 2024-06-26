@@ -82,6 +82,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         mgear_component.parent_fullname = data_component['parent_fullName']
         mgear_component.parent_localname = data_component['parent_localName']
         mgear_component.data_contracts = {}
+        mgear_component.joint_relatives = data_component['jointRelatives']
 
         # Stores all the controls associated with this component
         for ctrl in controls:

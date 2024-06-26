@@ -6,20 +6,10 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 from ueGear.controlrig.components.base_component import UEComponent
 
-# class mfkComponent(fkComponent):
-# # When building Maya use this node
-#     def create_functions(self, controller: unreal.RigVMController = None):
-#         fkComponent.create_functions()
-#
-#         # inject matrix data and orientation
-#
 
 class fkComponent(UEComponent):
     name = "test_FK"
     mgear_component = "EPIC_control_01"
-
-    # skeleton_joints = None
-    # skeleton_array_node = None
 
     def __init__(self):
         super().__init__()
@@ -49,12 +39,6 @@ class fkComponent(UEComponent):
         # ---- TESTING
         self.bones = []
 
-        # parent = root
-        # Item = root
-        # root = parent + Item
-
-
-
     def create_functions(self, controller: unreal.RigVMController):
         if controller is None:
             return
@@ -63,7 +47,8 @@ class fkComponent(UEComponent):
         print(" Create ControlRig Functions")
         print("-------------------------------")
 
-        self._init_comment(controller)
+        # calls the super method
+        super().create_functions(controller)
 
         # Generate Function Nodes
         for evaluation_path in self.functions.keys():

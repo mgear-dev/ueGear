@@ -38,6 +38,9 @@ class mgComponent:
     """List of attachpoints that another component can be parented by, or in the case of
     ueGear driven by"""
 
+    joint_relatives: dict = None
+    """List of integers that associate the output joint that should drive the output"""
+
     def __init__(self) -> None:
         pass
 
@@ -52,5 +55,6 @@ class mgComponent:
         msg += f"|      Attach Point : {self.parent_localname}\n"
         msg += f"|     Joints : {self.joints}\n"
         msg += f"|   Controls : {self.controls}\n"
+        msg += f"|   Joint Relatives : {self.joint_relatives}\n"
 
         return msg

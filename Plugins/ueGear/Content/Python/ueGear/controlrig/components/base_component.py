@@ -147,13 +147,15 @@ class UEComponent(object):
         self.parent_node = None
         parent_node.remove_child(node=self)
 
-    def create_functions(self):
+    def create_functions(self, controller: unreal.RigVMController):
         """OVERLOAD THIS METHOD
 
         This method will be used to generate all the associated functions with the mGear component, and apply any
         alterations specific to the component.
         """
-        pass
+
+        self._init_comment(controller)
+
 
     def populate_bones(self):
         """OVERLOAD THIS METHOD
