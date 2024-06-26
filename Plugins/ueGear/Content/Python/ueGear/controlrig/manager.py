@@ -199,6 +199,7 @@ class UEGearManager:
 
 
         # TODO: Rezise comment to encapsulate the entirety of control rig functions
+        # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
 
         # for i, ue_comp in enumerate(self.uegear_components):
         #     ue_comp.comment_node

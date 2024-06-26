@@ -98,7 +98,7 @@ class SpineComponent(UEComponent):
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
         controller.set_pin_default_value(construct_func.get_name() + '.control_name',
-                                         self.metadata.controls[0],
+                                         self.metadata.fullname,
                                          False)
 
 
