@@ -148,7 +148,6 @@ class UEGearManager:
 
         self.uegear_components.append(ueg_comp)
 
-
         print(ueg_comp)
         print(f"      NAME : {ueg_comp.name}")
         print(f"mGear Comp : {ueg_comp.mgear_component}")
@@ -170,7 +169,6 @@ class UEGearManager:
         # TODO: Setting up control data population
 
         ueg_comp.populate_control_transforms(bp_controller)
-
 
     def group_components(self):
         """Loops over all components that have been created and generates a comment box and positions them in a
@@ -197,14 +195,13 @@ class UEGearManager:
             print(f"Comment Size {comment_size}")
             controller.set_node_size(ue_comp.comment_node, comment_size)
 
-
         # TODO: Rezise comment to encapsulate the entirety of control rig functions
         # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
 
         # for i, ue_comp in enumerate(self.uegear_components):
         #     ue_comp.comment_node
 
-    def build_components(self, ignore_component_names:list=None, ignore_component_types:list=None):
+    def build_components(self, ignore_component_names: list = None, ignore_component_types: list = None):
         """Builds all components
 
         ignore_component_names : list(str) - list of names that will be ignored if the name of the component matches
@@ -214,7 +211,6 @@ class UEGearManager:
         for comp in self.mg_rig.components.values():
             print(comp.name)
             print(comp.comp_type)
-
 
     def populate_parents(self):
         """
@@ -256,7 +252,6 @@ class UEGearManager:
                 print(f" {comp.name} > Has no parent, World Component Exists")
                 comp.set_parent(world_component)
 
-
     def connect_execution(self):
         """Connects the individual functions Execution port, in order of parent hierarchy"""
 
@@ -286,8 +281,7 @@ class UEGearManager:
                 bp_controller.add_link(f'{p_func}.ExecuteContext',
                                        f'{c_func}.ExecuteContext')
 
-
-    def _find_parent_node_function(self, component, function_name:str):
+    def _find_parent_node_function(self, component, function_name: str):
         """Recursively looks at the function, then if one does not exist looks for
         the next one in the parent/child hierarchy
 
@@ -295,9 +289,9 @@ class UEGearManager:
         """
 
         solve = {'construction_functions': self.get_construction_node(),
-                'forward_functions':self.get_forward_node(),
-                'backwards_functions':self.get_backwards_node()
-                }
+                 'forward_functions': self.get_forward_node(),
+                 'backwards_functions': self.get_backwards_node()
+                 }
 
         parent_comp = component.parent_node
 
@@ -314,7 +308,7 @@ class UEGearManager:
 
         return comp_nodes[0]
 
-    def pin_exists(self, function: unreal.RigVMNode, pin_name: str, input_pin:bool=True) -> bool:
+    def pin_exists(self, function: unreal.RigVMNode, pin_name: str, input_pin: bool = True) -> bool:
         """Checks if a pin exists as in input our output
         function
         """
@@ -479,7 +473,6 @@ class UEGearManager:
                         pin_direction = pin.get_direction()
                         print(f"      {pin_name} : {pin_direction}")
 
-
                     print(parent_function)
 
                     # Connects the parent function node to the chile function node..
@@ -489,14 +482,13 @@ class UEGearManager:
                     c_func_name = comp_function.get_name()
 
                     bp_controller.add_link(f"{p_func_name}.root",
-                                            f"{c_func_name}.parent")
+                                           f"{c_func_name}.parent")
 
 
             elif comp.metadata.parent_fullname == comp.parent_node.name:
                 print("  Connect via relationships/Association")
             else:
                 unreal.log_error(f"Invalid relationship data found: {comp.name}")
-
 
         # loop over components
         # if world exists then it is the master root
@@ -700,7 +692,7 @@ class UEGearManager:
 
         rig_vm_controller = self.get_active_controller()
 
-        position_offset = unreal.Vector2D(-300,0)
+        position_offset = unreal.Vector2D(-300, 0)
 
         # Forward
         if not self.get_node("BeginExecution") and not self.get_node("RigUnit_BeginExecution"):
@@ -770,3 +762,41 @@ def get_driven_joints(manager: UEGearManager, ueg_component: components.base_com
     ueg_component.bones = found_bones
 
     return found_bones
+
+
+def create_array_node(node_name: str,
+                      controller: unreal.RigVMController,
+                      pos_x: float = 700,
+                      pos_y: float = 700) -> str:
+    """Generates a make array node"""
+
+    array_node_name = f"{node_name}_arrayNode"
+
+    found_node = controller.get_graph().find_node_by_name(array_node_name)
+
+    if not found_node:
+        controller.add_template_node(
+            'DISPATCH_RigVMDispatch_ArrayMake(in Values,out Array)', unreal.Vector2D(pos_x, pos_y),
+            array_node_name)
+
+    return array_node_name
+
+
+def array_node_has_pins(node_name: str,
+                        controller: unreal.RigVMController,
+                        minimum_pins: int = 1):
+    """
+    Checks if the array node contains any pins.
+
+    As different nodes get generated with different default pin values, we have a minimum cound to query against.
+    """
+    # Checks if node exists, else creates node
+    found_node = controller.get_graph().find_node_by_name(node_name)
+
+    # Do pins already exist on the node, if not then we will have to create them. Else we dont
+    existing_pins = found_node.get_pins()[0].get_sub_pins()
+
+    if len(existing_pins) > minimum_pins:
+        return True
+
+    return False

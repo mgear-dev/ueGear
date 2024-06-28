@@ -22,15 +22,15 @@ class SpineComponent(UEComponent):
 
         # Control Rig Inputs
         self.cr_inputs = {'construction_functions': ['parent'],
-                       'forward_functions': [],
-                       'backwards_functions': [],
-                       }
+                          'forward_functions': [],
+                          'backwards_functions': [],
+                          }
 
         # Control Rig Outputs
         self.cr_output = {'construction_functions': ['root'],
-                       'forward_functions': [],
-                       'backwards_functions': [],
-                       }
+                          'forward_functions': [],
+                          'backwards_functions': [],
+                          }
 
         # mGear
         self.inputs = []
@@ -101,7 +101,6 @@ class SpineComponent(UEComponent):
                                          self.metadata.fullname,
                                          False)
 
-
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
         Generates the Bone array node that will be utilised by control rig to drive the component
@@ -137,7 +136,7 @@ class SpineComponent(UEComponent):
         controller.add_link(f'{outpu_joint_node_name}.Items',
                             f'{construction_func_name}.joint_outputs')
 
-    def _init_master_joint_node(self, controller, node_name:str, bones):
+    def _init_master_joint_node(self, controller, node_name: str, bones):
         """Create the master bones node that will drive the creation of the joint, and be driven by the fk joints
         """
 
@@ -150,7 +149,7 @@ class SpineComponent(UEComponent):
             unreal.Vector2D(-54.908936, 204.649109),
             node_name)
 
-        pin_index = 0 # stores the current pin index that is being updated
+        pin_index = 0  # stores the current pin index that is being updated
 
         for bone in bones:
             bone_name = str(bone.key.name)
@@ -166,8 +165,7 @@ class SpineComponent(UEComponent):
 
             pin_index += 1
 
-
-    def _init_output_joints(self, controller:unreal.RigVMController, bones):
+    def _init_output_joints(self, controller: unreal.RigVMController, bones):
         """Connects all the required joins to the output locations"""
 
         print(" - Init Output Joints")
@@ -183,21 +181,20 @@ class SpineComponent(UEComponent):
         # Checks if node exists, else creates node
         found_node = controller.get_graph().find_node_by_name(array_node_name)
 
-
         if not found_node:
             # Create the ItemArray node
             found_node = controller.add_unit_node_from_struct_path(
-                                                    '/Script/ControlRig.RigUnit_ItemArray',
-                                                    'Execute',
-                                                    unreal.Vector2D(0.0, 0.0),
-                                                    array_node_name)
+                '/Script/ControlRig.RigUnit_ItemArray',
+                'Execute',
+                unreal.Vector2D(500.0, 500.0),
+                array_node_name)
 
         # Do pins already exist on the node, if not then we will have to create them. Else we dont
-        existing_pins = found_node.get_pins()
+        existing_pins = found_node.get_pins()[0].get_sub_pins()
+
         generate_new_pins = True
         if len(existing_pins) > 0:
             generate_new_pins = False
-
 
         pin_index = 0
 
@@ -229,20 +226,39 @@ class SpineComponent(UEComponent):
         """Updates the transform data for the controls generated, with the data from the mgear json
         file.
         """
+        import ueGear.controlrig.manager as ueMan
 
-        print("Populate Control Transforms: Still need to set this up")
-        return
+        names_node = ueMan.create_array_node("control_names", controller)
+        trans_node = ueMan.create_array_node("control_transforms", controller)
 
-        control_name = self.metadata.controls[0]
-        control_transform = self.metadata.control_transforms[control_name]
+        name_pins_exist = ueMan.array_node_has_pins(names_node, controller)
+        trans_pins_exist = ueMan.array_node_has_pins(trans_node, controller)
 
-        const_func = self.nodes['construction_functions'][0].get_name()
+        pin_index = 0
 
-        quat = control_transform.rotation
-        pos = control_transform.translation
+        for control_name in self.metadata.controls:
+            control_transform = self.metadata.control_transforms[control_name]
 
-        controller.set_pin_default_value(f"{const_func}.control_world_transform",
-            f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
-            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
-            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-            True)
+            if not name_pins_exist:
+                controller.insert_array_pin(f'{names_node}.Values', -1, '')
+            if not trans_pins_exist:
+                controller.insert_array_pin(f'{trans_node}.Values', -1, '')
+
+            quat = control_transform.rotation
+            pos = control_transform.translation
+
+            controller.set_pin_default_value(f'{names_node}.Values.{pin_index}', control_name, False)
+
+            controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
+                                             f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                                             f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
+                                             f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
+                                             True)
+
+            pin_index += 1
+
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{trans_node}.Array',
+                            f'{construction_func_name}.fk_world_transforms')
+        controller.add_link(f'{names_node}.Array',
+                            f'{construction_func_name}.fk_world_keys')
