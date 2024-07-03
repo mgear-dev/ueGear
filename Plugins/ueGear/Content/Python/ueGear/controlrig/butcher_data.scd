@@ -15,7 +15,7 @@
         "importSkin": false,
         "skin": "",
         "data_collector": true,
-        "data_collector_path": "C:/SIMON_WORK/mGear/ueGear_ControlRig/butcherBuildData_v002.scd",
+        "data_collector_path": "C:/Users/Simon/test_butcher.scd",
         "data_collector_embedded": false,
         "data_collector_embedded_custom_joint": "",
         "L_color_fk": 6,
@@ -244,7 +244,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "global_C0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "global_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         },
@@ -405,7 +414,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "local_C0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "local_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": "global_C0",
             "parent_localName": "root"
         },
@@ -580,8 +598,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "root_C0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "root_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "local_C0",
             "parent_localName": "root"
@@ -743,7 +770,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "body_C0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "body_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": "root_C0",
             "parent_localName": "root"
         },
@@ -3134,11 +3170,26 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "spine_C0_0_cnx",
+                "spineTop": "spine_C0_1_cnx",
+                "chest": "spine_C0_1_cnx",
+                "tan0": "spine_C0_fk1_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "tan0": 1,
                 "spineTop": -2,
                 "chest": -1
+            },
+            "controlRelatives": {
+                "root": "spine_C0_fk0_ctl",
+                "spineTop": "spine_C0_fk2_ctl",
+                "chest": "spine_C0_chest_ctl"
+            },
+            "aliasRelatives": {
+                "root": "pelvis",
+                "chest": "chest"
             },
             "parent_fullName": "body_C0",
             "parent_localName": "root"
@@ -3950,6 +4001,14 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "spine_C0_1_cnx|neck_C0_root",
+                "tan1": "spine_C0_1_cnx|neck_C0_root",
+                "tan2": "neck_C0_head_ctl",
+                "neck": "neck_C0_head_ctl",
+                "head": "neck_C0_head_ctl",
+                "eff": "neck_C0_head_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "tan1": 0,
@@ -3957,6 +4016,20 @@
                 "neck": 2,
                 "head": 2,
                 "eff": 2
+            },
+            "controlRelatives": {
+                "root": "neck_C0_fk0_ctl",
+                "tan1": "neck_C0_head_ctl",
+                "tan2": "neck_C0_head_ctl",
+                "neck": "neck_C0_head_ctl",
+                "head": "neck_C0_head_ctl",
+                "eff": "neck_C0_head_ctl"
+            },
+            "aliasRelatives": {
+                "tan1": "root",
+                "tan2": "head",
+                "neck": "head",
+                "eff": "head"
             },
             "parent_fullName": "spine_C0",
             "parent_localName": "chest"
@@ -6950,7 +7023,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "face_C0_jnt_lvl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "face_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": "neck_C0",
             "parent_localName": "eff"
         },
@@ -7503,9 +7585,21 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "eye_L0_fk_ctl",
+                "look": "eye_L0_Over_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "look": 1
+            },
+            "controlRelatives": {
+                "root": "eye_L0_fk_ctl",
+                "look": "eye_L0_Over_ctl"
+            },
+            "aliasRelatives": {
+                "root": "eye",
+                "look": "eyeOver"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -8059,9 +8153,21 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "eye_R0_fk_ctl",
+                "look": "eye_R0_Over_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "look": 1
+            },
+            "controlRelatives": {
+                "root": "eye_R0_fk_ctl",
+                "look": "eye_R0_Over_ctl"
+            },
+            "aliasRelatives": {
+                "root": "eye",
+                "look": "eyeOver"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -8668,6 +8774,13 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "face_C0_jnt_lvl|mouth_C0_root",
+                "jaw": "mouth_C0_jawLow_rot",
+                "rotcenter": "mouth_C0_jawLow_rot",
+                "lipup": "mouth_C0_lipup_ctl",
+                "liplow": "mouth_C0_liplow_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "jaw": 0,
@@ -8675,6 +8788,14 @@
                 "lipup": 1,
                 "liplow": 2
             },
+            "controlRelatives": {
+                "root": "face_C0_ctl",
+                "jaw": "mouth_C0_jaw_ctl",
+                "rotcenter": "mouth_C0_jaw_ctl",
+                "lipup": "mouth_C0_lipup_ctl",
+                "liplow": "mouth_C0_liplow_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "face_C0",
             "parent_localName": "root"
         },
@@ -9080,8 +9201,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "lowerEyelid_L0_jnt_lvl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "lowerEyelid_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -9488,8 +9618,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "upperEyelid_L0_jnt_lvl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "upperEyelid_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -9938,8 +10077,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "eyebrow_L0_jnt_lvl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "eyebrow_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -10388,8 +10536,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "eyebrow_R0_jnt_lvl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "eyebrow_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -10551,7 +10708,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "eyeAim_C0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "eyeAim_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
         },
@@ -10890,8 +11056,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "lowerEyelid_R0_jnt_lvl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "lowerEyelid_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -11298,8 +11473,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "upperEyelid_R0_jnt_lvl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "upperEyelid_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "face_C0",
             "parent_localName": "root"
@@ -11770,9 +11954,21 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "shoulder_L0_ctl",
+                "tip": "shoulder_L0_orbit_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "tip": 0
+            },
+            "controlRelatives": {
+                "root": "shoulder_L0_ctl",
+                "tip": "shoulder_L0_orbit_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl",
+                "tip": "orbit"
             },
             "parent_fullName": "spine_C0",
             "parent_localName": "chest"
@@ -14624,12 +14820,25 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "arm_L0_div0_loc",
+                "elbow": "arm_L0_div3_loc",
+                "wrist": "arm_L0_div5_loc",
+                "eff": "arm_L0_eff_loc"
+            },
             "jointRelatives": {
                 "root": 0,
                 "elbow": 3,
                 "wrist": 5,
                 "eff": -1
             },
+            "controlRelatives": {
+                "root": "arm_L0_fk0_ctl",
+                "elbow": "arm_L0_fk1_ctl",
+                "wrist": "arm_L0_fk2_ctl",
+                "eff": "arm_L0_fk2_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "shoulder_L0",
             "parent_localName": "tip"
         },
@@ -15199,10 +15408,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "thumb_L0_fk0_ctl",
+                "0_loc": "thumb_L0_fk1_ctl",
+                "1_loc": "thumb_L0_fk2_ctl",
+                "2_loc": "thumb_L0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "thumb_L0_fk0_ctl",
+                "0_loc": "thumb_L0_fk1_ctl",
+                "1_loc": "thumb_L0_fk2_ctl",
+                "2_loc": "thumb_L0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "arm_L0",
@@ -16108,12 +16334,25 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "meta_L0_0_npo|meta_L0_0_loc",
+                "0_loc": "meta_L0_1_npo|meta_L0_1_loc",
+                "1_loc": "meta_L0_2_npo|meta_L0_2_loc",
+                "2_loc": "meta_L0_3_loc"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
                 "2_loc": 3
             },
+            "controlRelatives": {
+                "root": "meta_L0_ctl",
+                "0_loc": "meta_L0_ctl",
+                "1_loc": "meta_L0_ctl",
+                "2_loc": "meta_L0_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "arm_L0",
             "parent_localName": "eff"
         },
@@ -16683,10 +16922,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_L3_fk0_ctl",
+                "0_loc": "finger_L3_fk1_ctl",
+                "1_loc": "finger_L3_fk2_ctl",
+                "2_loc": "finger_L3_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_L3_fk0_ctl",
+                "0_loc": "finger_L3_fk1_ctl",
+                "1_loc": "finger_L3_fk2_ctl",
+                "2_loc": "finger_L3_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_L0",
@@ -17258,10 +17514,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_L2_fk0_ctl",
+                "0_loc": "finger_L2_fk1_ctl",
+                "1_loc": "finger_L2_fk2_ctl",
+                "2_loc": "finger_L2_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_L2_fk0_ctl",
+                "0_loc": "finger_L2_fk1_ctl",
+                "1_loc": "finger_L2_fk2_ctl",
+                "2_loc": "finger_L2_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_L0",
@@ -17833,10 +18106,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_L1_fk0_ctl",
+                "0_loc": "finger_L1_fk1_ctl",
+                "1_loc": "finger_L1_fk2_ctl",
+                "2_loc": "finger_L1_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_L1_fk0_ctl",
+                "0_loc": "finger_L1_fk1_ctl",
+                "1_loc": "finger_L1_fk2_ctl",
+                "2_loc": "finger_L1_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_L0",
@@ -18408,10 +18698,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_L0_fk0_ctl",
+                "0_loc": "finger_L0_fk1_ctl",
+                "1_loc": "finger_L0_fk2_ctl",
+                "2_loc": "finger_L0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_L0_fk0_ctl",
+                "0_loc": "finger_L0_fk1_ctl",
+                "1_loc": "finger_L0_fk2_ctl",
+                "2_loc": "finger_L0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_L0",
@@ -18883,9 +19190,21 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "shoulder_R0_ctl",
+                "tip": "shoulder_R0_orbit_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "tip": 0
+            },
+            "controlRelatives": {
+                "root": "shoulder_R0_ctl",
+                "tip": "shoulder_R0_orbit_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl",
+                "tip": "orbit"
             },
             "parent_fullName": "spine_C0",
             "parent_localName": "chest"
@@ -21737,12 +22056,25 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "arm_R0_div0_loc",
+                "elbow": "arm_R0_div3_loc",
+                "wrist": "arm_R0_div5_loc",
+                "eff": "arm_R0_eff_loc"
+            },
             "jointRelatives": {
                 "root": 0,
                 "elbow": 3,
                 "wrist": 5,
                 "eff": -1
             },
+            "controlRelatives": {
+                "root": "arm_R0_fk0_ctl",
+                "elbow": "arm_R0_fk1_ctl",
+                "wrist": "arm_R0_fk2_ctl",
+                "eff": "arm_R0_fk2_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "shoulder_R0",
             "parent_localName": "tip"
         },
@@ -22312,10 +22644,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "thumb_R0_fk0_ctl",
+                "0_loc": "thumb_R0_fk1_ctl",
+                "1_loc": "thumb_R0_fk2_ctl",
+                "2_loc": "thumb_R0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "thumb_R0_fk0_ctl",
+                "0_loc": "thumb_R0_fk1_ctl",
+                "1_loc": "thumb_R0_fk2_ctl",
+                "2_loc": "thumb_R0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "arm_R0",
@@ -23221,12 +23570,25 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "meta_R0_0_npo|meta_R0_0_loc",
+                "0_loc": "meta_R0_1_npo|meta_R0_1_loc",
+                "1_loc": "meta_R0_2_npo|meta_R0_2_loc",
+                "2_loc": "meta_R0_3_loc"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
                 "2_loc": 3
             },
+            "controlRelatives": {
+                "root": "meta_R0_ctl",
+                "0_loc": "meta_R0_ctl",
+                "1_loc": "meta_R0_ctl",
+                "2_loc": "meta_R0_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "arm_R0",
             "parent_localName": "eff"
         },
@@ -23796,10 +24158,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_R3_fk0_ctl",
+                "0_loc": "finger_R3_fk1_ctl",
+                "1_loc": "finger_R3_fk2_ctl",
+                "2_loc": "finger_R3_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_R3_fk0_ctl",
+                "0_loc": "finger_R3_fk1_ctl",
+                "1_loc": "finger_R3_fk2_ctl",
+                "2_loc": "finger_R3_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_R0",
@@ -24371,10 +24750,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_R2_fk0_ctl",
+                "0_loc": "finger_R2_fk1_ctl",
+                "1_loc": "finger_R2_fk2_ctl",
+                "2_loc": "finger_R2_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_R2_fk0_ctl",
+                "0_loc": "finger_R2_fk1_ctl",
+                "1_loc": "finger_R2_fk2_ctl",
+                "2_loc": "finger_R2_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_R0",
@@ -24946,10 +25342,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_R1_fk0_ctl",
+                "0_loc": "finger_R1_fk1_ctl",
+                "1_loc": "finger_R1_fk2_ctl",
+                "2_loc": "finger_R1_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_R1_fk0_ctl",
+                "0_loc": "finger_R1_fk1_ctl",
+                "1_loc": "finger_R1_fk2_ctl",
+                "2_loc": "finger_R1_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_R0",
@@ -25521,10 +25934,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "finger_R0_fk0_ctl",
+                "0_loc": "finger_R0_fk1_ctl",
+                "1_loc": "finger_R0_fk2_ctl",
+                "2_loc": "finger_R0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "finger_R0_fk0_ctl",
+                "0_loc": "finger_R0_fk1_ctl",
+                "1_loc": "finger_R0_fk2_ctl",
+                "2_loc": "finger_R0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "meta_R0",
@@ -26096,10 +26526,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "apronSide_L0_fk0_ctl",
+                "0_loc": "apronSide_L0_fk1_ctl",
+                "1_loc": "apronSide_L0_fk2_ctl",
+                "2_loc": "apronSide_L0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "apronSide_L0_fk0_ctl",
+                "0_loc": "apronSide_L0_fk1_ctl",
+                "1_loc": "apronSide_L0_fk2_ctl",
+                "2_loc": "apronSide_L0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "spine_C0",
@@ -26671,10 +27118,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "apronFront_L0_fk0_ctl",
+                "0_loc": "apronFront_L0_fk1_ctl",
+                "1_loc": "apronFront_L0_fk2_ctl",
+                "2_loc": "apronFront_L0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "apronFront_L0_fk0_ctl",
+                "0_loc": "apronFront_L0_fk1_ctl",
+                "1_loc": "apronFront_L0_fk2_ctl",
+                "2_loc": "apronFront_L0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "spine_C0",
@@ -29488,11 +29952,26 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "leg_L0_div0_loc",
+                "knee": "leg_L0_div3_loc",
+                "ankle": "leg_L0_div5_loc",
+                "eff": "leg_L0_end_ref"
+            },
             "jointRelatives": {
                 "root": 0,
                 "knee": 3,
                 "ankle": 6,
                 "eff": 6
+            },
+            "controlRelatives": {
+                "root": "leg_L0_fk0_ctl",
+                "knee": "leg_L0_fk1_ctl",
+                "ankle": "leg_L0_ik_ctl",
+                "eff": "leg_L0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "eff": "foot"
             },
             "parent_fullName": "spine_C0",
             "parent_localName": "root"
@@ -30877,6 +31356,14 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "foot_L0_fk0_ctl",
+                "heel": "foot_L0_fk0_ctl",
+                "inpivot": "foot_L0_fk0_ctl",
+                "outpivot": "foot_L0_fk0_ctl",
+                "0_loc": "foot_L0_fk0_ctl",
+                "1_loc": "foot_L0_fk0_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "heel": 0,
@@ -30885,6 +31372,13 @@
                 "0_loc": 0,
                 "1_loc": 0
             },
+            "controlRelatives": {
+                "root": "foot_L0_fk0_ctl",
+                "heel": "foot_L0_fk0_ctl",
+                "inpivot": "foot_L0_fk0_ctl",
+                "outpivot": "foot_L0_fk0_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "leg_L0",
             "parent_localName": "ankle"
         },
@@ -31454,10 +31948,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "apronFront_R0_fk0_ctl",
+                "0_loc": "apronFront_R0_fk1_ctl",
+                "1_loc": "apronFront_R0_fk2_ctl",
+                "2_loc": "apronFront_R0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "apronFront_R0_fk0_ctl",
+                "0_loc": "apronFront_R0_fk1_ctl",
+                "1_loc": "apronFront_R0_fk2_ctl",
+                "2_loc": "apronFront_R0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "spine_C0",
@@ -32029,10 +32540,27 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "apronSide_R0_fk0_ctl",
+                "0_loc": "apronSide_R0_fk1_ctl",
+                "1_loc": "apronSide_R0_fk2_ctl",
+                "2_loc": "apronSide_R0_fk2_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "0_loc": 1,
                 "1_loc": 2,
+                "2_loc": 2
+            },
+            "controlRelatives": {
+                "root": "apronSide_R0_fk0_ctl",
+                "0_loc": "apronSide_R0_fk1_ctl",
+                "1_loc": "apronSide_R0_fk2_ctl",
+                "2_loc": "apronSide_R0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "0_ctl": 1,
+                "1_ctl": 2,
                 "2_loc": 2
             },
             "parent_fullName": "spine_C0",
@@ -34846,11 +35374,26 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "leg_R0_div0_loc",
+                "knee": "leg_R0_div3_loc",
+                "ankle": "leg_R0_div5_loc",
+                "eff": "leg_R0_end_ref"
+            },
             "jointRelatives": {
                 "root": 0,
                 "knee": 3,
                 "ankle": 6,
                 "eff": 6
+            },
+            "controlRelatives": {
+                "root": "leg_R0_fk0_ctl",
+                "knee": "leg_R0_fk1_ctl",
+                "ankle": "leg_R0_ik_ctl",
+                "eff": "leg_R0_fk2_ctl"
+            },
+            "aliasRelatives": {
+                "eff": "foot"
             },
             "parent_fullName": "spine_C0",
             "parent_localName": "root"
@@ -36235,6 +36778,14 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "foot_R0_fk0_ctl",
+                "heel": "foot_R0_fk0_ctl",
+                "inpivot": "foot_R0_fk0_ctl",
+                "outpivot": "foot_R0_fk0_ctl",
+                "0_loc": "foot_R0_fk0_ctl",
+                "1_loc": "foot_R0_fk0_ctl"
+            },
             "jointRelatives": {
                 "root": 0,
                 "heel": 0,
@@ -36243,6 +36794,13 @@
                 "0_loc": 0,
                 "1_loc": 0
             },
+            "controlRelatives": {
+                "root": "foot_R0_fk0_ctl",
+                "heel": "foot_R0_fk0_ctl",
+                "inpivot": "foot_R0_fk0_ctl",
+                "outpivot": "foot_R0_fk0_ctl"
+            },
+            "aliasRelatives": {},
             "parent_fullName": "leg_R0",
             "parent_localName": "ankle"
         },
@@ -36483,8 +37041,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "knife_C0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "knife_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "root_C0",
             "parent_localName": "root"
@@ -36726,8 +37293,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_hand_root_C0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_hand_root_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "root_C0",
             "parent_localName": "root"
@@ -36969,8 +37545,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_hand_gun_C0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_hand_gun_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "ik_hand_root_C0",
             "parent_localName": "root"
@@ -37212,8 +37797,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_hand_L0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_hand_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "ik_hand_gun_C0",
             "parent_localName": "root"
@@ -37455,8 +38049,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_hand_R0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_hand_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "ik_hand_gun_C0",
             "parent_localName": "root"
@@ -37698,8 +38301,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_foot_root_C0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_foot_root_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "root_C0",
             "parent_localName": "root"
@@ -37941,8 +38553,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_foot_L0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_foot_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "ik_foot_root_C0",
             "parent_localName": "root"
@@ -38184,8 +38805,17 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "ik_foot_R0_ctl"
+            },
             "jointRelatives": {
                 "root": 0
+            },
+            "controlRelatives": {
+                "root": "ik_foot_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
             },
             "parent_fullName": "ik_foot_root_C0",
             "parent_localName": "root"
@@ -38622,7 +39252,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "armUI_L0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "armUI_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         },
@@ -40258,7 +40897,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "legUI_R0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "legUI_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         },
@@ -40694,7 +41342,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "armUI_R0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "armUI_R0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         },
@@ -40859,7 +41516,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "spineUI_C0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "spineUI_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         },
@@ -42495,7 +43161,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "legUI_L0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "legUI_L0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         },
@@ -42911,7 +43586,16 @@
                     1.0
                 ]
             },
+            "relatives": {
+                "root": "faceUI_C0_ctl"
+            },
             "jointRelatives": {},
+            "controlRelatives": {
+                "root": "faceUI_C0_ctl"
+            },
+            "aliasRelatives": {
+                "root": "ctl"
+            },
             "parent_fullName": null,
             "parent_localName": null
         }

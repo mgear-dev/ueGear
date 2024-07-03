@@ -6,7 +6,6 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 from ueGear.controlrig.components.base_component import UEComponent
 
-
 class SpineComponent(UEComponent):
     name = "test_Spine"
     mgear_component = "EPIC_spine_02"

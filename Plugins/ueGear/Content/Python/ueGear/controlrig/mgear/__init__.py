@@ -1,7 +1,6 @@
 import json
 
 import unreal
-
 from .component import mgComponent
 from .rig import mgRig
 
@@ -25,14 +24,14 @@ def _conversion_matrix_space(matrix: unreal.Matrix) -> unreal.Transform:
 
     returns a transform
     """
-    convertion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
-                                   y_plane=[0, 0, -1, 0],
-                                   z_plane=[0, 1, 0, 0],
-                                   w_plane=[0, 0, 0, 1]
+    conversion_mtx = unreal.Matrix(x_plane= [1, 0,  0, 0],
+                                   y_plane= [0, 0, -1, 0],
+                                   z_plane= [0, 1,  0, 0],
+                                   w_plane= [0, 0,  0, 1]
                                    )
 
 
-    corrected_mtx = convertion_mtx * matrix * convertion_mtx.get_inverse()
+    corrected_mtx = conversion_mtx * matrix * conversion_mtx.get_inverse()
     # update Rotation
     euler = matrix.transform().rotation.euler()
     quat = unreal.Quat()
@@ -91,6 +90,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             mgear_component.controls.append(ctrl["Name"])
 
             # Checks the controls transform data and records it as a Unreal.Transform
+            # Convert the maya to world transform
 
             world_pos = ctrl["WorldPosition"]
             world_rot = ctrl["WorldRotation"]
@@ -110,7 +110,8 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             if mgear_component.control_transforms is None:
                 mgear_component.control_transforms = {}
 
-            mgear_component.control_transforms[ctrl["Name"]] = ue_trans
+            # mgear_component.control_transforms[ctrl["Name"]] = ue_trans
+            mgear_component.control_transforms[ctrl["Name"]] = maya_mtx.transform()
 
         # Stores all the joints associated with this component
         for jnt in joints:
