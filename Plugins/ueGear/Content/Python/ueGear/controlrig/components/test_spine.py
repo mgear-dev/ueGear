@@ -230,6 +230,15 @@ class SpineComponent(UEComponent):
         names_node = ueMan.create_array_node("control_names", controller)
         trans_node = ueMan.create_array_node("control_transforms", controller)
 
+        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
+        # values
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{trans_node}.Array',
+                            f'{construction_func_name}.fk_world_transforms')
+        controller.add_link(f'{names_node}.Array',
+                            f'{construction_func_name}.fk_world_keys')
+
+        # Checks the pins
         name_pins_exist = ueMan.array_node_has_pins(names_node, controller)
         trans_pins_exist = ueMan.array_node_has_pins(trans_node, controller)
 
@@ -239,25 +248,25 @@ class SpineComponent(UEComponent):
             control_transform = self.metadata.control_transforms[control_name]
 
             if not name_pins_exist:
-                controller.insert_array_pin(f'{names_node}.Values', -1, '')
+                controller.insert_array_pin(f'{names_node}.Values', -1, '',
+                                             print_python_command=True)
             if not trans_pins_exist:
-                controller.insert_array_pin(f'{trans_node}.Values', -1, '')
+                controller.insert_array_pin(f'{trans_node}.Values', -1, '',
+                                             print_python_command=True)
 
             quat = control_transform.rotation
             pos = control_transform.translation
 
-            controller.set_pin_default_value(f'{names_node}.Values.{pin_index}', control_name, False)
+            controller.set_pin_default_value(f'{names_node}.Values.{pin_index}',
+                                             control_name,
+                                             False,
+                                             print_python_command=True)
 
             controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
                                              f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
                                              f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
                                              f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-                                             True)
+                                             True,
+                                             print_python_command=True)
 
             pin_index += 1
-
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{trans_node}.Array',
-                            f'{construction_func_name}.fk_world_transforms')
-        controller.add_link(f'{names_node}.Array',
-                            f'{construction_func_name}.fk_world_keys')
