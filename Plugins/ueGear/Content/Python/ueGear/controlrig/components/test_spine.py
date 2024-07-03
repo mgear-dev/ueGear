@@ -13,8 +13,8 @@ class SpineComponent(UEComponent):
     def __init__(self):
         super().__init__()
 
-        self.functions = {'construction_functions': ['construct_FK_hierarchy'],
-                          'forward_functions': ['forward_FK_hierarchy'],
+        self.functions = {'construction_functions': ['construct_FK_spine'],
+                          'forward_functions': ['forward_FK_spine'],
                           'backwards_functions': [],
                           }
         self.cr_variables = {}
