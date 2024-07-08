@@ -171,7 +171,7 @@ class UEComponent(object):
         """
         pass
 
-    def init_input_data(self):
+    def init_input_data(self, controller: unreal.RigVMController):
         """OVERLOAD THIS METHOD
 
         This method should handle all input node data population

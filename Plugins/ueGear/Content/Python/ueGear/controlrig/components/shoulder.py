@@ -92,12 +92,10 @@ class ShoulderComponent(UEComponent):
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
-        Generates the Bone array node that will be utilised by control rig to drive the component
+        populates the bone shoulder joint node
         """
 
-        return
-
-        if bones is None or len(bones) < 3:
+        if bones is None or len(bones) < 1:
             unreal.log_error("[Bone Populate] Failed no Bones found")
             return
         if controller is None:
@@ -107,122 +105,56 @@ class ShoulderComponent(UEComponent):
         print(" Populate Bones")
         print("-----------------")
 
-        # Unique name for this skeleton node array
-        array_node_name = f"{self.metadata.fullname}_RigUnit_ItemArray"
+        bone_name = bones[0].key.name
 
-        # node doesn't exists, create the joint node
-        if not controller.get_graph().find_node_by_name(array_node_name):
-            self._init_master_joint_node(controller, array_node_name, bones)
+        construction_node = self.nodes["construction_functions"][0]
+        forward_node = self.nodes["forward_functions"][0]
 
-            # Connects the Item Array Node to the functions.
-            for evaluation_path in self.nodes.keys():
-                for function_node in self.nodes[evaluation_path]:
-                    print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
-                    controller.add_link(f'{array_node_name}.Items',
-                                        f'{function_node.get_name()}.Joints')
+        for function in [construction_node, forward_node]:
+            construction_node_name = function.get_name()
 
-        outpu_joint_node_name = self._init_output_joints(controller, bones)
-
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
-
-        controller.add_link(f'{outpu_joint_node_name}.Items',
-                            f'{construction_func_name}.joint_outputs')
-
-    def _init_master_joint_node(self, controller, node_name: str, bones):
-        """Create the master bones node that will drive the creation of the joint, and be driven by the fk joints
-        """
-
-        print(" - Init Master Joints")
-
-        return
-
-        # Creates an Item Array Node to the control rig
-        controller.add_unit_node_from_struct_path(
-            '/Script/ControlRig.RigUnit_ItemArray',
-            'Execute',
-            unreal.Vector2D(-54.908936, 204.649109),
-            node_name)
-
-        pin_index = 0  # stores the current pin index that is being updated
-
-        for bone in bones:
-            bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
-
-            # Populates the Item Array Node
-            controller.insert_array_pin(f'{node_name}.Items', -1, '')
-            controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
-                                             f'(Type=Bone,Name="{bone_name}")',
-                                             True)
-            controller.set_pin_expansion(f'{node_name}.Items.{str(pin_index)}', True)
-            controller.set_pin_expansion(f'{node_name}.Items', True)
-
-            pin_index += 1
-
-    def _init_output_joints(self, controller: unreal.RigVMController, bones):
-        """Connects all the required joins to the output locations"""
-
-        print(" - Init Output Joints")
-
-        return
-
-        # Unique name for this skeleton output array
-        array_node_name = f"{self.metadata.fullname}_OutputSkeleton_RigUnit_ItemArray"
-
-        # Create a lookup table of the bones, to speed up interactions
-        bone_dict = {}
-        for bone in bones:
-            bone_dict[str(bone.key.name)] = bone
-
-        # Checks if node exists, else creates node
-        found_node = controller.get_graph().find_node_by_name(array_node_name)
-
-        if not found_node:
-            # Create the ItemArray node
-            found_node = controller.add_unit_node_from_struct_path(
-                '/Script/ControlRig.RigUnit_ItemArray',
-                'Execute',
-                unreal.Vector2D(500.0, 500.0),
-                array_node_name)
-
-        # Do pins already exist on the node, if not then we will have to create them. Else we dont
-        existing_pins = found_node.get_pins()[0].get_sub_pins()
-
-        generate_new_pins = True
-        if len(existing_pins) > 0:
-            generate_new_pins = False
-
-        pin_index = 0
-
-        # Loops over all the joint relatives to setup the array
-        for jnt_name, jnt_index in self.metadata.joint_relatives.items():
-            joint_name = self.metadata.joints[jnt_index]
-            found_bone = bone_dict.get(joint_name, None)
-
-            if found_bone is None:
-                unreal.log_error(f"[Init Output Joints] Cannot find bone {joint_name}")
-                continue
-
-            # No pins are found then we add new pins on the array to populate
-            if generate_new_pins:
-                # Add new Item to array
-                controller.insert_array_pin(f'{array_node_name}.Items', -1, '')
-
-            bone_name = joint_name
-            # Set Item to be of bone type
-            controller.set_pin_default_value(f'{array_node_name}.Items.{pin_index}.Type', 'Bone', False)
-            # Set the pin to be a specific bone name
-            controller.set_pin_default_value(f'{array_node_name}.Items.{pin_index}.Name', bone_name, False)
-
-            pin_index += 1
-
-        return array_node_name
+            controller.set_pin_default_value(
+                f'{construction_node_name}.shoulder_jnt.Name', bone_name, False)
+            controller.set_pin_default_value(
+                f'{construction_node_name}.shoulder_jnt.Type', 'Bone', False)
 
 
-    def init_input_data(self):
+    def init_input_data(self, controller: unreal.RigVMController):
 
-        # TODO: Set colour for side
-        # TODO: Set shoulder Joint to drive
+        self._set_side_colour(controller)
+
+
+    def _set_side_colour(self, controller: unreal.RigVMController):
+        """Sets the controls default colour depending on the side"""
+
+        construction_node = self.nodes["construction_functions"][0]
+        func_name = construction_node.get_name()
+
+        # Sets the colour channels to be 0
+        for channel in ["R","G","B"]:
+            controller.set_pin_default_value(
+                f'{func_name}.colour.{channel}',
+                '0.000000',
+                False)
+
+        if self.metadata.side == "L":
+            controller.set_pin_default_value(
+                f'{func_name}.colour.B',
+                '1.000000',
+                False)
+
+        elif self.metadata.side == "R":
+            controller.set_pin_default_value(
+                f'{func_name}.colour.G',
+                '1.000000',
+                False)
+
+        elif self.metadata.side == "M":
+            controller.set_pin_default_value(
+                f'{func_name}.colour.R',
+                '1.000000',
+                False)
+
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json
@@ -251,25 +183,31 @@ class ShoulderComponent(UEComponent):
             control_transform = self.metadata.control_transforms[control_name]
 
             if not name_pins_exist:
-                controller.insert_array_pin(f'{names_node}.Values', -1, '',
-                                             print_python_command=True)
+                found_node = controller.get_graph().find_node_by_name(names_node)
+                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls):
+                    controller.insert_array_pin(f'{names_node}.Values',
+                                                -1,
+                                                '')
             if not trans_pins_exist:
-                controller.insert_array_pin(f'{trans_node}.Values', -1, '',
-                                             print_python_command=True)
+                found_node = controller.get_graph().find_node_by_name(trans_node)
+                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls):
+                    controller.insert_array_pin(f'{trans_node}.Values',
+                                                -1,
+                                                '')
 
             quat = control_transform.rotation
             pos = control_transform.translation
 
             controller.set_pin_default_value(f'{names_node}.Values.{pin_index}',
                                              control_name,
-                                             False,
-                                             print_python_command=True)
+                                             False)
 
             controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
                                              f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
                                              f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
                                              f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-                                             True,
-                                             print_python_command=True)
+                                             True)
 
             pin_index += 1

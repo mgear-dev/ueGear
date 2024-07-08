@@ -168,7 +168,7 @@ class UEGearManager:
         # populate control positions
         ueg_comp.populate_control_transforms(bp_controller)
 
-        ueg_comp.init_input_data()
+        ueg_comp.init_input_data(bp_controller)
 
     def group_components(self):
         """Loops over all components that have been created and generates a comment box and positions them in a

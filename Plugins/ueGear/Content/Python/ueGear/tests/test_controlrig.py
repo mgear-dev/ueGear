@@ -163,7 +163,7 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component('body_C0', ignore_parent=True)
     gear_manager.build_component('spine_C0', ignore_parent=True)
     gear_manager.build_component('shoulder_L0', ignore_parent=True)
-    # gear_manager.build_component('shoulder_R0', ignore_parent=True)
+    gear_manager.build_component('shoulder_R0', ignore_parent=True)
 
     # At this point there are many components created, but not connected to one another
 

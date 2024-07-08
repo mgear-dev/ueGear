@@ -165,7 +165,10 @@ class SpineComponent(UEComponent):
             pin_index += 1
 
     def _init_output_joints(self, controller: unreal.RigVMController, bones):
-        """Connects all the required joins to the output locations"""
+        """Creates an array of joints that will be fed into the node and then drive the output pins
+
+        TODO: Refactor this, as it is no longer needed due to relatives now existsing in the json file.
+        """
 
         print(" - Init Output Joints")
 
