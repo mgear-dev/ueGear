@@ -166,9 +166,9 @@ class UEGearManager:
         ueg_comp.populate_bones(bones, bp_controller)
 
         # populate control positions
-        # TODO: Setting up control data population
-
         ueg_comp.populate_control_transforms(bp_controller)
+
+        ueg_comp.init_input_data()
 
     def group_components(self):
         """Loops over all components that have been created and generates a comment box and positions them in a

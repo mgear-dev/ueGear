@@ -1,9 +1,11 @@
 
 from types import ModuleType
 
-from ueGear.controlrig.components import base_component, test_fk, test_spine
+from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder
 
-__all__ = [base_component, test_fk, test_spine, 'lookup_mgear_component']
+__all__ = [base_component, test_fk, test_spine, shoulder,
+           'lookup_mgear_component'
+           ]
 
 
 def lookup_mgear_component(mg_component_name: str) -> list[base_component.UEComponent]:

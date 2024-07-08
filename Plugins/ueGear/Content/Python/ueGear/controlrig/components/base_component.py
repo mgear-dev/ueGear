@@ -164,6 +164,20 @@ class UEComponent(object):
         """
         pass
 
+    def populate_control_transforms(self):
+        """OVERLOAD THIS METHOD
+
+        This method should handle the population of control transforms and control names
+        """
+        pass
+
+    def init_input_data(self):
+        """OVERLOAD THIS METHOD
+
+        This method should handle all input node data population
+        """
+        pass
+
     # DEVELOPMENT!!!!!!!
 
     def __repr__(self):

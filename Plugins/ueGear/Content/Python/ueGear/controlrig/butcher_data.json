@@ -3174,7 +3174,7 @@
                 "root": "spine_C0_0_cnx",
                 "spineTop": "spine_C0_1_cnx",
                 "chest": "spine_C0_1_cnx",
-                "tan0": "spine_C0_fk1_ctl"
+                "tan0": "spine_C0_ fk1_ctl"
             },
             "jointRelatives": {
                 "root": 0,
