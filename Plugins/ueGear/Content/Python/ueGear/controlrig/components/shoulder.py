@@ -149,7 +149,7 @@ class ShoulderComponent(UEComponent):
                 '1.000000',
                 False)
 
-        elif self.metadata.side == "M":
+        elif self.metadata.side == "M" or self.metadata.side == "C":
             controller.set_pin_default_value(
                 f'{func_name}.colour.R',
                 '1.000000',

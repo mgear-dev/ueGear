@@ -113,4 +113,8 @@ Can only read data fom a dataset in constructino event > read user data
 
 ## Unreal 5.3
 
-- Control Rig Functions do not return the size when queried. 
+- Control Rig Functions do not return the size when queried.
+
+# TODO
+
+- [ ] Working on control generation and its orientation.

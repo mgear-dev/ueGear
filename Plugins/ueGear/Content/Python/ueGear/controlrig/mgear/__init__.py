@@ -8,6 +8,7 @@ from .rig import mgRig
 This container handles all the mGear component data that will be used to deserialise the `*.scd` file.
 """
 
+
 def load_json_file(file_path: str):
     """
     Load a JSON file using the json module.
@@ -24,12 +25,11 @@ def _conversion_matrix_space(matrix: unreal.Matrix) -> unreal.Transform:
 
     returns a transform
     """
-    conversion_mtx = unreal.Matrix(x_plane= [1, 0,  0, 0],
-                                   y_plane= [0, 0, -1, 0],
-                                   z_plane= [0, 1,  0, 0],
-                                   w_plane= [0, 0,  0, 1]
+    conversion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
+                                   y_plane=[0, 0, -1, 0],
+                                   z_plane=[0, 1, 0, 0],
+                                   w_plane=[0, 0, 0, 1]
                                    )
-
 
     corrected_mtx = conversion_mtx * matrix * conversion_mtx.get_inverse()
     # update Rotation
@@ -49,6 +49,7 @@ def _conversion_matrix_space(matrix: unreal.Matrix) -> unreal.Transform:
     trans.translation = pos
 
     return trans
+
 
 def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
     """
@@ -93,24 +94,21 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             # Convert the maya to world transform
 
             world_pos = ctrl["WorldPosition"]
-            world_rot = ctrl["WorldRotation"]
+            world_rot = ctrl["QuaternionWorldRotation"]
 
             ue_trans = unreal.Transform()
-            ue_quaternion = unreal.Quat()
+            ue_quaternion = unreal.Quat(world_rot[0], world_rot[1], world_rot[2], world_rot[3])
 
-            world_pos = [world_pos['x'], world_pos['y'], world_pos['z']] # reordering for orientation change
-            ue_quaternion.set_from_euler(world_rot)
+            world_pos = [world_pos['x'], world_pos['y'], world_pos['z']]  # reordering for orientation change
             ue_trans.set_editor_property("translation", world_pos)
             ue_trans.set_editor_property("rotation", ue_quaternion)
 
             # Converts from Maya space to Unreal Space
             maya_mtx = ue_trans.to_matrix()
-            ue_trans = _conversion_matrix_space(maya_mtx)
 
             if mgear_component.control_transforms is None:
                 mgear_component.control_transforms = {}
 
-            # mgear_component.control_transforms[ctrl["Name"]] = ue_trans
             mgear_component.control_transforms[ctrl["Name"]] = maya_mtx.transform()
 
         # Stores all the joints associated with this component
