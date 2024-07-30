@@ -109,30 +109,75 @@ class ArmComponent(UEComponent):
 
         # Ignore Twist bones as we have not implemented them yet in the Control Rig Node
         for b in bones:
-            if "twist" in str(b.key.name):
+            bone_name = str(b.key.name)
+            print(bone_name)
+            if "twist" in bone_name:
                 continue
             filtered_bones.append(b)
 
         # Unique name for this skeleton node array
         array_node_name = f"{self.metadata.fullname}_bones_RigUnit_ItemArray"
+        upper_bone_node_name = f"{self.metadata.fullname}_upper_RigUnit_ItemArray"
+        mid_bone_node_name = f"{self.metadata.fullname}_mid_RigUnit_ItemArray"
+        lower_bone_node_name = f"{self.metadata.fullname}_forward_lower_RigUnit_ItemArray"
+
+        # We have to create another At function for the construction node, as nodes cannot be connected on both
+        # construction and forward streams
+        con_lower_bone_node_name = f"{self.metadata.fullname}_construction_lower_RigUnit_ItemArray"
+
+        individual_bone_node_names = [upper_bone_node_name,
+                                      mid_bone_node_name,
+                                      lower_bone_node_name,
+                                      con_lower_bone_node_name]
 
         # node doesn't exists, create the joint node
         if not controller.get_graph().find_node_by_name(array_node_name):
             self._init_master_joint_node(controller, array_node_name, filtered_bones)
 
-        #     # Connects the Item Array Node to the functions.
-        #     for evaluation_path in self.nodes.keys():
-        #         for function_node in self.nodes[evaluation_path]:
-        #             print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
-        #             controller.add_link(f'{array_node_name}.Items',
-        #                                 f'{function_node.get_name()}.Joints')
-        #
-        # outpu_joint_node_name = self._init_output_joints(controller, bones)
-        #
-        # construction_func_name = self.nodes["construction_functions"][0].get_name()
-        #
-        # controller.add_link(f'{outpu_joint_node_name}.Items',
-        #                     f'{construction_func_name}.joint_outputs')
+        for idx, individual_index_node in enumerate(individual_bone_node_names):
+            if not controller.get_graph().find_node_by_name(individual_index_node):
+                controller.add_template_node('DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+                                                unreal.Vector2D(3500, 800),
+                                                individual_index_node
+                                             )
+
+                controller.add_link(f'{array_node_name}.Items',
+                                    f'{individual_index_node}.Array'
+                                    )
+                # assigns the last bone in the chain to both lower_bone functions
+                if idx > 2:
+                    idx = 2
+
+                controller.set_pin_default_value(
+                    f'{individual_index_node}.Index',
+                    str(idx),
+                    False
+                )
+
+        # Connects the joint node to the Construction function
+
+        for function_node in self.nodes["construction_functions"]:
+            print(f"  Creating Construction Connection:   {array_node_name}.Items >> {function_node.get_name()}.fk_joints")
+            controller.add_link(f'{array_node_name}.Items',
+                                f'{function_node.get_name()}.fk_joints')
+
+            controller.add_link(f'{con_lower_bone_node_name}.Element',
+                                f'{function_node.get_name()}.effector_joint')
+
+        # Connects the joint node to the Forward function
+
+        for function_node in self.nodes["forward_functions"]:
+            print(f"  Creating Forward Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
+
+            controller.add_link(f'{upper_bone_node_name}.Element',
+                                f'{function_node.get_name()}.top_bone')
+
+            controller.add_link(f'{mid_bone_node_name}.Element',
+                                f'{function_node.get_name()}.mid_bone')
+
+            controller.add_link(f'{lower_bone_node_name}.Element',
+                                f'{function_node.get_name()}.end_bone')
+
 
 
     def _init_master_joint_node(self, controller, node_name: str, bones):
