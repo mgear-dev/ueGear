@@ -13,8 +13,8 @@ class ArmComponent(UEComponent):
     def __init__(self):
         super().__init__()
 
-        self.functions = {'construction_functions': ['construct_shoulder'],
-                          'forward_functions': ['forward_shoulder'],
+        self.functions = {'construction_functions': ['construct_IK_arm'],
+                          'forward_functions': ['forward_IK_arm'],
                           'backwards_functions': [],
                           }
         self.cr_variables = {}
@@ -104,12 +104,21 @@ class ArmComponent(UEComponent):
         print(" Populate Bones")
         print("-----------------")
 
+        filtered_bones = []
+        """List of bones that do not contain twist bones"""
+
+        # Ignore Twist bones as we have not implemented them yet in the Control Rig Node
+        for b in bones:
+            if "twist" in str(b.key.name):
+                continue
+            filtered_bones.append(b)
+
         # Unique name for this skeleton node array
         array_node_name = f"{self.metadata.fullname}_bones_RigUnit_ItemArray"
 
         # node doesn't exists, create the joint node
         if not controller.get_graph().find_node_by_name(array_node_name):
-            self._init_master_joint_node(controller, array_node_name, bones)
+            self._init_master_joint_node(controller, array_node_name, filtered_bones)
 
         #     # Connects the Item Array Node to the functions.
         #     for evaluation_path in self.nodes.keys():
@@ -127,7 +136,7 @@ class ArmComponent(UEComponent):
 
 
     def _init_master_joint_node(self, controller, node_name: str, bones):
-        """Create the master bones node that will drive the creation of the joint, and be driven by the fk joints
+        """Creates an array node of all the bones
         """
 
         print(" - Init Master Joints")
@@ -158,7 +167,9 @@ class ArmComponent(UEComponent):
 
     def init_input_data(self, controller: unreal.RigVMController):
 
-        self._set_side_colour(controller)
+        # commented out while developing arm
+        # self._set_side_colour(controller)
+        pass
 
 
     def _set_side_colour(self, controller: unreal.RigVMController):
@@ -198,6 +209,8 @@ class ArmComponent(UEComponent):
         file.
         """
         import ueGear.controlrig.manager as ueMan
+
+        return
 
         names_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_names", controller)
         trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
