@@ -6,6 +6,7 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 from ueGear.controlrig.components.base_component import UEComponent
 
+
 class ArmComponent(UEComponent):
     name = "test_Arm"
     mgear_component = "EPIC_arm_02"
@@ -89,7 +90,6 @@ class ArmComponent(UEComponent):
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
 
-
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
         Generates the Bone array node that will be utilised by control rig to drive the component
@@ -110,7 +110,6 @@ class ArmComponent(UEComponent):
         # Ignore Twist bones as we have not implemented them yet in the Control Rig Node
         for b in bones:
             bone_name = str(b.key.name)
-            print(bone_name)
             if "twist" in bone_name:
                 continue
             filtered_bones.append(b)
@@ -137,14 +136,14 @@ class ArmComponent(UEComponent):
         for idx, individual_index_node in enumerate(individual_bone_node_names):
             if not controller.get_graph().find_node_by_name(individual_index_node):
                 controller.add_template_node('DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
-                                                unreal.Vector2D(3500, 800),
-                                                individual_index_node
+                                             unreal.Vector2D(3500, 800),
+                                             individual_index_node
                                              )
 
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{individual_index_node}.Array'
                                     )
-                # assigns the last bone in the chain to both lower_bone functions
+                # assigns the last bone in the list to both lower_bone variables
                 if idx > 2:
                     idx = 2
 
@@ -157,7 +156,8 @@ class ArmComponent(UEComponent):
         # Connects the joint node to the Construction function
 
         for function_node in self.nodes["construction_functions"]:
-            print(f"  Creating Construction Connection:   {array_node_name}.Items >> {function_node.get_name()}.fk_joints")
+            print(
+                f"  Creating Construction Connection:   {array_node_name}.Items >> {function_node.get_name()}.fk_joints")
             controller.add_link(f'{array_node_name}.Items',
                                 f'{function_node.get_name()}.fk_joints')
 
@@ -177,8 +177,6 @@ class ArmComponent(UEComponent):
 
             controller.add_link(f'{lower_bone_node_name}.Element',
                                 f'{function_node.get_name()}.end_bone')
-
-
 
     def _init_master_joint_node(self, controller, node_name: str, bones):
         """Creates an array node of all the bones
@@ -209,12 +207,10 @@ class ArmComponent(UEComponent):
 
             pin_index += 1
 
-
     def init_input_data(self, controller: unreal.RigVMController):
 
         # commented out while developing arm
-        # self._set_side_colour(controller)
-        pass
+        self._set_side_colour(controller)
 
 
     def _set_side_colour(self, controller: unreal.RigVMController):
@@ -224,7 +220,7 @@ class ArmComponent(UEComponent):
         func_name = construction_node.get_name()
 
         # Sets the colour channels to be 0
-        for channel in ["R","G","B"]:
+        for channel in ["R", "G", "B"]:
             controller.set_pin_default_value(
                 f'{func_name}.colour.{channel}',
                 '0.000000',
@@ -248,61 +244,114 @@ class ArmComponent(UEComponent):
                 '1.000000',
                 False)
 
+    def _set_transform_pin(self, node_name, pin_name, transform_value, controller):
+        quat = transform_value.rotation
+        pos = transform_value.translation
+
+        controller.set_pin_default_value(f"{node_name}.{pin_name}",
+                                         f"("
+                                         f"Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}),"
+                                         f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
+                                         f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
+                                         True)
+
+
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
-        """Updates the transform data for the controls generated, with the data from the mgear json
-        file.
+        """Generates the list nodes of controls names and transforms
         """
+        print("--------------------------------------------------")
+        print(" Generating Control Names and Transform Functions")
+        print("--------------------------------------------------")
+
         import ueGear.controlrig.manager as ueMan
 
-        return
+        # Control names
+        fk_control_names = []
+        ik_upv_name = ""
+        ik_eff_name = ""
 
-        names_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_names", controller)
-        trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
+        # Filter our required names and transforms
+
+        for ctrl_name in self.metadata.controls:
+            if "_fk" in ctrl_name:
+                fk_control_names.append(ctrl_name)
+            elif "_upv_" in ctrl_name:
+                ik_upv_name = ctrl_name
+            elif "_ik_" in ctrl_name:
+                ik_eff_name = ctrl_name
+
+        # Gets the construction function name
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        # SETUP IK DATA
+
+        # Gets the names of the ik controls and their transforms, and applies it directly to the node
+        controller.set_pin_default_value(f'{construction_func_name}.effector_name',
+                                         ik_eff_name, False)
+        controller.set_pin_default_value(f'{construction_func_name}.upVector_name',
+                                         ik_upv_name, False)
+
+        ik_eff_trans = self.metadata.control_transforms[ik_eff_name]
+        ik_upv_trans = self.metadata.control_transforms[ik_upv_name]
+
+        self._set_transform_pin(construction_func_name,
+                                'effector',
+                                ik_eff_trans,
+                                controller)
+
+        self._set_transform_pin(construction_func_name,
+                                'upVector',
+                                ik_upv_trans,
+                                controller)
+
+        # SETUP FK DATA
+
+        # Generates the array nodes for fk names and transforms
+        fk_names_node = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_names", controller)
+        fk_trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_transforms", controller)
 
         # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
         # values
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{trans_node}.Array',
-                            f'{construction_func_name}.world_control_transforms')
-        controller.add_link(f'{names_node}.Array',
-                            f'{construction_func_name}.control_names')
+        controller.add_link(f'{fk_names_node}.Array',
+                            f'{construction_func_name}.fk_control_names')
+        controller.add_link(f'{fk_trans_node}.Array',
+                            f'{construction_func_name}.fk_control_transforms')
 
-        # Checks the pins
-        name_pins_exist = ueMan.array_node_has_pins(names_node, controller)
-        trans_pins_exist = ueMan.array_node_has_pins(trans_node, controller)
+
+        # Populate the array node with new pins that contain the name and transform data
+
+        # Checks to see if the array has existing pins
+        name_pins_exist = ueMan.array_node_has_pins(fk_names_node, controller)
+        trans_pins_exist = ueMan.array_node_has_pins(fk_trans_node, controller)
 
         pin_index = 0
 
-        for control_name in self.metadata.controls:
+        for control_name in fk_control_names:
             control_transform = self.metadata.control_transforms[control_name]
 
             if not name_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(names_node)
+                found_node = controller.get_graph().find_node_by_name(fk_names_node)
                 existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls):
-                    controller.insert_array_pin(f'{names_node}.Values',
+                if existing_pin_count < len(fk_control_names):
+                    controller.insert_array_pin(f'{fk_names_node}.Values',
                                                 -1,
                                                 '')
             if not trans_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(trans_node)
+                found_node = controller.get_graph().find_node_by_name(fk_trans_node)
                 existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls):
-                    controller.insert_array_pin(f'{trans_node}.Values',
+                if existing_pin_count < len(fk_control_names):
+                    controller.insert_array_pin(f'{fk_trans_node}.Values',
                                                 -1,
                                                 '')
 
-            quat = control_transform.rotation
-            pos = control_transform.translation
+            self._set_transform_pin(fk_trans_node,
+                                    f'Values.{pin_index}',
+                                    control_transform,
+                                    controller)
 
-            controller.set_pin_default_value(f'{names_node}.Values.{pin_index}',
+            controller.set_pin_default_value(f'{fk_names_node}.Values.{pin_index}',
                                              control_name,
                                              False)
-
-            controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
-                                             f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
-                                             f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
-                                             f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-                                             True)
 
             pin_index += 1
