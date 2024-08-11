@@ -165,6 +165,12 @@ class ShoulderComponent(UEComponent):
         names_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_names", controller)
         trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
 
+        node_names = controller.get_graph().find_node_by_name(names_node)
+        node_trans = controller.get_graph().find_node_by_name(trans_node)
+
+        self.add_misc_function(node_names)
+        self.add_misc_function(node_trans)
+
         # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
         # values
         construction_func_name = self.nodes["construction_functions"][0].get_name()

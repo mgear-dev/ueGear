@@ -26,6 +26,9 @@ class mgComponent:
     control_transforms: dict = None
     """Each control could have a transform if that transform contains translation and rotation data"""
 
+    controls_role: dict = None
+    """Each control has a specific role, this stores the roll"""
+
     # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
 
     parent_fullname: str = None

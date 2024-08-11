@@ -140,6 +140,9 @@ class fkComponent(UEComponent):
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{function_node.get_name()}.Array')
 
+        node = controller.get_graph().find_node_by_name(array_node_name)
+        self.add_misc_function(node)
+
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json
         file.

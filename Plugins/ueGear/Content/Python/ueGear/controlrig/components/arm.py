@@ -135,10 +135,11 @@ class ArmComponent(UEComponent):
 
         for idx, individual_index_node in enumerate(individual_bone_node_names):
             if not controller.get_graph().find_node_by_name(individual_index_node):
-                controller.add_template_node('DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+                node = controller.add_template_node('DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
                                              unreal.Vector2D(3500, 800),
                                              individual_index_node
                                              )
+                self.add_misc_function(node)
 
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{individual_index_node}.Array'
@@ -185,11 +186,13 @@ class ArmComponent(UEComponent):
         print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
-        controller.add_unit_node_from_struct_path(
+        node = controller.add_unit_node_from_struct_path(
             '/Script/ControlRig.RigUnit_ItemArray',
             'Execute',
             unreal.Vector2D(-54.908936, 204.649109),
             node_name)
+
+        self.add_misc_function(node)
 
         pin_index = 0  # stores the current pin index that is being updated
 
@@ -274,11 +277,14 @@ class ArmComponent(UEComponent):
         # Filter our required names and transforms
 
         for ctrl_name in self.metadata.controls:
-            if "_fk" in ctrl_name:
+
+            # Use the controls.Role metadata to detect the type
+            ctrl_role = self.metadata.controls_role[ctrl_name]
+            if "fk" in ctrl_role:
                 fk_control_names.append(ctrl_name)
-            elif "_upv_" in ctrl_name:
+            elif "upv" in ctrl_role:
                 ik_upv_name = ctrl_name
-            elif "_ik_" in ctrl_name:
+            elif "ik" == ctrl_role:
                 ik_eff_name = ctrl_name
 
         # Gets the construction function name
@@ -308,22 +314,28 @@ class ArmComponent(UEComponent):
         # SETUP FK DATA
 
         # Generates the array nodes for fk names and transforms
-        fk_names_node = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_names", controller)
-        fk_trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_transforms", controller)
+        fk_names_node_name = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_names", controller)
+        fk_trans_node_name = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_transforms", controller)
+
+        fk_names_node = controller.get_graph().find_node_by_name(fk_names_node_name)
+        fk_trans_node = controller.get_graph().find_node_by_name(fk_trans_node_name)
+
+        self.add_misc_function(fk_names_node)
+        self.add_misc_function(fk_trans_node)
 
         # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
         # values
-        controller.add_link(f'{fk_names_node}.Array',
+        controller.add_link(f'{fk_names_node_name}.Array',
                             f'{construction_func_name}.fk_control_names')
-        controller.add_link(f'{fk_trans_node}.Array',
+        controller.add_link(f'{fk_trans_node_name}.Array',
                             f'{construction_func_name}.fk_control_transforms')
 
 
         # Populate the array node with new pins that contain the name and transform data
 
         # Checks to see if the array has existing pins
-        name_pins_exist = ueMan.array_node_has_pins(fk_names_node, controller)
-        trans_pins_exist = ueMan.array_node_has_pins(fk_trans_node, controller)
+        name_pins_exist = ueMan.array_node_has_pins(fk_names_node_name, controller)
+        trans_pins_exist = ueMan.array_node_has_pins(fk_trans_node_name, controller)
 
         pin_index = 0
 
@@ -331,26 +343,26 @@ class ArmComponent(UEComponent):
             control_transform = self.metadata.control_transforms[control_name]
 
             if not name_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(fk_names_node)
+                found_node = controller.get_graph().find_node_by_name(fk_names_node_name)
                 existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
                 if existing_pin_count < len(fk_control_names):
-                    controller.insert_array_pin(f'{fk_names_node}.Values',
+                    controller.insert_array_pin(f'{fk_names_node_name}.Values',
                                                 -1,
                                                 '')
             if not trans_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(fk_trans_node)
+                found_node = controller.get_graph().find_node_by_name(fk_trans_node_name)
                 existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
                 if existing_pin_count < len(fk_control_names):
-                    controller.insert_array_pin(f'{fk_trans_node}.Values',
+                    controller.insert_array_pin(f'{fk_trans_node_name}.Values',
                                                 -1,
                                                 '')
 
-            self._set_transform_pin(fk_trans_node,
+            self._set_transform_pin(fk_trans_node_name,
                                     f'Values.{pin_index}',
                                     control_transform,
                                     controller)
 
-            controller.set_pin_default_value(f'{fk_names_node}.Values.{pin_index}',
+            controller.set_pin_default_value(f'{fk_names_node_name}.Values.{pin_index}',
                                              control_name,
                                              False)
 

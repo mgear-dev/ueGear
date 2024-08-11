@@ -185,8 +185,13 @@ class UEGearManager:
             comment_size = 0
 
             for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
-                node = ue_comp.nodes[flow_name]
-                for n in node:
+                print(flow_name)
+                nodes = ue_comp.nodes[flow_name]
+
+                for n in nodes:
+                    (w, h) = calculate_node_size(n)
+                    print((w, h))
+
                     controller.set_node_position(n, pos + unreal.Vector2D(40, node_count * 300))
                     controller.set_node_position(ue_comp.comment_node, pos - unreal.Vector2D(5, 50))
                     node_count += 1
@@ -197,6 +202,13 @@ class UEGearManager:
 
         # TODO: Rezise comment to encapsulate the entirety of control rig functions
         # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
+
+            print("GROUP COMPONENTS")
+            for node in ue_comp.get_misc_functions():
+                (w, h) = calculate_node_size(node)
+                print(w, h)
+
+                controller.set_node_position(node, pos - unreal.Vector2D(5, 50))
 
         # for i, ue_comp in enumerate(self.uegear_components):
         #     ue_comp.comment_node
@@ -800,3 +812,49 @@ def array_node_has_pins(node_name: str,
         return True
 
     return False
+
+
+def calculate_node_size(node: unreal.RigVMUnitNode):
+    """
+    Calculates the node size by checking the amount of input and output pins,
+    as well as the names of the pins.
+    """
+    # todo: calculate the size of  node by the amount of pins and size of the name
+    input_pins = []
+    outpu_pins = []
+    longest_input_name = ""
+    longest_output_name = ""
+    node_name = node.get_name()
+
+    for pin in node.get_pins():
+
+        pin_name = str(pin.get_display_name())
+
+        if pin.get_direction() == unreal.RigVMPinDirection.INPUT:
+            input_pins.append(pin)
+            if len(pin_name) > len(longest_input_name):
+                longest_input_name = pin_name
+
+        if pin.get_direction() == unreal.RigVMPinDirection.OUTPUT:
+            outpu_pins.append(pin)
+            if len(pin_name) > len(longest_output_name):
+                longest_output_name = pin_name
+
+    print(f"{len(input_pins)} > {node_name} > {len(outpu_pins)}")
+    print(f"{len(longest_input_name)} > {node_name} > {len(longest_output_name)}")
+
+    offset = 10
+    char_width = 2
+    char_height = 7
+
+    width = len(longest_input_name) * char_width + offset + \
+            len(node_name) * char_width + offset +          \
+            len(longest_output_name) * char_width
+
+    height = (len(input_pins)+1) * char_height + \
+            1 * char_height +                    \
+            (len(outpu_pins)+1) * char_height
+
+
+    return (width, height)
+

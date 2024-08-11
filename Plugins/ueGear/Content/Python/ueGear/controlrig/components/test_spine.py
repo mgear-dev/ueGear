@@ -135,6 +135,9 @@ class SpineComponent(UEComponent):
         controller.add_link(f'{outpu_joint_node_name}.Items',
                             f'{construction_func_name}.joint_outputs')
 
+        node = controller.get_graph().find_node_by_name(array_node_name)
+        self.add_misc_function(node)
+
     def _init_master_joint_node(self, controller, node_name: str, bones):
         """Create the master bones node that will drive the creation of the joint, and be driven by the fk joints
         """
@@ -222,6 +225,9 @@ class SpineComponent(UEComponent):
 
             pin_index += 1
 
+        node = controller.get_graph().find_node_by_name(array_node_name)
+        self.add_misc_function(node)
+
         return array_node_name
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
@@ -232,6 +238,12 @@ class SpineComponent(UEComponent):
 
         names_node = ueMan.create_array_node("control_names", controller)
         trans_node = ueMan.create_array_node("control_transforms", controller)
+
+        node_names = controller.get_graph().find_node_by_name(names_node)
+        node_trans = controller.get_graph().find_node_by_name(trans_node)
+
+        self.add_misc_function(node_names)
+        self.add_misc_function(node_trans)
 
         # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
         # values

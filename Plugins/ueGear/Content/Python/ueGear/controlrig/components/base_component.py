@@ -60,6 +60,7 @@ class UEComponent(object):
             'construction_functions': [],
             'forward_functions': [],
             'backwards_functions': [],
+            'misc_functions': []
         }
         self.cr_variables = {}
         self.connection = {}
@@ -177,6 +178,20 @@ class UEComponent(object):
         This method should handle all input node data population
         """
         pass
+
+    def add_misc_function(self, node):
+        """
+        Adds a miscilanois function(node) to this component so it can be more easily accessed
+        and used at a later time.
+
+        misc nodes are nodes that we use as input to the component
+        """
+        self.nodes["misc_functions"].append(node)
+
+    def get_misc_functions(self):
+        """Gets all miscilanois functions relating to this component"""
+        return self.nodes["misc_functions"]
+
 
     # DEVELOPMENT!!!!!!!
 

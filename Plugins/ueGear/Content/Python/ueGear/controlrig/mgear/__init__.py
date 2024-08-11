@@ -88,7 +88,10 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         for ctrl in controls:
             if mgear_component.controls is None:
                 mgear_component.controls = []
+                mgear_component.controls_role = {}
+
             mgear_component.controls.append(ctrl["Name"])
+            mgear_component.controls_role[ctrl["Name"]] = ctrl["Role"]
 
             # Checks the controls transform data and records it as a Unreal.Transform
             # Convert the maya to world transform
