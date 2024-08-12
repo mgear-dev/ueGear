@@ -138,7 +138,7 @@ class UEComponent(object):
     def set_parent(self, parent_comp):
         self.remove_parent()
         self.parent_node = parent_comp
-        self.parent_node.children_node.append(parent_comp)
+        self.parent_node.children_node.append(self)
 
     def remove_parent(self):
         if self.parent_node is None:

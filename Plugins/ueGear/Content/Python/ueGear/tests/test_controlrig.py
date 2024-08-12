@@ -119,6 +119,8 @@ def test_create_fk_control():
 
     gear_manager.connect_components()
 
+    gear_manager.group_components()
+
 
 def test_create_spine_shoulders_control():
     """
@@ -164,8 +166,11 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component('body_C0', ignore_parent=True)
     gear_manager.build_component('spine_C0', ignore_parent=True)
     gear_manager.build_component('shoulder_L0', ignore_parent=True)
-    # gear_manager.build_component('shoulder_R0', ignore_parent=True)
+    gear_manager.build_component('shoulder_R0', ignore_parent=True)
     gear_manager.build_component('arm_L0', ignore_parent=True)
+    gear_manager.build_component('arm_R0', ignore_parent=True)
+    gear_manager.build_component('leg_L0', ignore_parent=True)
+    # gear_manager.build_component('leg_R0', ignore_parent=True)
 
     # At this point there are many components created, but not connected to one another
 

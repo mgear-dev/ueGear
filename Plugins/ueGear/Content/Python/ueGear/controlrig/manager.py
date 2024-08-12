@@ -185,30 +185,29 @@ class UEGearManager:
             comment_size = 0
 
             for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
-                print(flow_name)
                 nodes = ue_comp.nodes[flow_name]
 
                 for n in nodes:
+                    # Calculates the size of the node, via extimation method
+                    # todo: utilise calculation
                     (w, h) = calculate_node_size(n)
-                    print((w, h))
-
                     controller.set_node_position(n, pos + unreal.Vector2D(40, node_count * 300))
                     controller.set_node_position(ue_comp.comment_node, pos - unreal.Vector2D(5, 50))
                     node_count += 1
 
             comment_size = unreal.Vector2D(500, node_count * 300)
-            print(f"Comment Size {comment_size}")
+            # print(f"Comment Size {comment_size}")
             controller.set_node_size(ue_comp.comment_node, comment_size)
 
         # TODO: Rezise comment to encapsulate the entirety of control rig functions
         # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
 
-            print("GROUP COMPONENTS")
+            # print("GROUP COMPONENTS")
             for node in ue_comp.get_misc_functions():
                 (w, h) = calculate_node_size(node)
-                print(w, h)
+                # print(w, h)
 
-                controller.set_node_position(node, pos - unreal.Vector2D(5, 50))
+                controller.set_node_position(node, pos + unreal.Vector2D(40, 450))
 
         # for i, ue_comp in enumerate(self.uegear_components):
         #     ue_comp.comment_node
@@ -290,8 +289,62 @@ class UEGearManager:
                 p_func = parent_nodes.get_name()
                 c_func = comp_nodes[0].get_name()
 
-                bp_controller.add_link(f'{p_func}.ExecuteContext',
-                                       f'{c_func}.ExecuteContext')
+                # Check if parent node, has already been connected, else branch off
+
+                execute_pin = parent_nodes.find_pin("ExecuteContext")
+                target_pins = execute_pin.get_linked_target_pins()
+
+                if len(target_pins) == 0:
+                    print("Pin not connected, setting up basic connection")
+                    bp_controller.add_link(f'{p_func}.ExecuteContext',
+                                           f'{c_func}.ExecuteContext')
+                else:
+                    # Checks if the pin belongs to a branch node, if not creates a branch node.
+
+                    first_driven_node = target_pins[0].get_node()
+                    is_sequence = str(first_driven_node.get_node_title()) == "Sequence"
+
+                    if is_sequence:
+                        print("Sequence Node, insert new pin and connect")
+
+                        source_node_name = p_func
+                        new_connection_node_name = c_func
+                        seq_node_name = f'{source_node_name}_RigVMFunction_Sequence'
+
+                        # Generate next available plug on the Sequence Node
+                        new_pin = bp_controller.add_aggregate_pin(seq_node_name, '', '')
+
+                        bp_controller.add_link(new_pin,
+                                               f'{new_connection_node_name}.ExecuteContext')
+
+                    else:
+                        print("Creating Sequence Node for execution")
+
+                        source_node_name = p_func
+                        connected_node_name = first_driven_node.get_name()
+                        new_connection_node_name = c_func
+                        seq_node_name = f'{source_node_name}_RigVMFunction_Sequence'
+
+                        # Create Sequence Node
+
+                        bp_controller.add_unit_node_from_struct_path(
+                            '/Script/RigVM.RigVMFunction_Sequence',
+                            'Execute',
+                            unreal.Vector2D(1125.814540, 650.259969),
+                            seq_node_name)
+
+                        # Connect Parent/Source node to the sequence node
+
+                        bp_controller.add_link(f'{source_node_name}.ExecuteContext',
+                                               f'{seq_node_name}.ExecuteContext')
+
+                        # Connect Sequence node to the nodes that were connected to the Parent node, and the new
+                        # node that will be connected.
+                        bp_controller.add_link(f'{seq_node_name}.A',
+                                               f'{connected_node_name}.ExecuteContext')
+                        bp_controller.add_link(f'{seq_node_name}.B',
+                                               f'{new_connection_node_name}.ExecuteContext')
+
 
     def _find_parent_node_function(self, component, function_name: str):
         """Recursively looks at the function, then if one does not exist looks for
@@ -840,8 +893,8 @@ def calculate_node_size(node: unreal.RigVMUnitNode):
             if len(pin_name) > len(longest_output_name):
                 longest_output_name = pin_name
 
-    print(f"{len(input_pins)} > {node_name} > {len(outpu_pins)}")
-    print(f"{len(longest_input_name)} > {node_name} > {len(longest_output_name)}")
+    # print(f"{len(input_pins)} > {node_name} > {len(outpu_pins)}")
+    # print(f"{len(longest_input_name)} > {node_name} > {len(longest_output_name)}")
 
     offset = 10
     char_width = 2
