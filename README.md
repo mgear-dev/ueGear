@@ -117,4 +117,17 @@ Can only read data fom a dataset in constructino event > read user data
 
 # TODO
 
-- [ ] Working on control generation and its orientation.
+- [ ] Rig Components to Create
+  - [ ] Hands
+  - [ ] Neck
+  - [ ] Feet
+  - [ ] Weapon
+  - [ ] Head + and all associated face components
+
+- [ ] Control Shape Orientation
+  - [ ] Spine
+  - [ ] Arms FK
+  - [ ] Legs FK
+
+- [ ] Control Rig implementation
+  - [ ] Automatic matching

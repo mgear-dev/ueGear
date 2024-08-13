@@ -111,6 +111,9 @@ class UEGearManager:
 
         ueg_comp.create_functions(self.get_active_controller())
 
+        # Orients the control shape
+        ueg_comp.populate_control_shape_orientation(self.get_active_controller())
+
     def build_component(self, name, ignore_parent=True):
         """Create an individual component from the mgear scene desciptor file.
 

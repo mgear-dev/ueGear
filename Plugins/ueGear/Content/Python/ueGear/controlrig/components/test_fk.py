@@ -161,3 +161,21 @@ class fkComponent(UEComponent):
             f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
             f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
             True)
+
+        self.populate_control_shape_orientation(controller)
+
+    def populate_control_shape_orientation(self, controller: unreal.RigVMController = None):
+        """Populates the control's shapes orientation"""
+
+        for cr_func in self.functions["construction_functions"]:
+            construction_node = f"{self.name}_{cr_func}"
+
+            ue_cr_node = controller.get_graph().find_node_by_name(construction_node)
+
+            print("Populate Control Shape Orientation")
+            print(construction_node)
+            print(f"Getting {ue_cr_node}")
+
+            controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
+                                         '90.000000',
+                                         False)
