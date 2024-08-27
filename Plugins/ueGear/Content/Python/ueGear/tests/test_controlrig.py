@@ -10,11 +10,12 @@ from ueGear import assets
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
-from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm
+from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg
 from ueGear.controlrig import components
 from ueGear.controlrig.mgear import component, rig
 importlib.reload(shoulder)
 importlib.reload(arm)
+importlib.reload(leg)
 importlib.reload(components)
 importlib.reload(mgear)
 importlib.reload(component)
@@ -170,7 +171,8 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component('arm_L0', ignore_parent=True)
     gear_manager.build_component('arm_R0', ignore_parent=True)
     gear_manager.build_component('leg_L0', ignore_parent=True)
-    # gear_manager.build_component('leg_R0', ignore_parent=True)
+    gear_manager.build_component('leg_R0', ignore_parent=True)
+    # gear_manager.build_component('foot_L0', ignore_parent=True)
 
     # At this point there are many components created, but not connected to one another
 

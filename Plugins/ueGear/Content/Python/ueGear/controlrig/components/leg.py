@@ -78,7 +78,6 @@ class LegComponent(UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
-                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
@@ -212,9 +211,26 @@ class LegComponent(UEComponent):
 
     def init_input_data(self, controller: unreal.RigVMController):
 
-        # commented out while developing arm
         self._set_side_colour(controller)
+        self._set_mirrored_ik_upvector(controller)
 
+    def _set_mirrored_ik_upvector(self, controller: unreal.RigVMController):
+        """
+        As the legs are mirrored, if a right leg is being built then we need to setup the
+        up axis to align with the upvector and joints
+        """
+
+        forward_function = self.nodes["forward_functions"][0]
+        func_name = forward_function.get_name()
+
+        if self.metadata.side == "R":
+
+            controller.set_pin_default_value(f'{func_name}.ik_PrimaryAxis',
+                                             '(X=-1.000000, Y=0.000000, Z=0.000000)',
+                                             True)
+            controller.set_pin_default_value(f'{func_name}.ik_SecondaryAxis',
+                                             '(X=0.000000, Y=1.000000, Z=0.000000)',
+                                             True)
 
     def _set_side_colour(self, controller: unreal.RigVMController):
         """Sets the controls default colour depending on the side"""
