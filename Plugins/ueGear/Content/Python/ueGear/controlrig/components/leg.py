@@ -14,8 +14,8 @@ class LegComponent(UEComponent):
     def __init__(self):
         super().__init__()
 
-        self.functions = {'construction_functions': ['construct_IK_arm'],
-                          'forward_functions': ['forward_IK_arm'],
+        self.functions = {'construction_functions': ['construct_IK_leg'],
+                          'forward_functions': ['forward_IK_leg'],
                           'backwards_functions': [],
                           }
         self.cr_variables = {}
@@ -278,6 +278,8 @@ class LegComponent(UEComponent):
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
+
+        Design Decision: All feet IK Controls are built in World Space, oriented to World Space
         """
         print("--------------------------------------------------")
         print(" Generating Control Names and Transform Functions")
@@ -316,6 +318,9 @@ class LegComponent(UEComponent):
 
         ik_eff_trans = self.metadata.control_transforms[ik_eff_name]
         ik_upv_trans = self.metadata.control_transforms[ik_upv_name]
+
+        # Orient the ik effector into unreal world space, by creating a new Transform, and assinging only the position.
+        ik_eff_trans = unreal.Transform(location=ik_eff_trans.translation)
 
         self._set_transform_pin(construction_func_name,
                                 'effector',
