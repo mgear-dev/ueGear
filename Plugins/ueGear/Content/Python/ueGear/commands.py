@@ -62,6 +62,12 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         mayaio.export_layout_file()
 
+    @unreal.ufunction(override=True, meta=dict(Catergory="ueGear Commands"))
+    def generate_uegear_ui(self):
+        """
+        """
+        print("TEST UI")
+
     # ==================================================================================================================
     # PATHS
     # ==================================================================================================================

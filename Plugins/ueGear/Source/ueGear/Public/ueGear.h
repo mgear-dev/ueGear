@@ -22,4 +22,5 @@ private:
 	void ImportMayaDataCallback();
 	void ImportMayaLayoutCallback();
 	void ExportUnrealLayoutCallback();
+	void GenerateUegearUiCallback();
 };
