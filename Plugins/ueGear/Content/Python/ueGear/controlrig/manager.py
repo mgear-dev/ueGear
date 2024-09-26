@@ -41,6 +41,9 @@ class UEGearManager:
         self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
 
+        # Generates the 'Create', 'Forward' and 'Backwards' nodes
+        self.create_solves()
+
     def get_open_controlrig_blueprints(self):
         """Gets all open Control Rig Blueprints
 
@@ -125,8 +128,6 @@ class UEGearManager:
 
         if self._active_blueprint is None:
             unreal.log_error("ueGear Manager > Cannot create Control Rig Blueprint, please specify active blueprint.")
-
-        self.create_solves()
 
         guide_component = self.mg_rig.components.get(name, None)
 
