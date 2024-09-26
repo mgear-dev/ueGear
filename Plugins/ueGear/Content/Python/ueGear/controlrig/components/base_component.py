@@ -192,6 +192,36 @@ class UEComponent(object):
         """Gets all miscilanois functions relating to this component"""
         return self.nodes["misc_functions"]
 
+    def set_side_colour(self, controller: unreal.RigVMController):
+        """Sets the controls default colour depending on the side"""
+
+        construction_node = self.nodes["construction_functions"][0]
+        func_name = construction_node.get_name()
+
+        # Sets the colour channels to be 0,0,0
+        for channel in ["R", "G", "B"]:
+            controller.set_pin_default_value(
+                f'{func_name}.colour.{channel}',
+                '0.000000',
+                False)
+
+        if self.metadata.side == "L":
+            controller.set_pin_default_value(
+                f'{func_name}.colour.B',
+                '1.000000',
+                False)
+
+        elif self.metadata.side == "R":
+            controller.set_pin_default_value(
+                f'{func_name}.colour.G',
+                '1.000000',
+                False)
+
+        elif self.metadata.side == "M" or self.metadata.side == "C":
+            controller.set_pin_default_value(
+                f'{func_name}.colour.R',
+                '1.000000',
+                False)
 
     # DEVELOPMENT!!!!!!!
 
