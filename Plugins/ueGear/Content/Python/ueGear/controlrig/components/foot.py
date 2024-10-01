@@ -200,38 +200,38 @@ class FootComponent(UEComponent):
         print(" Generating Control Names and Transform Functions")
         print("--------------------------------------------------")
 
-        import ueGear.controlrig.manager as ueMan
+        space_mtx = unreal.Matrix( x_plane = [1.000000, 0.000000, 0.000000, 0.000000],
+                                   y_plane = [0.000000, 0.000000, 1.000000, 0.000000],
+                                   z_plane = [0.000000, 1.000000, 0.000000, 0.000000],
+                                   w_plane = [0.000000, 0.000000, 0.000000, 1.000000])
 
         # Gets the construction function name
         construction_func_name = self.nodes["construction_functions"][0].get_name()
 
         for guide_name, guide_mtx in self.metadata.guide_transforms.items():
 
-            print(guide_name)
-            print(guide_mtx)
-
+            # Space Convert between Maya and Unreal
+            guide_mtx = guide_mtx * space_mtx
             transform = guide_mtx.transform()
+
+            # Rotates the Maya transformation data
+            corrected_quat = unreal.Quat()
+            transform.rotation = corrected_quat
 
             pin_name = None
 
             if guide_name == "root":
-                pin_name = "roll"
-            elif guide_name == "0_loc":
-                pin_name = "tip"
+                pin_name = "root"
             elif guide_name == "1_loc":
                 pin_name = "tip"
             elif guide_name == "heel":
                 pin_name = "heel"
+            elif guide_name == "0_loc":
+                pin_name = "fk0"
             elif guide_name == "outpivot":
-                print("todo: outpivot not setup yet")
+                pin_name = "outer_pivot"
             elif guide_name == "inpivot":
-                print("todo: inpivot not setup yet")
-
-            # todo: clean up or populate the following pins on the function node
-            "bk0"
-            "bk1"
-            "fk"
-
+                pin_name = "inner_pivot"
 
             # Populate the pins transform data
             if pin_name is None:
@@ -244,5 +244,6 @@ class FootComponent(UEComponent):
             controller.set_pin_default_value(f'{construction_func_name}.{pin_name}',
                                              f'(Rotation=(X={_rot.x}, Y={_rot.y}, Z={_rot.z},W={_rot.w}),'
                                              f'Translation=(X={_trn.x},Y={_trn.y},Z={_trn.z}),'
-                                             f'Scale3D=(X={_scl.x},Y={_scl.y},Z={_scl.z}))',
+                                             f'Scale3D=(X=1.0,Y=1.0,Z=1.0))',
+                                             # f'Scale3D=(X={_scl.x},Y={_scl.y},Z={_scl.z}))',
                                              True)
