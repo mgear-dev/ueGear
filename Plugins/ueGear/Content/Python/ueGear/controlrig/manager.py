@@ -256,7 +256,7 @@ class UEGearManager:
                 parent_component = self.get_uegear_component(parent_comp_name)
                 if parent_component is None:
                     print(f"    Could not find parent component > {parent_comp_name}")
-                    return
+                    continue
 
                 print(f"      > Found parent component: {parent_comp_name}")
                 comp.set_parent(parent_component)

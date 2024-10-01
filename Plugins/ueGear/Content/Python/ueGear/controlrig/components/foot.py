@@ -157,10 +157,7 @@ class FootComponent(UEComponent):
             pin_index += 1
 
     def init_input_data(self, controller: unreal.RigVMController):
-
         self.set_side_colour(controller)
-
-
 
     def _set_transform_pin(self, node_name: str, pin_name: str, transform_value: unreal.Transform, controller):
         quat = transform_value.rotation

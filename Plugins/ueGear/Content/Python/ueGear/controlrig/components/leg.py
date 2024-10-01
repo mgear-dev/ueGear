@@ -27,8 +27,8 @@ class LegComponent(UEComponent):
                           }
 
         # Control Rig Outputs
-        self.cr_output = {'construction_functions': ['root'],
-                          'forward_functions': [],
+        self.cr_output = {'construction_functions': ['ankle'],
+                          'forward_functions': ['ik_active_out'],
                           'backwards_functions': [],
                           }
 
