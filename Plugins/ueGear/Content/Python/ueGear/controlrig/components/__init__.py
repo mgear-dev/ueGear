@@ -1,9 +1,9 @@
 
 from types import ModuleType
 
-from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg
+from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg, foot
 
-__all__ = [base_component, test_fk, test_spine, shoulder, arm, leg,
+__all__ = [base_component, test_fk, test_spine, shoulder, arm, leg, foot,
            'lookup_mgear_component'
            ]
 

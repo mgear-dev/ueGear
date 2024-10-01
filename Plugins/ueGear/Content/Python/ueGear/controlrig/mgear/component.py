@@ -44,6 +44,10 @@ class mgComponent:
     joint_relatives: dict = None
     """List of integers that associate the output joint that should drive the output"""
 
+    guide_transforms: dict = None
+    """Some components contain guide transforms, these transforms are used to place
+    underlying articulation positions."""
+
     def __init__(self) -> None:
         pass
 

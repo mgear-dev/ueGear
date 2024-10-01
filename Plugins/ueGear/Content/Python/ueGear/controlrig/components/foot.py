@@ -115,7 +115,7 @@ class FootComponent(UEComponent):
                                          f'(Type=Bone, Name="{jnt_name}")',
                                          True)
 
-        # todo: Assign ball joint to the forward node
+        # Assign ball joint to the forward node
 
         forward_node = self.nodes["forward_functions"][0]
         controller.set_pin_default_value(f'{forward_node.get_name()}.ball_joint',
@@ -193,7 +193,8 @@ class FootComponent(UEComponent):
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
 
-        Design Decision: All feet IK Controls are built in World Space, oriented to World Space
+        The foot does not rely on control positions as it uses the guideTransforms to place the
+        locations where the foot will rotate around.
         """
         print("--------------------------------------------------")
         print(" Generating Control Names and Transform Functions")
@@ -201,104 +202,47 @@ class FootComponent(UEComponent):
 
         import ueGear.controlrig.manager as ueMan
 
-        # Control names
-        fk_control_names = []
-        ik_upv_name = ""
-        ik_eff_name = ""
-
-        # Filter our required names and transforms
-
-        for ctrl_name in self.metadata.controls:
-
-            # Use the controls.Role metadata to detect the type
-            ctrl_role = self.metadata.controls_role[ctrl_name]
-            if "fk" in ctrl_role:
-                fk_control_names.append(ctrl_name)
-            elif "upv" in ctrl_role:
-                ik_upv_name = ctrl_name
-            elif "ik" == ctrl_role:
-                ik_eff_name = ctrl_name
-
         # Gets the construction function name
         construction_func_name = self.nodes["construction_functions"][0].get_name()
 
-        # SETUP IK DATA
+        for guide_name, guide_mtx in self.metadata.guide_transforms.items():
 
-        # Gets the names of the ik controls and their transforms, and applies it directly to the node
-        controller.set_pin_default_value(f'{construction_func_name}.effector_name',
-                                         ik_eff_name, False)
-        controller.set_pin_default_value(f'{construction_func_name}.upVector_name',
-                                         ik_upv_name, False)
+            print(guide_name)
+            print(guide_mtx)
 
-        ik_eff_trans = self.metadata.control_transforms[ik_eff_name]
-        ik_upv_trans = self.metadata.control_transforms[ik_upv_name]
+            transform = guide_mtx.transform()
 
-        # Orient the ik effector into unreal world space, by creating a new Transform, and assinging only the position.
-        ik_eff_trans = unreal.Transform(location=ik_eff_trans.translation)
+            pin_name = None
 
-        self._set_transform_pin(construction_func_name,
-                                'effector',
-                                ik_eff_trans,
-                                controller)
+            if guide_name == "root":
+                pin_name = "roll"
+            elif guide_name == "0_loc":
+                pin_name = "tip"
+            elif guide_name == "1_loc":
+                pin_name = "tip"
+            elif guide_name == "heel":
+                pin_name = "heel"
+            elif guide_name == "outpivot":
+                print("todo: outpivot not setup yet")
+            elif guide_name == "inpivot":
+                print("todo: inpivot not setup yet")
 
-        self._set_transform_pin(construction_func_name,
-                                'upVector',
-                                ik_upv_trans,
-                                controller)
-
-        # SETUP FK DATA
-
-        # Generates the array nodes for fk names and transforms
-        fk_names_node_name = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_names", controller)
-        fk_trans_node_name = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_transforms", controller)
-
-        fk_names_node = controller.get_graph().find_node_by_name(fk_names_node_name)
-        fk_trans_node = controller.get_graph().find_node_by_name(fk_trans_node_name)
-
-        self.add_misc_function(fk_names_node)
-        self.add_misc_function(fk_trans_node)
-
-        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
-        # values
-        controller.add_link(f'{fk_names_node_name}.Array',
-                            f'{construction_func_name}.fk_control_names')
-        controller.add_link(f'{fk_trans_node_name}.Array',
-                            f'{construction_func_name}.fk_control_transforms')
+            # todo: clean up or populate the following pins on the function node
+            "bk0"
+            "bk1"
+            "fk"
 
 
-        # Populate the array node with new pins that contain the name and transform data
+            # Populate the pins transform data
+            if pin_name is None:
+                continue
 
-        # Checks to see if the array has existing pins
-        name_pins_exist = ueMan.array_node_has_pins(fk_names_node_name, controller)
-        trans_pins_exist = ueMan.array_node_has_pins(fk_trans_node_name, controller)
+            _trn = transform.translation
+            _rot = transform.rotation
+            _scl = transform.scale3d
 
-        pin_index = 0
-
-        for control_name in fk_control_names:
-            control_transform = self.metadata.control_transforms[control_name]
-
-            if not name_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(fk_names_node_name)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(fk_control_names):
-                    controller.insert_array_pin(f'{fk_names_node_name}.Values',
-                                                -1,
-                                                '')
-            if not trans_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(fk_trans_node_name)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(fk_control_names):
-                    controller.insert_array_pin(f'{fk_trans_node_name}.Values',
-                                                -1,
-                                                '')
-
-            self._set_transform_pin(fk_trans_node_name,
-                                    f'Values.{pin_index}',
-                                    control_transform,
-                                    controller)
-
-            controller.set_pin_default_value(f'{fk_names_node_name}.Values.{pin_index}',
-                                             control_name,
-                                             False)
-
-            pin_index += 1
+            controller.set_pin_default_value(f'{construction_func_name}.{pin_name}',
+                                             f'(Rotation=(X={_rot.x}, Y={_rot.y}, Z={_rot.z},W={_rot.w}),'
+                                             f'Translation=(X={_trn.x},Y={_trn.y},Z={_trn.z}),'
+                                             f'Scale3D=(X={_scl.x},Y={_scl.y},Z={_scl.z}))',
+                                             True)
