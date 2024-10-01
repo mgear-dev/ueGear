@@ -417,6 +417,10 @@ class UEGearManager:
 
             print(f" -- {comp.name} --")
 
+            if comp.parent_node is None:
+                print(f"  Parent Node does not exist in graph: {parent_comp_name}")
+                continue
+
             print(f"  parent: {parent_comp_name}")
             print(f"  parent port: {parent_pin_name}")
             print(f"  Relationship Parent: {comp.parent_node.name}")
@@ -441,15 +445,12 @@ class UEGearManager:
                 comp_function = comp_functions[0]
                 parent_function = parent_functions[0]
 
-                print(parent_function)
-
                 # Connects the parent function node to the chile function node..
                 p_func_name = parent_function.get_name()
                 c_func_name = comp_function.get_name()
 
                 bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
                                        f"{c_func_name}.parent")
-
 
             elif comp.metadata.parent_fullname == comp.parent_node.name:
                 print("  Connect via relationships/Association")
@@ -468,15 +469,12 @@ class UEGearManager:
                 comp_function = comp_functions[0]
                 parent_function = parent_functions[0]
 
-                print(parent_function)
-
                 # Connects the parent function node to the chile function node..
                 p_func_name = parent_function.get_name()
                 c_func_name = comp_function.get_name()
 
                 bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
                                        f"{c_func_name}.parent")
-
 
             else:
                 unreal.log_error(f"Invalid relationship data found: {comp.name}")

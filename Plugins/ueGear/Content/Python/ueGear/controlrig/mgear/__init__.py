@@ -73,6 +73,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         data_contrat = data_component["DataContracts"]
         joints = data_component["Joints"]
         controls = data_component["Controls"]
+        guide_transforms = data_component.get("guideTransforms", None)
 
         mgear_component = mgComponent()
         mgear_component.name = component_name
@@ -83,6 +84,26 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         mgear_component.parent_localname = data_component['parent_localName']
         mgear_component.data_contracts = {}
         mgear_component.joint_relatives = data_component['jointRelatives']
+
+        # checks if guide transforms exists, as not all components have this attribute.
+        if guide_transforms:
+            # Converts the numeric list matrix into an Unreal Matrix
+            for key, val in guide_transforms.items():
+                mtx = unreal.Matrix()
+
+                # mtx.x_plane = unreal.Plane(val[0][0], val[1][0], val[2][0], val[3][0])
+                # mtx.y_plane = unreal.Plane(val[0][1], val[1][1], val[2][1], val[3][1])
+                # mtx.z_plane = unreal.Plane(val[0][2], val[1][2], val[2][2], val[3][2])
+                # mtx.w_plane = unreal.Plane(val[0][3], val[1][3], val[2][3], val[3][3])
+
+                mtx.x_plane = unreal.Plane(val[0][0], val[0][1], val[0][2], val[0][3])
+                mtx.y_plane = unreal.Plane(val[1][0], val[1][1], val[1][2], val[1][3])
+                mtx.z_plane = unreal.Plane(val[2][0], val[2][1], val[2][2], val[2][3])
+                mtx.w_plane = unreal.Plane(val[3][0], val[3][1], val[3][2], val[3][3])
+
+                guide_transforms[key] = mtx
+
+            mgear_component.guide_transforms = guide_transforms
 
         # Stores all the controls associated with this component
         for ctrl in controls:

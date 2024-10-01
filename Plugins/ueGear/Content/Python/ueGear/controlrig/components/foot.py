@@ -82,12 +82,15 @@ class FootComponent(UEComponent):
 
         # Gets the Construction Function Node and sets the control name
 
-        func_name = self.functions['construction_functions'][0]
+        func_name = self.name + "_" + self.functions['construction_functions'][0]
 
-        construct_func = base_component.get_construction_node(self, f"{self.name}_{func_name}")
+        construct_func = base_component.get_construction_node(self, f"{func_name}")
 
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
+        else:
+            # Set construction functions side
+            controller.set_pin_default_value(f'{func_name}.side', self.metadata.side, False)
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
@@ -156,28 +159,10 @@ class FootComponent(UEComponent):
     def init_input_data(self, controller: unreal.RigVMController):
 
         self.set_side_colour(controller)
-        # self._set_mirrored_ik_upvector(controller)
-
-    def _set_mirrored_ik_upvector(self, controller: unreal.RigVMController):
-        """
-        As the legs are mirrored, if a right leg is being built then we need to setup the
-        up axis to align with the upvector and joints
-        """
-
-        forward_function = self.nodes["forward_functions"][0]
-        func_name = forward_function.get_name()
-
-        if self.metadata.side == "R":
-
-            controller.set_pin_default_value(f'{func_name}.ik_PrimaryAxis',
-                                             '(X=-1.000000, Y=0.000000, Z=0.000000)',
-                                             True)
-            controller.set_pin_default_value(f'{func_name}.ik_SecondaryAxis',
-                                             '(X=0.000000, Y=1.000000, Z=0.000000)',
-                                             True)
 
 
-    def _set_transform_pin(self, node_name, pin_name, transform_value, controller):
+
+    def _set_transform_pin(self, node_name: str, pin_name: str, transform_value: unreal.Transform, controller):
         quat = transform_value.rotation
         pos = transform_value.translation
 
@@ -187,8 +172,6 @@ class FootComponent(UEComponent):
                                          f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
                                          f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
                                          True)
-
-
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
@@ -237,13 +220,7 @@ class FootComponent(UEComponent):
             if pin_name is None:
                 continue
 
-            _trn = transform.translation
-            _rot = transform.rotation
-            _scl = transform.scale3d
-
-            controller.set_pin_default_value(f'{construction_func_name}.{pin_name}',
-                                             f'(Rotation=(X={_rot.x}, Y={_rot.y}, Z={_rot.z},W={_rot.w}),'
-                                             f'Translation=(X={_trn.x},Y={_trn.y},Z={_trn.z}),'
-                                             f'Scale3D=(X=1.0,Y=1.0,Z=1.0))',
-                                             # f'Scale3D=(X={_scl.x},Y={_scl.y},Z={_scl.z}))',
-                                             True)
+            self._set_transform_pin(construction_func_name,
+                                    pin_name,
+                                    transform,
+                                    controller)
