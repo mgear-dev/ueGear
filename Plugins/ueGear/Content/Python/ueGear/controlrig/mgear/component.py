@@ -29,6 +29,9 @@ class mgComponent:
     controls_role: dict = None
     """Each control has a specific role, this stores the roll"""
 
+    controls_aabb: dict = None
+    """Axis Aligned Bounding Box for the controls"""
+
     # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
 
     parent_fullname: str = None

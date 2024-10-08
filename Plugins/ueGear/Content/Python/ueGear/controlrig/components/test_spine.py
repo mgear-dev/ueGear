@@ -139,7 +139,8 @@ class SpineComponent(UEComponent):
         self.add_misc_function(node)
 
     def _init_master_joint_node(self, controller, node_name: str, bones):
-        """Create the master bones node that will drive the creation of the joint, and be driven by the fk joints
+        """Create the bone node, that will contain a list of all the bones that need to be
+        driven.
         """
 
         print(" - Init Master Joints")

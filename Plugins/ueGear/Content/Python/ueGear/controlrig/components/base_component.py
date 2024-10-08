@@ -223,6 +223,37 @@ class UEComponent(object):
                 '1.000000',
                 False)
 
+    def _init_master_joint_node(self, controller, node_name: str, bones):
+        """Create the bone node, that will contain a list of all the bones that need to be
+        driven.
+
+        TODO: This could be made more generic and reusable
+        """
+        print(" - Init Master Joints")
+
+        # Creates an Item Array Node to the control rig
+        controller.add_unit_node_from_struct_path(
+            '/Script/ControlRig.RigUnit_ItemArray',
+            'Execute',
+            unreal.Vector2D(-54.908936, 204.649109),
+            node_name)
+
+        pin_index = 0  # stores the current pin index that is being updated
+
+        for bone in bones:
+            bone_name = str(bone.key.name)
+            print(f"  {self.name} > {bone_name}")
+
+            # Populates the Item Array Node
+            controller.insert_array_pin(f'{node_name}.Items', -1, '')
+            controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
+                                             f'(Type=Bone,Name="{bone_name}")',
+                                             True)
+            controller.set_pin_expansion(f'{node_name}.Items.{str(pin_index)}', True)
+            controller.set_pin_expansion(f'{node_name}.Items', True)
+
+            pin_index += 1
+
     # DEVELOPMENT!!!!!!!
 
     def __repr__(self):

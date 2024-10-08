@@ -18,37 +18,37 @@ def load_json_file(file_path: str):
     return data
 
 
-def _conversion_matrix_space(matrix: unreal.Matrix) -> unreal.Transform:
-    """Converts from Maya Y up to Unreals
-
-    matrix - is the matrix that needs to be converted into unreal space
-
-    returns a transform
-    """
-    conversion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
-                                   y_plane=[0, 0, -1, 0],
-                                   z_plane=[0, 1, 0, 0],
-                                   w_plane=[0, 0, 0, 1]
-                                   )
-
-    corrected_mtx = conversion_mtx * matrix * conversion_mtx.get_inverse()
-    # update Rotation
-    euler = matrix.transform().rotation.euler()
-    quat = unreal.Quat()
-    # quat.set_from_euler(unreal.Vector(euler.x + 90, euler.y, euler.z))
-    quat.set_from_euler(unreal.Vector(euler.x, euler.y, euler.z))
-    trans = corrected_mtx.transform()
-    trans.rotation = quat
-
-    # Update Position
-    pos = trans.translation
-    # pos_y = pos.y
-    # pos_z = pos.z
-    # pos.y = pos_z
-    # pos.z = -pos_y
-    trans.translation = pos
-
-    return trans
+# def _conversion_matrix_space(matrix: unreal.Matrix) -> unreal.Transform:
+#     """Converts from Maya Y up to Unreals
+#
+#     matrix - is the matrix that needs to be converted into unreal space
+#
+#     returns a transform
+#     """
+#     conversion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
+#                                    y_plane=[0, 0, -1, 0],
+#                                    z_plane=[0, 1, 0, 0],
+#                                    w_plane=[0, 0, 0, 1]
+#                                    )
+#
+#     corrected_mtx = conversion_mtx * matrix * conversion_mtx.get_inverse()
+#     # update Rotation
+#     euler = matrix.transform().rotation.euler()
+#     quat = unreal.Quat()
+#     # quat.set_from_euler(unreal.Vector(euler.x + 90, euler.y, euler.z))
+#     quat.set_from_euler(unreal.Vector(euler.x, euler.y, euler.z))
+#     trans = corrected_mtx.transform()
+#     trans.rotation = quat
+#
+#     # Update Position
+#     pos = trans.translation
+#     # pos_y = pos.y
+#     # pos_z = pos.z
+#     # pos.y = pos_z
+#     # pos.z = -pos_y
+#     trans.translation = pos
+#
+#     return trans
 
 
 def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
@@ -110,24 +110,24 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             if mgear_component.controls is None:
                 mgear_component.controls = []
                 mgear_component.controls_role = {}
+                mgear_component.controls_aabb = {}
 
             mgear_component.controls.append(ctrl["Name"])
             mgear_component.controls_role[ctrl["Name"]] = ctrl["Role"]
 
-            # Checks the controls transform data and records it as a Unreal.Transform
-            # Convert the maya to world transform
+            # Calculate control size
+            control_size = _calculate_control_size(ctrl)
+            mgear_component.controls_aabb[ctrl["Name"]] = control_size
 
+            # Checks the controls transform data and records it as a Unreal.Transform
             world_pos = ctrl["WorldPosition"]
             world_rot = ctrl["QuaternionWorldRotation"]
-
-            ue_trans = unreal.Transform()
+            world_pos = [world_pos['x'], world_pos['y'], world_pos['z']]
             ue_quaternion = unreal.Quat(world_rot[0], world_rot[1], world_rot[2], world_rot[3])
 
-            world_pos = [world_pos['x'], world_pos['y'], world_pos['z']]  # reordering for orientation change
+            ue_trans = unreal.Transform()
             ue_trans.set_editor_property("translation", world_pos)
             ue_trans.set_editor_property("rotation", ue_quaternion)
-
-            # Converts from Maya space to Unreal Space
             maya_mtx = ue_trans.to_matrix()
 
             if mgear_component.control_transforms is None:
@@ -149,3 +149,43 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         rig.add_component(new_component=mgear_component)
 
     return rig
+
+
+def _calculate_control_size(control_data: dict) -> list[int]:
+    """
+    Calculates a bounding box around the control, by evaluating the control points.
+
+    This bounding box is used to help scale the control rig's control shape.
+
+    """
+
+    bounding_box = [[0, 0, 0]]
+    """The bounding box will be a centered bounding box, storing the offset position 
+    from the center to the corners. This is an Axis Aligned Bounding Box (AABB)
+    """
+
+    bb_min = None
+    bb_max = None
+
+    shape_catergory = control_data["Shape"]
+    for crv_name in shape_catergory["curves_names"]:
+        shape_meta_data = shape_catergory[crv_name]["shapes"]
+        shape_data_list = shape_meta_data.values()
+        for shape_data in shape_data_list:
+            shape_points = shape_data["points"]
+
+            # Loop over all the points and record the largest and smallest positions
+            for point in shape_points:
+                # Initialises the min and max if they have not been populated yet
+                if bb_min is None and bb_max is None:
+                    bb_min = point[:]
+                    bb_max = point[:]
+                    continue
+
+                bb_min = list(map(min, bb_min, point))
+                bb_max = list(map(max, bb_max, point))
+
+    if bb_min and bb_max:
+        bounding_box = [(abs(min_i) + abs(max_i))/2 for min_i, max_i in zip(bb_min, bb_max)]
+
+    return bounding_box
