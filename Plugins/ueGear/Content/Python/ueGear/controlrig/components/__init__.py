@@ -1,9 +1,8 @@
-
 from types import ModuleType
 
-from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg, foot
+from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg, foot, neck
 
-__all__ = [base_component, test_fk, test_spine, shoulder, arm, leg, foot,
+__all__ = [base_component, test_fk, test_spine, shoulder, arm, leg, foot, neck,
            'lookup_mgear_component'
            ]
 
@@ -26,3 +25,8 @@ def lookup_mgear_component(mg_component_name: str) -> list[base_component.UEComp
                     matching_components.append(cls)
 
     return matching_components
+
+
+MAYA_COLOURS = {6: [0.0, 0.0, 1.0],
+                18: [0.0, 0.25, 1.0]}
+"""A look up table for maya index colours"""

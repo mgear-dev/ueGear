@@ -10,10 +10,12 @@ from ueGear import assets
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
-from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg
+from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg, foot, neck
 from ueGear.controlrig import components
 from ueGear.controlrig.mgear import component, rig
+importlib.reload(foot)
 importlib.reload(shoulder)
+importlib.reload(neck)
 importlib.reload(arm)
 importlib.reload(leg)
 importlib.reload(components)
@@ -129,9 +131,9 @@ def test_create_spine_shoulders_control():
 
     - No active control rig is set, so it should generate a new control rig
     """
-    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.gnx"
     TEST_CONTROLRIG_PATH = "/Game/TEST"
-    TEST_CONTROLRIG_NAME = "test_create_fk_control"
+    TEST_CONTROLRIG_NAME = "test_create_rig"
     TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
 
     # Converts teh json data into a class based structure, filters out non-required metadata.
@@ -166,13 +168,21 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component('root_C0', ignore_parent=True)
     gear_manager.build_component('body_C0', ignore_parent=True)
     gear_manager.build_component('spine_C0', ignore_parent=True)
-    gear_manager.build_component('shoulder_L0', ignore_parent=True)
-    gear_manager.build_component('shoulder_R0', ignore_parent=True)
-    gear_manager.build_component('arm_L0', ignore_parent=True)
-    gear_manager.build_component('arm_R0', ignore_parent=True)
-    gear_manager.build_component('leg_L0', ignore_parent=True)
-    gear_manager.build_component('leg_R0', ignore_parent=True)
+
+    gear_manager.build_component('neck_C0', ignore_parent=True)
+
+
+    # gear_manager.build_component('shoulder_L0', ignore_parent=True)
+    # gear_manager.build_component('shoulder_R0', ignore_parent=True)
+    #
+    # gear_manager.build_component('arm_L0', ignore_parent=True)
+    # gear_manager.build_component('arm_R0', ignore_parent=True)
+    #
+    # gear_manager.build_component('leg_L0', ignore_parent=True)
+    # gear_manager.build_component('leg_R0', ignore_parent=True)
+    #
     # gear_manager.build_component('foot_L0', ignore_parent=True)
+    # gear_manager.build_component('foot_R0', ignore_parent=True)
 
     # At this point there are many components created, but not connected to one another
 
