@@ -159,6 +159,8 @@ def _calculate_control_size(control_data: dict) -> list[int]:
 
     """
 
+    # TODO: Convert the world space points into local space points using a matrix. Then calculate the BB.
+
     bounding_box = [[0, 0, 0]]
     """The bounding box will be a centered bounding box, storing the offset position 
     from the center to the corners. This is an Axis Aligned Bounding Box (AABB)
