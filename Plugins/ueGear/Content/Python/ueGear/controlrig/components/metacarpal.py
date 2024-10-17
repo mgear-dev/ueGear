@@ -7,7 +7,7 @@ from ueGear.controlrig.components import base_component
 from ueGear.controlrig.components.base_component import UEComponent
 
 
-class ChainComponent(UEComponent):
+class MetacarpalComponent(UEComponent):
     name = "metacarpal"
     mgear_component = "EPIC_meta_01"
 
@@ -15,7 +15,7 @@ class ChainComponent(UEComponent):
         super().__init__()
 
         self.functions = {'construction_functions': ['construct_metacarpal'],
-                          'forward_functions': ['forward_metacarpal '],
+                          'forward_functions': ['forward_metacarpal'],
                           'backwards_functions': [],
                           }
         self.cr_variables = {}
@@ -120,7 +120,8 @@ class ChainComponent(UEComponent):
 
     def init_input_data(self, controller: unreal.RigVMController):
 
-        self._set_side_colour(controller)
+        # todo:
+        # self._set_side_colour(controller)
 
         self._connect_bones(controller)
 
@@ -133,10 +134,10 @@ class ChainComponent(UEComponent):
         forward_node_name = self.nodes["forward_functions"][0].get_name()
 
         controller.add_link(f'{bone_node_name}.Items',
-                            f'{construction_node_name}.fk_bones')
+                            f'{construction_node_name}.bones')
 
         controller.add_link(f'{bone_node_name}.Items',
-                            f'{forward_node_name}.Array')
+                            f'{forward_node_name}.bones')
 
     def _set_side_colour(self, controller: unreal.RigVMController):
         """Sets the controls default colour depending on the side"""

@@ -179,6 +179,14 @@ class UEComponent(object):
         """
         pass
 
+    def get_associated_parent_output(self, name: str):
+        """OVERLOAD THIS METHOD
+
+        This is a helper function that should be used to query the node for a specific mGear parent object,
+        which relates to a specific output pin of the current function
+        """
+        pass
+
     def add_misc_function(self, node):
         """
         Adds a miscilanois function(node) to this component so it can be more easily accessed

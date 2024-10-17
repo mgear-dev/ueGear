@@ -473,6 +473,11 @@ class UEGearManager:
                 p_func_name = parent_function.get_name()
                 c_func_name = comp_function.get_name()
 
+                # todo: setup a function that returns the correct node based plug data using the name of the parent_pin_name
+                # This function would exist on the component object
+                # eg. pin_to_link_to =  component.get_associated_output(parent_pin_name)
+
+
                 bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
                                        f"{c_func_name}.parent")
 
