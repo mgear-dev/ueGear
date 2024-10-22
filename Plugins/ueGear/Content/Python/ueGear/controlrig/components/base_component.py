@@ -179,7 +179,7 @@ class UEComponent(object):
         """
         pass
 
-    def get_associated_parent_output(self, name: str):
+    def get_associated_parent_output(self, name: str, controller: unreal.RigVMController):
         """OVERLOAD THIS METHOD
 
         This is a helper function that should be used to query the node for a specific mGear parent object,

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import unreal
 
 from ueGear import assets as ue_assets
@@ -473,13 +475,21 @@ class UEGearManager:
                 p_func_name = parent_function.get_name()
                 c_func_name = comp_function.get_name()
 
-                # todo: setup a function that returns the correct node based plug data using the name of the parent_pin_name
-                # This function would exist on the component object
-                # eg. pin_to_link_to =  component.get_associated_output(parent_pin_name)
+                # Function that returns the correct pin from the name of the parent_pin_name
+                # If no pin is found then we fall back to specified parent mGear name.
+                pin = parent_comp.get_associated_parent_output(parent_pin_name, bp_controller)
 
+                if pin:
+                    print(f"Associated Parent Pin : {pin}")
+                    print(f"{pin} > {c_func_name}.parent ")
 
-                bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
-                                       f"{c_func_name}.parent")
+                    bp_controller.add_link(pin,
+                                           f"{c_func_name}.parent")
+                else:
+                    print(f"{p_func_name}.{parent_pin_name} > {c_func_name}.parent ")
+
+                    bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
+                                           f"{c_func_name}.parent")
 
             else:
                 unreal.log_error(f"Invalid relationship data found: {comp.name}")
@@ -589,7 +599,7 @@ class UEGearManager:
 
     def get_node(self, node_name: str,
                  create_if_missing: bool = False, function_path: str = None,
-                 function_name: str = None) -> unreal.RigVMNode:
+                 function_name: str = None) -> Optional[unreal.RigVMNode]:
         """
         Gets a node by name in the current graph that is active in the Manager.
 

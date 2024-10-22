@@ -295,3 +295,42 @@ class MetacarpalComponent(UEComponent):
 
         self.populate_control_names(controller)
         self.populate_control_scale(controller)
+
+    def get_associated_parent_output(self, name: str, controller: unreal.RigVMController) -> str:
+        """
+        name: Name of the relative key that will be used to get the associated bone index.
+        controller: The BP controller that will manipulate the graph.
+
+        return: The name of the pin to be connected from.
+        """
+        print("--- get_associated_parent_output ---")
+
+        # Looks at the metacarpals jointRelative dictionary for the name and the index of the output
+        joint_index = str(self.metadata.joint_relatives[name])
+
+        print(f"  {self.name} > {name} : {joint_index}")
+
+        node_name = "_".join( [self.name, name, joint_index] )
+
+        # Create At Index
+        node = controller.add_template_node(
+            'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+            unreal.Vector2D(3500, 1000),
+            node_name
+            )
+        self.add_misc_function(node)
+
+        # Set At index
+        controller.set_pin_default_value(
+            f'{node_name}.Index',
+            str(joint_index),
+            False
+        )
+
+        # Connect At Index to Array output "controls"
+        construction_node_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{construction_node_name}.controls',
+                            f'{node_name}.Array'
+                            )
+
+        return f'{node_name}.Element'

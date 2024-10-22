@@ -10,10 +10,12 @@ from ueGear import assets
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
-from ueGear.controlrig.components import base_component, test_fk, test_spine, shoulder, arm, leg, foot, neck, chain
+from ueGear.controlrig.components import (base_component, test_fk, test_spine, shoulder, arm, leg, foot, neck, chain,
+                                          metacarpal)
 from ueGear.controlrig import components
 from ueGear.controlrig.mgear import component, rig
 importlib.reload(foot)
+importlib.reload(metacarpal)
 importlib.reload(chain)
 importlib.reload(shoulder)
 importlib.reload(neck)
@@ -164,14 +166,13 @@ def test_create_spine_shoulders_control():
     gear_manager.build_world_control()
 
     # Builds component by name
-    # gear_manager.build_component('global_C0', ignore_parent=True)
-    # gear_manager.build_component('local_C0', ignore_parent=True)
-    # gear_manager.build_component('root_C0', ignore_parent=True)
-    # gear_manager.build_component('body_C0', ignore_parent=True)
-    # gear_manager.build_component('spine_C0', ignore_parent=True)
+    gear_manager.build_component('global_C0', ignore_parent=True)
+    gear_manager.build_component('local_C0', ignore_parent=True)
+    gear_manager.build_component('root_C0', ignore_parent=True)
+    gear_manager.build_component('body_C0', ignore_parent=True)
+    gear_manager.build_component('spine_C0', ignore_parent=True)
 
-    # gear_manager.build_component('neck_C0', ignore_parent=True)
-
+    gear_manager.build_component('neck_C0', ignore_parent=True)
 
     gear_manager.build_component('shoulder_L0', ignore_parent=True)
     # gear_manager.build_component('shoulder_R0', ignore_parent=True)
@@ -190,6 +191,7 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component("finger_L2")
     gear_manager.build_component("finger_L3")
     gear_manager.build_component("thumb_L0")
+    gear_manager.build_component("meta_L0")
 
     # At this point there are many components created, but not connected to one another
 
