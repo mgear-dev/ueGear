@@ -16,13 +16,13 @@ import unreal
 from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 
 # TODO: Remove the imports once we release into production
-importlib.reload(helpers)
-importlib.reload(structs)
-importlib.reload(tag)
-importlib.reload(assets)
-importlib.reload(actors)
-importlib.reload(textures)
-importlib.reload(mayaio)
+# importlib.reload(helpers)
+# importlib.reload(structs)
+# importlib.reload(tag)
+# importlib.reload(assets)
+# importlib.reload(actors)
+# importlib.reload(textures)
+# importlib.reload(mayaio)
 
 
 # TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
@@ -107,6 +107,31 @@ class PyUeGearCommands(unreal.UeGearCommands):
             unreal_array.append(path)
 
         return unreal_array
+
+    @unreal.ufunction(
+        ret=str,
+        static=True,
+        meta=dict(Category="ueGear Commands")
+    )
+    def get_mgear_gnx_path():
+        """
+        NOTE: Currently this is not being used in the Editor Utility Widget, as the UE widgets has a refresh issue.
+
+        https://forums.unrealengine.com/t/custom-blueprint-nodes-defined-in-python-need-to-be-refreshed-every-time-i-reopen-the-editor/146413/8
+        """
+        import tkinter as tk
+        from tkinter import filedialog
+
+        # Hides the root window
+        root = tk.Tk()
+        root.withdraw()
+
+        file_path = filedialog.askopenfilename(
+            title="Select a mGear GNX file",
+            filetypes=[("GNX files", "*.gnx"), ("All files", "*.*")],
+            defaultextension=".gnx"
+        )
+        return file_path
 
     # ==================================================================================================================
     # ASSETS
