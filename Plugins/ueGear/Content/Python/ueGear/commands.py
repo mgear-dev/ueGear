@@ -66,7 +66,13 @@ class PyUeGearCommands(unreal.UeGearCommands):
     def generate_uegear_ui(self):
         """
         """
-        print("TEST UI")
+        widget_name = 'ueGear_ui'
+        asset_path = f'/ueGear/Python/ueGear/ui/{widget_name}'
+        asset_widget = unreal.EditorAssetLibrary.load_asset(asset_path)
+
+        edit_utils = unreal.get_editor_subsystem(unreal.EditorUtilitySubsystem)
+        edit_utils.spawn_and_register_tab(asset_widget)
+
 
     # ==================================================================================================================
     # PATHS
