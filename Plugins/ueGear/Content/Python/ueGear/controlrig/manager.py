@@ -928,3 +928,61 @@ def calculate_node_size(node: unreal.RigVMUnitNode):
 
     return (width, height)
 
+def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, gnx_path: str):
+    """
+    Generates the control rig from the available components
+    """
+    TEST_BUILD_JSON = gnx_path
+    TEST_CONTROLRIG_PATH = output_path
+    TEST_CONTROLRIG_NAME = rig_name
+    TEST_CONTROLRIG_SKM = skeleton_package
+
+    print("-------------------------------------------")
+    print(" Creating Control Rig from mGear .gnx file")
+    print(f"   {rig_name}")
+    print(f"   {skeleton_package}")
+    print(f"   {output_path}")
+    print(f"   {gnx_path}")
+    print("-------------------------------------------")
+
+
+    # Converts teh json data into a class based structure, filters out non-required metadata.
+    mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
+
+    gear_manager = UEGearManager()
+    gear_manager.load_rig(mgear_rig)
+
+    # Creates an asset path
+    cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
+    # Control Rig Blueprint
+    cr_bp = assets.get_asset_object(cr_path)
+
+    if cr_bp is None:
+        cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_SKM)
+    else:
+        gear_manager.set_active_blueprint(cr_bp)
+
+    if cr_bp is None:
+        unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
+        unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
+        return None
+
+    # - At this point we now have The Manager, with an empty Control Rig BP
+
+    # Builds the world control if it has been enabled in the Main Settings
+    gear_manager.build_world_control()
+
+    # Loop over all the components and tries to build them
+    for comp in gear_manager.mg_rig.components.values:
+        print(comp.name)
+        print(comp.comp_type)
+
+        # gear_manager.build_component('global_C0', ignore_parent=True)
+
+    # - At this point there are many components created, but not connected to one another
+
+    gear_manager.populate_parents()
+
+    gear_manager.connect_components()
+
+    gear_manager.group_components()

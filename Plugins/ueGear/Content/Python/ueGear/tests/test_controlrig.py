@@ -246,6 +246,18 @@ def test_build_mgRig():
 
     # gear_manager.connect_components()
 
+def test_manager_create_control_rig():
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    TEST_CONTROLRIG_PATH = "/Game/TEST"
+    TEST_CONTROLRIG_NAME = "test_create_fk_control"
+    TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
+
+    import ueGear.controlrig.manager as ueM
+    ueM.create_control_rig(TEST_CONTROLRIG_NAME,
+                           TEST_CONTROLRIG_SKM,
+                           TEST_CONTROLRIG_PATH,
+                           TEST_BUILD_JSON)
+
 #----
 
 # test_build_component_count()
@@ -253,6 +265,8 @@ def test_build_mgRig():
 # test_create_control_rig_bp()
 # test_create_fk_control()
 
-test_create_spine_shoulders_control()
+# test_create_spine_shoulders_control()
 
 # test_build_mgRig()
+
+test_manager_create_control_rig()
