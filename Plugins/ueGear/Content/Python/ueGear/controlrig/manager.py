@@ -43,8 +43,9 @@ class UEGearManager:
         self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
 
-        # Generates the 'Create', 'Forward' and 'Backwards' nodes
-        self.create_solves()
+
+        # # Generates the 'Create', 'Forward' and 'Backwards' nodes
+        # self.create_solves()
 
     def get_open_controlrig_blueprints(self):
         """Gets all open Control Rig Blueprints
@@ -226,8 +227,8 @@ class UEGearManager:
         """
 
         for comp in self.mg_rig.components.values():
-            print(comp.name)
-            print(comp.comp_type)
+            print(f"  {comp.comp_type} - {comp.fullname}")
+            gear_manager.build_component(comp.fullname)
 
     def populate_parents(self):
         """
@@ -774,6 +775,10 @@ class UEGearManager:
 
         rig_vm_controller = self.get_active_controller()
 
+        if rig_vm_controller is None:
+            unreal.log_error("No Control Rig Controller found, please open up a control Rig UI and try again")
+            return
+
         position_offset = unreal.Vector2D(-300, 0)
 
         # Forward
@@ -955,29 +960,24 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     # Creates an asset path
     cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
     # Control Rig Blueprint
-    cr_bp = assets.get_asset_object(cr_path)
+    cr_bp = ue_assets.get_asset_object(cr_path)
 
     if cr_bp is None:
         cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_SKM)
     else:
         gear_manager.set_active_blueprint(cr_bp)
 
-    if cr_bp is None:
-        unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
-        unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
-        return None
+    # todo: commented out as the folder should only be deleted if it is empty.
+    # if cr_bp is None:
+    #     unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
+    #     unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
+    #     return None
 
     # - At this point we now have The Manager, with an empty Control Rig BP
 
     # Builds the world control if it has been enabled in the Main Settings
     gear_manager.build_world_control()
-
-    # Loop over all the components and tries to build them
-    for comp in gear_manager.mg_rig.components.values:
-        print(comp.name)
-        print(comp.comp_type)
-
-        # gear_manager.build_component('global_C0', ignore_parent=True)
+    gear_manager.build_components()
 
     # - At this point there are many components created, but not connected to one another
 

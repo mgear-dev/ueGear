@@ -247,9 +247,9 @@ def test_build_mgRig():
     # gear_manager.connect_components()
 
 def test_manager_create_control_rig():
-    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.scd"
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.gnx"
     TEST_CONTROLRIG_PATH = "/Game/TEST"
-    TEST_CONTROLRIG_NAME = "test_create_fk_control"
+    TEST_CONTROLRIG_NAME = "test_manager_create"
     TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
 
     import ueGear.controlrig.manager as ueM
