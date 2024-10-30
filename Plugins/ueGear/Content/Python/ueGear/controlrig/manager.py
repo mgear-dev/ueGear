@@ -88,6 +88,7 @@ class UEGearManager:
 
         :return:
         """
+        controller = self.get_active_controller()
 
         create_ctrl = self.mg_rig.settings["worldCtl"]
         name = self.mg_rig.settings["world_ctl_name"]
@@ -115,10 +116,10 @@ class UEGearManager:
 
         self.uegear_components.append(ueg_comp)
 
-        ueg_comp.create_functions(self.get_active_controller())
+        ueg_comp.create_functions(controller)
 
         # Orients the control shape
-        ueg_comp.populate_control_shape_orientation(self.get_active_controller())
+        ueg_comp.populate_control_shape_orientation(controller)
 
     def build_component(self, name, ignore_parent=True):
         """Create an individual component from the mgear scene desciptor file.
@@ -224,10 +225,11 @@ class UEGearManager:
 
         ignore_component_names : list(str) - list of names that will be ignored if the name of the component matches
         ignore_component_type : list(str) - list of types that will not be build, if found component matches
+
+        # todo: implement the ignore functionality
         """
 
         for comp in self.mg_rig.components.values():
-            print(f"  {comp.comp_type} - {comp.fullname}")
             self.build_component(comp.fullname)
 
     def populate_parents(self):
@@ -962,15 +964,16 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     # Control Rig Blueprint
     cr_bp = ue_assets.get_asset_object(cr_path)
 
-    print(f"DEBUG: create_control_rig > {cr_bp}")
+    print(f" --  Could not find Control Rig Blueprint > {cr_bp}")
 
     if cr_bp is None:
+        print(f" --  Creating Control Rig Blueprint > {cr_path}")
         cr_bp = gear_manager.create_control_rig(TEST_CONTROLRIG_PATH, TEST_CONTROLRIG_NAME, TEST_CONTROLRIG_SKM)
-
-    print(cr_bp)
-    if cr_bp is None:
-        unreal.log_error("No Control Rig Graph found..")
-        return
+        if cr_bp is None:
+            unreal.log_error("No Control Rig Graph found..")
+            return
+        aes = unreal.AssetEditorSubsystem()
+        aes.open_editor_for_assets([cr_bp])
 
     gear_manager.set_active_blueprint(cr_bp)
 

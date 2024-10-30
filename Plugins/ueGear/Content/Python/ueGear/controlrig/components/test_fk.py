@@ -67,7 +67,6 @@ class fkComponent(UEComponent):
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
                     print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -81,7 +80,6 @@ class fkComponent(UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
-                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
