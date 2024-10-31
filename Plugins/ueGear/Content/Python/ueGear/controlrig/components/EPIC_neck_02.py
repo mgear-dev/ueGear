@@ -10,7 +10,7 @@ from ueGear.controlrig.components import base_component
 # [ ] The end joint should be driven the "head" fk control
 
 
-class NeckComponent(base_component.UEComponent):
+class Component(base_component.UEComponent):
     name = "neck"
     mgear_component = "EPIC_neck_02"
 

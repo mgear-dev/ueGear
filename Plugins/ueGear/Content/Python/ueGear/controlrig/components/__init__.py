@@ -4,10 +4,8 @@ import inspect
 
 from types import ModuleType
 
-# from ueGear.controlrig.components import *
-from . import *
-from ueGear.controlrig.components import base_component
-
+# from . import *
+import ueGear.controlrig.components.base_component
 
 def lookup_mgear_component(mg_component_name: str) -> list[base_component.UEComponent]:
     """

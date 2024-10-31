@@ -4,7 +4,7 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 
 
-class ChainComponent(base_component.UEComponent):
+class Component(base_component.UEComponent):
     name = "chain"
     mgear_component = "EPIC_chain_01"
 

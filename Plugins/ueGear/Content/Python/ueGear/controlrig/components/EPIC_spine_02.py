@@ -3,7 +3,7 @@ import unreal
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 
-class SpineComponent(base_component.UEComponent):
+class Component(base_component.UEComponent):
     name = "test_Spine"
     mgear_component = "EPIC_spine_02"
 

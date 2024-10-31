@@ -5,7 +5,7 @@ import unreal
 from ueGear import assets as ue_assets
 from ueGear.controlrig import mgear
 from ueGear.controlrig import components
-
+from ueGear.controlrig.components import EPIC_control_01
 
 class UEGearManager:
     _factory: unreal.ControlRigBlueprintFactory = None
@@ -110,7 +110,7 @@ class UEGearManager:
         placeholder_component.joints = None
         placeholder_component.comp_type = "world_ctrl"
 
-        ueg_comp = components.EPIC_control_01.fkComponent()
+        ueg_comp = EPIC_control_01.Component()
         ueg_comp.metadata = placeholder_component
         ueg_comp.name = name
 
