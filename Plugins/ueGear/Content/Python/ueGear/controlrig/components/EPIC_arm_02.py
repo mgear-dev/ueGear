@@ -1,21 +1,18 @@
-__all__ = ['LegComponent']
-
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
-from ueGear.controlrig.components.base_component import UEComponent
 
 
-class LegComponent(UEComponent):
-    name = "test_Leg"
-    mgear_component = "EPIC_leg_02"
+class ArmComponent(base_component.UEComponent):
+    name = "test_Arm"
+    mgear_component = "EPIC_arm_02"
 
     def __init__(self):
         super().__init__()
 
-        self.functions = {'construction_functions': ['construct_IK_leg'],
-                          'forward_functions': ['forward_IK_leg'],
+        self.functions = {'construction_functions': ['construct_IK_arm'],
+                          'forward_functions': ['forward_IK_arm'],
                           'backwards_functions': [],
                           }
         self.cr_variables = {}
@@ -27,8 +24,8 @@ class LegComponent(UEComponent):
                           }
 
         # Control Rig Outputs
-        self.cr_output = {'construction_functions': ['ankle'],
-                          'forward_functions': ['ik_active_out'],
+        self.cr_output = {'construction_functions': ['root'],
+                          'forward_functions': [],
                           'backwards_functions': [],
                           }
 
@@ -78,6 +75,7 @@ class LegComponent(UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
+                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
@@ -211,12 +209,14 @@ class LegComponent(UEComponent):
 
     def init_input_data(self, controller: unreal.RigVMController):
 
+        # commented out while developing arm
         self._set_side_colour(controller)
         self._set_mirrored_ik_upvector(controller)
 
+
     def _set_mirrored_ik_upvector(self, controller: unreal.RigVMController):
         """
-        As the legs are mirrored, if a right leg is being built then we need to setup the
+        The Arms can be mirrored, if a right side is being built then we need to setup the
         up axis to align with the upvector and joints
         """
 
@@ -278,8 +278,6 @@ class LegComponent(UEComponent):
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
-
-        Design Decision: All feet IK Controls are built in World Space, oriented to World Space
         """
         print("--------------------------------------------------")
         print(" Generating Control Names and Transform Functions")
@@ -318,9 +316,6 @@ class LegComponent(UEComponent):
 
         ik_eff_trans = self.metadata.control_transforms[ik_eff_name]
         ik_upv_trans = self.metadata.control_transforms[ik_upv_name]
-
-        # Orient the ik effector into unreal world space, by creating a new Transform, and assinging only the position.
-        ik_eff_trans = unreal.Transform(location=ik_eff_trans.translation)
 
         self._set_transform_pin(construction_func_name,
                                 'effector',

@@ -1,13 +1,10 @@
-__all__ = ['MetacarpalComponent']
-
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
-from ueGear.controlrig.components.base_component import UEComponent
 
 
-class MetacarpalComponent(UEComponent):
+class MetacarpalComponent(base_component.UEComponent):
     name = "metacarpal"
     mgear_component = "EPIC_meta_01"
 

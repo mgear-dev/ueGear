@@ -1,13 +1,10 @@
-__all__ = ['ChainComponent']
-
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
-from ueGear.controlrig.components.base_component import UEComponent
 
 
-class ChainComponent(UEComponent):
+class ChainComponent(base_component.UEComponent):
     name = "chain"
     mgear_component = "EPIC_chain_01"
 

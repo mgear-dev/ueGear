@@ -10,26 +10,15 @@ from ueGear import assets
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
-from ueGear.controlrig.components import (base_component, test_fk, test_spine, shoulder, arm, leg, foot, neck, chain,
-                                          metacarpal)
+from ueGear.controlrig.components import *
 from ueGear.controlrig import components
 from ueGear.controlrig.mgear import component, rig
-importlib.reload(foot)
-importlib.reload(metacarpal)
-importlib.reload(chain)
-importlib.reload(shoulder)
-importlib.reload(neck)
-importlib.reload(arm)
-importlib.reload(leg)
 importlib.reload(components)
 importlib.reload(mgear)
 importlib.reload(component)
 importlib.reload(rig)
-
 importlib.reload(ueM)
-importlib.reload(base_component)
-importlib.reload(test_fk)
-importlib.reload(test_spine)
+
 # ---
 
 def test_build_component_count():

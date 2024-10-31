@@ -110,7 +110,7 @@ class UEGearManager:
         placeholder_component.joints = None
         placeholder_component.comp_type = "world_ctrl"
 
-        ueg_comp = components.test_fk.fkComponent()
+        ueg_comp = components.EPIC_control_01.fkComponent()
         ueg_comp.metadata = placeholder_component
         ueg_comp.name = name
 

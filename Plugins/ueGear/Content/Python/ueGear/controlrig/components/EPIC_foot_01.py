@@ -1,13 +1,10 @@
-__all__ = ['FootComponent']
-
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
-from ueGear.controlrig.components.base_component import UEComponent
 
 
-class FootComponent(UEComponent):
+class FootComponent(base_component.UEComponent):
     name = "foot_component"
     mgear_component = "EPIC_foot_01"
 
