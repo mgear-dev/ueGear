@@ -1,0 +1,1 @@
+CONTROL_RIG_FUNCTION_PATH = r"/ueGear/Python/ueGear/controlrig/ueGearFunctionLibrary.ueGearFunctionLibrary_C"

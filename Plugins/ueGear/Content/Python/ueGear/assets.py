@@ -159,6 +159,25 @@ def get_asset_data(asset_path, only_on_disk=False):
     )
 
 
+def get_asset_object(asset_path:str) -> unreal.Object:
+    """
+    Returns the Object for the asset at the specific asset_path
+
+    :param str asset_path: path of the asset we want to retrieve data of.
+    :rtype: unreal.Object or None
+    """
+    asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    assets_data = asset_registry.get_assets_by_package_name(
+        asset_path, include_only_on_disk_assets=False
+    )
+
+    if len(assets_data) != 1:
+        unreal.log_warning(f"Multiple Asset Objects found: {asset_path}")
+        return None
+    return assets_data[0].get_asset()
+
+
 def get_asset(asset_path, only_on_disk=False):
     """
     Returns instance of an existent asset.
@@ -190,13 +209,18 @@ def get_selected_asset_data():
     return unreal.EditorUtilityLibrary.get_selected_asset_data()
 
 
-def selected_assets():
+def selected_assets(asset_type=None):
     """
     Returns current selected asset instances in Content Browser.
+
+    :param type(unreal.Class) asset_type: The type of object you want to select. Filters out types that do not match
 
     :return: list of selected asset instances in Content Browser.
     :rtype: list(object)
     """
+
+    if asset_type:
+        return unreal.EditorUtilityLibrary.get_selected_assets_of_class(asset_type)
 
     return unreal.EditorUtilityLibrary.get_selected_assets()
 

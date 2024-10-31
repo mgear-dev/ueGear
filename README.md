@@ -1,6 +1,7 @@
 # ueGear
 Unreal Engine Gear
 
+Requires: Unreal 5.2+
 
 ### ueGear 0.1 Roadmap Goals
 **Goal:** 
@@ -88,3 +89,64 @@ Go to the FBX webpage and install the latest version that works with your Maya v
 - Can be instantiated by the LevelSequencer
 - Can exist in a Level and not in a LevelSequencer
 - Never exists in the Content Browser. It will appear in a LevelSequence or inside a level.
+
+# Control Rig
+
+The ueGear Control Rig Library can be found in the following location
+Repo: `ueGear/Plugins/ueGear/Content/Python/ueGear/controlrig/ueGearFunctionLibrary.uasset`
+Unreal: `ueGear/Content/Python/ueGear/controlrig/ueGearFunctionLibrary.uasset`
+
+If you enable plugins in the Content Browser Settings, you will be able to see the folder.
+
+# Unreal meta data storing
+Blueprint class > Primary Dataset
+    - blueprint class
+    - can store a bunch of variables
+
+From blueprint > you can create a dataasset (instance)
+
+ControlRig > Asset User Data > 
+
+Can only read data fom a dataset in constructino event > read user data
+
+# Limitations
+
+## Unreal 5.3
+
+- Control Rig Functions do not return the size when queried.
+
+# WIP
+
+- [ ] Component Shape fitting - #21
+
+Mass updates or queries to all assets use "Editor Utility Tasks"
+    - It is a editor utility blueprint(Create it from the context menu)
+
+# TODO
+- [ ] Rig Components to Create
+  - [X] Hands
+  - [X] Metacarpal
+  - [X] Neck
+  - [X] Feet
+  - [X] Weapon
+  - [X] Head
+  - [ ] all associated face components
+
+- [ ] Control Shape Orientation
+  - [ ] Spine
+  - [ ] Arms FK
+  - [ ] Legs FK
+
+- [ ] Control Rig implementation
+  - [ ] Automatic matching
+
+- [ ] Backwards Solve
+
+- [ ] Tests
+    - [ ] Rig Complexity - different structures
+
+- [ ] 5.4 Add Modular System
+
+# How to set limits
+
+Limits are not available to be set via a construction node in `5.3`, they only appear in `5.4+`
