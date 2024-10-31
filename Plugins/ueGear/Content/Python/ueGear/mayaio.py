@@ -444,8 +444,8 @@ def convert_transform_maya_to_unreal(maya_transform, world_up):
     Converts a unreal.Transform(), that stores Maya data, into a transformation matrix that
     works in Unreal.
 
-    :param unreal.Transform() transform: Transform with Maya transformation data.
-    :param str transform: Mayas world up setting.
+    :param unreal.Transform() maya_transform: Transform with Maya transformation data.
+    :param str world_up: Mayas world up setting.
 
     :return: Maya transformation now in Unreal transform space.
     :rtype: unreal.Transform()

@@ -59,6 +59,13 @@ void FueGearModule::FillMenu(FMenuBuilder& MenuBuilder)
 	FSlateIcon(),
 	FUIAction(FExecuteAction::CreateRaw(this, &FueGearModule::ExportUnrealLayoutCallback))
 	);
+
+	MenuBuilder.AddMenuEntry(
+		FText::FromString("Generate ueGear Rig"),
+		FText::FromString("Generates a ueGear Control Rig from an mGear context."),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateRaw(this, &FueGearModule::GenerateUegearUiCallback))
+	);
 }
 
 void FueGearModule::ImportMayaDataCallback()
@@ -77,6 +84,12 @@ void FueGearModule::ExportUnrealLayoutCallback()
 {
 	UUeGearCommands* ueGearCommands = UUeGearCommands::Get();
 	ueGearCommands->ExportUnrealLayout();
+}
+
+void FueGearModule::GenerateUegearUiCallback()
+{
+	UUeGearCommands* ueGearCommands = UUeGearCommands::Get();
+	ueGearCommands->GenerateUegearUi();
 }
 
 #undef LOCTEXT_NAMESPACE

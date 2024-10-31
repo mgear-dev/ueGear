@@ -23,4 +23,7 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category=ueGear)
 	void ExportUnrealLayout();
+
+	UFUNCTION(BlueprintImplementableEvent, Category=ueGear)
+	void GenerateUegearUi();
 };
