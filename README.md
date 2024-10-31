@@ -115,14 +115,22 @@ Can only read data fom a dataset in constructino event > read user data
 
 - Control Rig Functions do not return the size when queried.
 
-# TODO
+# WIP
 
+- [ ] Component Shape fitting - #21
+
+Mass updates or queries to all assets use "Editor Utility Tasks"
+    - It is a editor utility blueprint(Create it from the context menu)
+
+# TODO
 - [ ] Rig Components to Create
-  - [ ] Hands
-  - [ ] Neck
-  - [ ] Feet
-  - [ ] Weapon
-  - [ ] Head + and all associated face components
+  - [X] Hands
+  - [X] Metacarpal
+  - [X] Neck
+  - [X] Feet
+  - [X] Weapon
+  - [X] Head
+  - [ ] all associated face components
 
 - [ ] Control Shape Orientation
   - [ ] Spine
@@ -131,3 +139,14 @@ Can only read data fom a dataset in constructino event > read user data
 
 - [ ] Control Rig implementation
   - [ ] Automatic matching
+
+- [ ] Backwards Solve
+
+- [ ] Tests
+    - [ ] Rig Complexity - different structures
+
+- [ ] 5.4 Add Modular System
+
+# How to set limits
+
+Limits are not available to be set via a construction node in `5.3`, they only appear in `5.4+`

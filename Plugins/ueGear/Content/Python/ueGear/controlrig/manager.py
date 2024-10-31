@@ -972,8 +972,11 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
         if cr_bp is None:
             unreal.log_error("No Control Rig Graph found..")
             return
-        aes = unreal.AssetEditorSubsystem()
-        aes.open_editor_for_assets([cr_bp])
+
+    # ------ Causes Unreal to Crash -------
+    # aes = unreal.AssetEditorSubsystem()
+    # aes.open_editor_for_assets([cr_bp])
+    # -------------------------------------
 
     gear_manager.set_active_blueprint(cr_bp)
 
@@ -984,15 +987,12 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     #     return None
 
     # - At this point we now have The Manager, with an empty Control Rig BP
-
     # Builds the world control if it has been enabled in the Main Settings
     gear_manager.build_world_control()
     gear_manager.build_components()
 
     # - At this point there are many components created, but not connected to one another
-
     gear_manager.populate_parents()
-
     gear_manager.connect_components()
-
     gear_manager.group_components()
+

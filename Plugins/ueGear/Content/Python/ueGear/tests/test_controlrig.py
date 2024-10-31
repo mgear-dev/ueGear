@@ -241,7 +241,6 @@ def test_manager_create_control_rig():
     TEST_CONTROLRIG_NAME = "test_manager_create"
     TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
 
-    import ueGear.controlrig.manager as ueM
     ueM.create_control_rig(TEST_CONTROLRIG_NAME,
                            TEST_CONTROLRIG_SKM,
                            TEST_CONTROLRIG_PATH,
