@@ -188,6 +188,13 @@ class Component(base_component.UEComponent):
             unreal_size = [round(element/reduce_ratio, 4) for element in aabb[1]]
 
             for axis, value in zip(["X", "Y", "Z",], unreal_size):
+
+                # an ugly way to ensure that the bounding box is not 100% flat,
+                # causing the control to be scaled flat on Z
+                if axis == "Z" and value <= 1.0:
+                    value = unreal_size[0]
+
+
                 controller.set_pin_default_value(
                     f'{construction_node}.control_size.{axis}',
                     str(value),
