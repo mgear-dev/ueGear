@@ -7,6 +7,7 @@ from ueGear.controlrig import mgear
 from ueGear.controlrig import components
 from ueGear.controlrig.components import EPIC_control_01
 
+
 class UEGearManager:
     _factory: unreal.ControlRigBlueprintFactory = None
     """Unreals Control Rig Blue Print Factory. This performs all the alterations to the Control Rig"""
@@ -42,7 +43,6 @@ class UEGearManager:
         unreal.load_module('ControlRigDeveloper')
         self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
-
 
         # # Generates the 'Create', 'Forward' and 'Backwards' nodes
         # self.create_solves()
@@ -109,6 +109,9 @@ class UEGearManager:
         placeholder_component.controls = [name]
         placeholder_component.joints = None
         placeholder_component.comp_type = "world_ctrl"
+        # populating the boundin box
+        placeholder_component.controls_aabb = dict()
+        placeholder_component.controls_aabb[name] = [[0, 0, 0], [120.0, 120.0, 120.0]]
 
         ueg_comp = EPIC_control_01.Component()
         ueg_comp.metadata = placeholder_component
@@ -120,6 +123,7 @@ class UEGearManager:
 
         # Orients the control shape
         ueg_comp.populate_control_shape_orientation(controller)
+        ueg_comp.populate_control_scale(controller)
 
     def build_component(self, name, ignore_parent=True):
         """Create an individual component from the mgear scene desciptor file.
@@ -207,8 +211,8 @@ class UEGearManager:
             # print(f"Comment Size {comment_size}")
             controller.set_node_size(ue_comp.comment_node, comment_size)
 
-        # TODO: Rezise comment to encapsulate the entirety of control rig functions
-        # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
+            # TODO: Rezise comment to encapsulate the entirety of control rig functions
+            # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
 
             # print("GROUP COMPONENTS")
             for node in ue_comp.get_misc_functions():
@@ -353,7 +357,6 @@ class UEGearManager:
                                                f'{connected_node_name}.ExecuteContext')
                         bp_controller.add_link(f'{seq_node_name}.B',
                                                f'{new_connection_node_name}.ExecuteContext')
-
 
     def _find_parent_node_function(self, component, function_name: str):
         """Recursively looks at the function, then if one does not exist looks for
@@ -925,15 +928,15 @@ def calculate_node_size(node: unreal.RigVMUnitNode):
     char_height = 7
 
     width = len(longest_input_name) * char_width + offset + \
-            len(node_name) * char_width + offset +          \
+            len(node_name) * char_width + offset + \
             len(longest_output_name) * char_width
 
-    height = (len(input_pins)+1) * char_height + \
-            1 * char_height +                    \
-            (len(outpu_pins)+1) * char_height
-
+    height = (len(input_pins) + 1) * char_height + \
+             1 * char_height + \
+             (len(outpu_pins) + 1) * char_height
 
     return (width, height)
+
 
 def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, gnx_path: str):
     """
@@ -951,7 +954,6 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     print(f"   {output_path}")
     print(f"   {gnx_path}")
     print("-------------------------------------------")
-
 
     # Converts teh json data into a class based structure, filters out non-required metadata.
     mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
@@ -995,4 +997,3 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.populate_parents()
     gear_manager.connect_components()
     gear_manager.group_components()
-
