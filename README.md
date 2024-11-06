@@ -118,6 +118,13 @@ Can only read data fom a dataset in constructino event > read user data
 # WIP
 
 - [ ] Component Shape fitting - #21
+  - [x] Global controls
+  - [x] Spine
+  - [ ] Neck
+    - [ ] Add shape offsetting
+    - [ ] Handl building of FK and IK, even though IK is not implemented yet
+  - [ ] Shoulder
+  - [ ] Arm
 
 Mass updates or queries to all assets use "Editor Utility Tasks"
     - It is a editor utility blueprint(Create it from the context menu)
