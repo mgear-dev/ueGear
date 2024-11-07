@@ -124,7 +124,6 @@ def _calculate_bounding_box(control_data: dict) -> list[int]:
     The bounding box will be a centered bounding box, storing the offset position
     from the center to the corners. This is an Axis Aligned Bounding Box (AABB)
     """
-
     min_point, max_point = _calculate_min_max_points(control_data)
     bb_center, bb_offset = _calculate_bb(min_point, max_point)
     return bb_center, bb_offset
@@ -173,15 +172,17 @@ def _calculate_bb(min, max):
     :param max: largest value for each axis that exists in the bounding box
     :return: The center of the bounding box, the length to the corner
     """
-    dist_to_corner = []
+    bb_offset = []
     bb_center = []
 
     for i, ii in zip(min, max):
-        dist = round((abs(i) + abs(ii)) / 2, 4)
-        dist_to_corner.append(dist)
-        bb_center.append(round(i + dist, 4))
+        center = round((i + ii) / 2, 4)
+        offset = ii - center
 
-    return bb_center, dist_to_corner
+        bb_offset.append(offset)
+        bb_center.append(center)
+
+    return bb_center, bb_offset
 
 
 def _convert_maya_matrix(maya_mtx: unreal.Matrix) -> unreal.Transform:
