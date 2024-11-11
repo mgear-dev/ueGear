@@ -246,7 +246,6 @@ class Component(base_component.UEComponent):
         # Calculates the unreal scale for the control and populates it into the array node.
         for control_name in self.metadata.controls:
             aabb = self.metadata.controls_aabb[control_name]
-            print(f"Shoulder > {control_name} > {aabb}")
             unreal_size = [round(element/reduce_ratio, 4) for element in aabb[1]]
 
             # todo: this is a test implementation, for a more robust validation, each axis should be checked.

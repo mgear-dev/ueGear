@@ -132,10 +132,11 @@ class Component(base_component.UEComponent):
 
         for idx, individual_index_node in enumerate(individual_bone_node_names):
             if not controller.get_graph().find_node_by_name(individual_index_node):
-                node = controller.add_template_node('DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
-                                             unreal.Vector2D(3500, 800),
-                                             individual_index_node
-                                             )
+                node = controller.add_template_node(
+                    'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+                    unreal.Vector2D(3500, 800),
+                    individual_index_node
+                    )
                 self.add_misc_function(node)
 
                 controller.add_link(f'{array_node_name}.Items',
@@ -213,7 +214,6 @@ class Component(base_component.UEComponent):
         self._set_side_colour(controller)
         self._set_mirrored_ik_upvector(controller)
 
-
     def _set_mirrored_ik_upvector(self, controller: unreal.RigVMController):
         """
         The Arms can be mirrored, if a right side is being built then we need to setup the
@@ -224,7 +224,6 @@ class Component(base_component.UEComponent):
         func_name = forward_function.get_name()
 
         if self.metadata.side == "R":
-
             controller.set_pin_default_value(f'{func_name}.ik_PrimaryAxis',
                                              '(X=-1.000000, Y=0.000000, Z=0.000000)',
                                              True)
@@ -274,8 +273,6 @@ class Component(base_component.UEComponent):
                                          f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
                                          True)
 
-
-
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
         """
@@ -291,9 +288,7 @@ class Component(base_component.UEComponent):
         ik_eff_name = ""
 
         # Filter our required names and transforms
-
         for ctrl_name in self.metadata.controls:
-
             # Use the controls.Role metadata to detect the type
             ctrl_role = self.metadata.controls_role[ctrl_name]
             if "fk" in ctrl_role:
@@ -346,7 +341,6 @@ class Component(base_component.UEComponent):
         controller.add_link(f'{fk_trans_node_name}.Array',
                             f'{construction_func_name}.fk_control_transforms')
 
-
         # Populate the array node with new pins that contain the name and transform data
 
         # Checks to see if the array has existing pins
@@ -380,6 +374,105 @@ class Component(base_component.UEComponent):
 
             controller.set_pin_default_value(f'{fk_names_node_name}.Values.{pin_index}',
                                              control_name,
+                                             False)
+
+            pin_index += 1
+
+        self.populate_control_scale(
+            fk_control_names,
+            ik_upv_name,
+            ik_eff_name,
+            controller)
+
+        self.populate_control_shape_offset(fk_control_names,
+            ik_upv_name,
+            ik_eff_name,
+            controller)
+
+    def populate_control_scale(self, fk_names: list[str], ik_upv: str, ik_eff: str, controller: unreal.RigVMController):
+        """
+        Generates a scale value per a control
+        """
+        import ueGear.controlrig.manager as ueMan
+
+        reduce_ratio = 4.0
+        """Magic number to try and get the maya control scale to be similar to that of unreal.
+        As the mGear uses a square and ueGear uses a cirlce.
+        """
+
+        # Generates the array node
+        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
+        array_node = controller.get_graph().find_node_by_name(array_name)
+        self.add_misc_function(array_node)
+
+        # connects the node of scales to the construction node
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{array_name}.Array',
+                            f'{construction_func_name}.control_sizes')
+
+        pins_exist = ueMan.array_node_has_pins(array_name, controller)
+        pin_index = 0
+
+        # Calculates the unreal scale for the control and populates it into the array node.
+        for control_name in fk_names + [ik_upv, ik_eff]:
+            aabb = self.metadata.controls_aabb[control_name]
+            unreal_size = [round(element / reduce_ratio, 4) for element in aabb[1]]
+
+            # rudementary way to check if the bounding box might be flat, if it is then
+            # the first value if applied onto the axis
+            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 0.2:
+                unreal_size[2] = unreal_size[0]
+            elif unreal_size[1] == unreal_size[2] and unreal_size[0] < 0.2:
+                unreal_size[0] = unreal_size[1]
+            elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
+                unreal_size[1] = unreal_size[0]
+
+            if not pins_exist:
+                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls_aabb):
+                    controller.insert_array_pin(f'{array_name}.Values',
+                                                -1,
+                                                '')
+
+            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
+                                             f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})',
+                                             False)
+
+            pin_index += 1
+
+    def populate_control_shape_offset(self, fk_names: list[str], ik_upv: str, ik_eff: str, controller: unreal.RigVMController):
+        """
+        As some controls have there pivot at the same position as the transform, but the control is actually moved
+        away from that pivot point. We use the bounding box position as an offset for the control shape.
+        """
+        import ueGear.controlrig.manager as ueMan
+
+        # Generates the array node
+        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_offset", controller)
+        array_node = controller.get_graph().find_node_by_name(array_name)
+        self.add_misc_function(array_node)
+
+        # connects the node of scales to the construction node
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{array_name}.Array',
+                            f'{construction_func_name}.control_offsets')
+
+        pins_exist = ueMan.array_node_has_pins(array_name, controller)
+        pin_index = 0
+
+        for control_name in fk_names + [ik_upv, ik_eff]:
+            aabb = self.metadata.controls_aabb[control_name]
+            bb_center = aabb[0]
+
+            if not pins_exist:
+                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls_aabb):
+                    controller.insert_array_pin(f'{array_name}.Values',
+                                                -1,
+                                                '')
+
+            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
+                                             f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})',
                                              False)
 
             pin_index += 1
