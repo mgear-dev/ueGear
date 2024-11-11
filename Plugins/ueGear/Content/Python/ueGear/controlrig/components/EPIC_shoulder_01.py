@@ -251,8 +251,12 @@ class Component(base_component.UEComponent):
             # todo: this is a test implementation, for a more robust validation, each axis should be checked.
             # rudementary way to check if the bounding box might be flat, if it is then
             # the first value if applied onto the axis
-            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 1.0:
+            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 0.2:
                 unreal_size[2] = unreal_size[0]
+            elif unreal_size[1] == unreal_size[2] and unreal_size[0] < 0.2:
+                unreal_size[0] = unreal_size[1]
+            elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
+                unreal_size[1] = unreal_size[0]
 
             if not pins_exist:
                 existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())

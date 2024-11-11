@@ -231,7 +231,16 @@ class Component(base_component.UEComponent):
         pin_index = 0
         for control_name in self.metadata.controls:
             aabb = self.metadata.controls_aabb[control_name]
-            aabb = [axi/aabb_divisor for axi in aabb]
+            unreal_size = [round(element / aabb_divisor, 4) for element in aabb[1]]
+
+            # rudementary way to check if the bounding box might be flat, if it is then
+            # the first value if applied onto the axis
+            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 0.2:
+                unreal_size[2] = unreal_size[0]
+            elif unreal_size[1] == unreal_size[2] and unreal_size[0] < 0.2:
+                unreal_size[0] = unreal_size[1]
+            elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
+                unreal_size[1] = unreal_size[0]
 
             if not name_pins_exist:
                 existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
@@ -241,7 +250,7 @@ class Component(base_component.UEComponent):
                                                 '')
 
             controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
-                                             f'(X={aabb[0]},Y={aabb[1]},Z={aabb[2]})',
+                                             f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})',
                                              False)
 
             pin_index += 1
