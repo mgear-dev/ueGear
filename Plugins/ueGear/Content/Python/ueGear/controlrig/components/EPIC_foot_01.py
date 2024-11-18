@@ -167,6 +167,14 @@ class Component(base_component.UEComponent):
                                          f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
                                          True)
 
+    # todo: refactor the guide population code here
+    def _set_control(self, name, transform, controller: unreal.RigVMController):
+        pass
+
+    # todo: refactor the guide population code here
+    def _populate_guide_transform(self):
+        pass
+
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
 
@@ -177,10 +185,10 @@ class Component(base_component.UEComponent):
         print(" Generating Control Names and Transform Functions")
         print("--------------------------------------------------")
 
-        space_mtx = unreal.Matrix( x_plane = [1.000000, 0.000000, 0.000000, 0.000000],
-                                   y_plane = [0.000000, 0.000000, 1.000000, 0.000000],
-                                   z_plane = [0.000000, 1.000000, 0.000000, 0.000000],
-                                   w_plane = [0.000000, 0.000000, 0.000000, 1.000000])
+        space_mtx = unreal.Matrix(x_plane=[1.000000, 0.000000, 0.000000, 0.000000],
+                                  y_plane=[0.000000, 0.000000, 1.000000, 0.000000],
+                                  z_plane=[0.000000, 1.000000, 0.000000, 0.000000],
+                                  w_plane=[0.000000, 0.000000, 0.000000, 1.000000])
 
         # Gets the construction function name
         construction_func_name = self.nodes["construction_functions"][0].get_name()
@@ -218,3 +226,90 @@ class Component(base_component.UEComponent):
                                     pin_name,
                                     transform,
                                     controller)
+
+        # Setting the transform locations, in a specific order
+
+        if len(self.metadata.controls) != 6:
+            raise IOError("Please Contact developer, as only 6 controls are accounted for..")
+
+        # Creates an ordered list of control transforms
+        ordered_ctrl_trans = [None] * 6
+        ordered_bounding_box = [None] * 6
+        role_order = ["heel", "tip", "roll", "bk0", "bk1", "fk0"]
+
+        for ctrl_name in self.metadata.controls:
+            # Use the controls.Role metadata to detect the type
+            ctrl_role = self.metadata.controls_role[ctrl_name]
+            ctrl_trans = self.metadata.control_transforms[ctrl_name]
+            ctrl_bb = self.metadata.controls_aabb[ctrl_name]
+            # rudementary way of ordering the output list
+            if ctrl_role == role_order[0]:
+                ordered_ctrl_trans[0] = ctrl_trans
+                ordered_bounding_box[0] = ctrl_bb
+            elif ctrl_role == role_order[1]:
+                ordered_ctrl_trans[1] = ctrl_trans
+                ordered_bounding_box[1] = ctrl_bb
+            elif ctrl_role == role_order[2]:
+                ordered_ctrl_trans[2] = ctrl_trans
+                ordered_bounding_box[2] = ctrl_bb
+            elif ctrl_role == role_order[3]:
+                ordered_ctrl_trans[3] = ctrl_trans
+                ordered_bounding_box[3] = ctrl_bb
+            elif ctrl_role == role_order[4]:
+                ordered_ctrl_trans[4] = ctrl_trans
+                ordered_bounding_box[4] = ctrl_bb
+            elif ctrl_role == role_order[5]:
+                ordered_ctrl_trans[5] = ctrl_trans
+                ordered_bounding_box[5] = ctrl_bb
+
+        # Adds a pin to the control_transforms pin on the construction node
+        for trans in ordered_ctrl_trans:
+            quat = trans.rotation
+            pos = trans.translation
+            controller.insert_array_pin(f'{construction_func_name}.control_transforms',
+                                        -1,
+                                        f"("
+                                        f"Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}),"
+                                        f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
+                                        f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))"
+                                        )
+
+        self.populate_control_scale(construction_func_name, ordered_bounding_box, controller)
+        self.populate_control_shape_offset(construction_func_name, ordered_bounding_box, controller)
+
+    def populate_control_scale(self, node_name, bounding_boxes, controller: unreal.RigVMController):
+        reduce_ratio = 4.0
+        """Magic number to try and get the maya control scale to be similar to that of unreal.
+        As the mGear uses a square and ueGear uses a cirlce.
+        """
+
+        for aabb in bounding_boxes:
+            unreal_size = [round(element / reduce_ratio, 4) for element in aabb[1]]
+
+            # rudementary way to check if the bounding box might be flat, if it is then
+            # the first value if applied onto the axis
+            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 0.2:
+                unreal_size[2] = unreal_size[0]
+            elif unreal_size[1] == unreal_size[2] and unreal_size[0] < 0.2:
+                unreal_size[0] = unreal_size[1]
+            elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
+                unreal_size[1] = unreal_size[0]
+
+            controller.insert_array_pin(f'{node_name}.control_sizes',
+                                        -1,
+                                        f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})'
+                                        )
+
+    def populate_control_shape_offset(self, node_name, bounding_boxes, controller: unreal.RigVMController):
+        """
+        As some controls have there pivot at the same position as the transform, but the control is actually moved
+        away from that pivot point. We use the bounding box position as an offset for the control shape.
+        """
+
+        for aabb in bounding_boxes:
+            bb_center = aabb[0]
+
+            controller.insert_array_pin(f'{node_name}.control_offsets',
+                                        -1,
+                                        f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})'
+                                        )
