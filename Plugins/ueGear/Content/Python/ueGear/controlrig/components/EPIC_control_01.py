@@ -158,6 +158,7 @@ class Component(base_component.UEComponent):
             True)
 
         self.populate_control_shape_orientation(controller)
+        self.populate_control_scale(controller)
 
     def populate_control_shape_orientation(self, controller: unreal.RigVMController = None):
         """Populates the control's shapes orientation"""
@@ -174,3 +175,27 @@ class Component(base_component.UEComponent):
             controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
                                          '90.000000',
                                          False)
+
+    def populate_control_scale(self, controller: unreal.RigVMController):
+        """Calculates the size of the control from the Bounding Box"""
+
+        for cr_func in self.functions["construction_functions"]:
+            construction_node = f"{self.name}_{cr_func}"
+
+            control_name = self.metadata.controls[0]
+            aabb = self.metadata.controls_aabb[control_name]
+            reduce_ratio = 6.0
+            unreal_size = [round(element/reduce_ratio, 4) for element in aabb[1]]
+
+            for axis, value in zip(["X", "Y", "Z",], unreal_size):
+
+                # an ugly way to ensure that the bounding box is not 100% flat,
+                # causing the control to be scaled flat on Z
+                if axis == "Z" and value <= 1.0:
+                    value = unreal_size[0]
+
+
+                controller.set_pin_default_value(
+                    f'{construction_node}.control_size.{axis}',
+                    str(value),
+                    False)
