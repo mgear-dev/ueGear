@@ -199,7 +199,132 @@ class Component(base_component.UEComponent):
                                              False)
             pin_index += 1
 
-    # TODO: Setup control size scale from mGear AABB
+    # TODO: setup an init_controls method and move this method and the populate controls method into it
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        """Updates the transform data for the controls generated, with the data from the mgear json
+        file.
+        """
+        import ueGear.controlrig.manager as ueMan
+
+        trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
+        node_trans = controller.get_graph().find_node_by_name(trans_node)
+        self.add_misc_function(node_trans)
+
+        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
+        # values
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{trans_node}.Array',
+                            f'{construction_func_name}.control_transforms')
+
+        # Checks the pins
+        trans_pins_exist = ueMan.array_node_has_pins(trans_node, controller)
+
+        pin_index = 0
+
+        for control_name in self.metadata.controls:
+            control_transform = self.metadata.control_transforms[control_name]
+
+            if not trans_pins_exist:
+                found_node = controller.get_graph().find_node_by_name(trans_node)
+                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls):
+                    controller.insert_array_pin(f'{trans_node}.Values',
+                                                -1,
+                                                '')
+
+            quat = control_transform.rotation
+            pos = control_transform.translation
+
+            controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
+                                             f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                                             f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
+                                             f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
+                                             True)
+
+            pin_index += 1
+
+        self.populate_control_names(controller)
+        self.populate_control_scale(controller)
+        self.populate_control_shape_offset(controller)
+        self.populate_control_colour(controller)
+
+    def get_associated_parent_output(self, name: str, controller: unreal.RigVMController) -> str:
+        """
+        name: Name of the relative key that will be used to get the associated bone index.
+        controller: The BP controller that will manipulate the graph.
+
+        return: The name of the pin to be connected from.
+        """
+        print("--- get_associated_parent_output ---")
+
+        # Looks at the metacarpals jointRelative dictionary for the name and the index of the output
+        joint_index = str(self.metadata.joint_relatives[name])
+
+        print(f"  {self.name} > {name} : {joint_index}")
+
+        node_name = "_".join( [self.name, name, joint_index] )
+
+        # Create At Index
+        node = controller.add_template_node(
+            'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+            unreal.Vector2D(3500, 1000),
+            node_name
+            )
+        self.add_misc_function(node)
+
+        # Set At index
+        controller.set_pin_default_value(
+            f'{node_name}.Index',
+            str(joint_index),
+            False
+        )
+
+        # Connect At Index to Array output "controls"
+        construction_node_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{construction_node_name}.controls',
+                            f'{node_name}.Array'
+                            )
+
+        return f'{node_name}.Element'
+
+    def populate_control_shape_offset(self, controller: unreal.RigVMController):
+        """
+        As some controls have there pivot at the same position as the transform, but the control is actually moved
+        away from that pivot point. We use the bounding box position as an offset for the control shape.
+        """
+        import ueGear.controlrig.manager as ueMan
+
+        # Generates the array node
+        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_offset", controller)
+        array_node = controller.get_graph().find_node_by_name(array_name)
+        self.add_misc_function(array_node)
+
+        # connects the node of scales to the construction node
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{array_name}.Array',
+                            f'{construction_func_name}.control_offsets')
+
+        pins_exist = ueMan.array_node_has_pins(array_name, controller)
+
+        pin_index = 0
+
+        for control_name in self.metadata.controls:
+            aabb = self.metadata.controls_aabb[control_name]
+            bb_center = aabb[0]
+
+            if not pins_exist:
+                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls_aabb):
+                    controller.insert_array_pin(f'{array_name}.Values',
+                                                -1,
+                                                '')
+
+            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
+                                             f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})',
+                                             False)
+
+            pin_index += 1
+
     def populate_control_scale(self, controller: unreal.RigVMController):
         """
         Generates a scale value per a control
@@ -248,93 +373,6 @@ class Component(base_component.UEComponent):
                                              False)
 
             pin_index += 1
-
-    # TODO: setup an init_controls method and move this method and the populate controls method into it
-    def populate_control_transforms(self, controller: unreal.RigVMController = None):
-        """Updates the transform data for the controls generated, with the data from the mgear json
-        file.
-        """
-        import ueGear.controlrig.manager as ueMan
-
-        trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
-        node_trans = controller.get_graph().find_node_by_name(trans_node)
-        self.add_misc_function(node_trans)
-
-        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
-        # values
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{trans_node}.Array',
-                            f'{construction_func_name}.control_transforms')
-
-        # Checks the pins
-        trans_pins_exist = ueMan.array_node_has_pins(trans_node, controller)
-
-        pin_index = 0
-
-        for control_name in self.metadata.controls:
-            control_transform = self.metadata.control_transforms[control_name]
-
-            if not trans_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(trans_node)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls):
-                    controller.insert_array_pin(f'{trans_node}.Values',
-                                                -1,
-                                                '')
-
-            quat = control_transform.rotation
-            pos = control_transform.translation
-
-            controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
-                                             f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
-                                             f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
-                                             f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-                                             True)
-
-            pin_index += 1
-
-        self.populate_control_names(controller)
-        self.populate_control_scale(controller)
-        self.populate_control_colour(controller)
-
-    def get_associated_parent_output(self, name: str, controller: unreal.RigVMController) -> str:
-        """
-        name: Name of the relative key that will be used to get the associated bone index.
-        controller: The BP controller that will manipulate the graph.
-
-        return: The name of the pin to be connected from.
-        """
-        print("--- get_associated_parent_output ---")
-
-        # Looks at the metacarpals jointRelative dictionary for the name and the index of the output
-        joint_index = str(self.metadata.joint_relatives[name])
-
-        print(f"  {self.name} > {name} : {joint_index}")
-
-        node_name = "_".join( [self.name, name, joint_index] )
-
-        # Create At Index
-        node = controller.add_template_node(
-            'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
-            unreal.Vector2D(3500, 1000),
-            node_name
-            )
-        self.add_misc_function(node)
-
-        # Set At index
-        controller.set_pin_default_value(
-            f'{node_name}.Index',
-            str(joint_index),
-            False
-        )
-
-        # Connect At Index to Array output "controls"
-        construction_node_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{construction_node_name}.controls',
-                            f'{node_name}.Array'
-                            )
-
-        return f'{node_name}.Element'
 
     def populate_control_colour(self, controller: unreal.RigVMController):
 
