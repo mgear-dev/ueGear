@@ -199,62 +199,6 @@ class Component(base_component.UEComponent):
                                              False)
             pin_index += 1
 
-    # TODO: Setup control size scale from mGear AABB
-    def populate_control_scale(self, controller: unreal.RigVMController):
-        """
-        Generates a scale value per a control
-        """
-
-        import ueGear.controlrig.manager as ueMan
-
-        # logs the AABB for each control
-        for control_name in self.metadata.controls:
-            print(control_name)
-            print(self.metadata.controls_aabb[control_name])
-
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
-        # connects the node of scales to the construction node
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_scale')
-
-        name_pins_exist = ueMan.array_node_has_pins(array_name, controller)
-
-        aabb_divisor = 3
-        """Magic number to try and get the maya control scale to be similar to that of unreal"""
-
-        # populate array
-        pin_index = 0
-        for control_name in self.metadata.controls:
-            aabb = self.metadata.controls_aabb[control_name]
-            unreal_size = [round(element / aabb_divisor, 4) for element in aabb[1]]
-
-            # rudementary way to check if the bounding box might be flat, if it is then
-            # the first value if applied onto the axis
-            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 0.2:
-                unreal_size[2] = unreal_size[0]
-            elif unreal_size[1] == unreal_size[2] and unreal_size[0] < 0.2:
-                unreal_size[0] = unreal_size[1]
-            elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
-                unreal_size[1] = unreal_size[0]
-
-            if not name_pins_exist:
-                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls_aabb):
-                    controller.insert_array_pin(f'{array_name}.Values',
-                                                -1,
-                                                '')
-
-            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
-                                             f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})',
-                                             False)
-
-            pin_index += 1
-
     # TODO: setup an init_controls method and move this method and the populate controls method into it
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json
@@ -301,6 +245,8 @@ class Component(base_component.UEComponent):
 
         self.populate_control_names(controller)
         self.populate_control_scale(controller)
+        self.populate_control_shape_offset(controller)
+        self.populate_control_colour(controller)
 
     def get_associated_parent_output(self, name: str, controller: unreal.RigVMController) -> str:
         """
@@ -340,3 +286,104 @@ class Component(base_component.UEComponent):
                             )
 
         return f'{node_name}.Element'
+
+    def populate_control_shape_offset(self, controller: unreal.RigVMController):
+        """
+        As some controls have there pivot at the same position as the transform, but the control is actually moved
+        away from that pivot point. We use the bounding box position as an offset for the control shape.
+        """
+        import ueGear.controlrig.manager as ueMan
+
+        # Generates the array node
+        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_offset", controller)
+        array_node = controller.get_graph().find_node_by_name(array_name)
+        self.add_misc_function(array_node)
+
+        # connects the node of scales to the construction node
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{array_name}.Array',
+                            f'{construction_func_name}.control_offsets')
+
+        pins_exist = ueMan.array_node_has_pins(array_name, controller)
+
+        pin_index = 0
+
+        for control_name in self.metadata.controls:
+            aabb = self.metadata.controls_aabb[control_name]
+            bb_center = aabb[0]
+
+            if not pins_exist:
+                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls_aabb):
+                    controller.insert_array_pin(f'{array_name}.Values',
+                                                -1,
+                                                '')
+
+            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
+                                             f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})',
+                                             False)
+
+            pin_index += 1
+
+    def populate_control_scale(self, controller: unreal.RigVMController):
+        """
+        Generates a scale value per a control
+        """
+        import ueGear.controlrig.manager as ueMan
+
+        # Generates the array node
+        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
+        array_node = controller.get_graph().find_node_by_name(array_name)
+        self.add_misc_function(array_node)
+
+        # connects the node of scales to the construction node
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+        controller.add_link(f'{array_name}.Array',
+                            f'{construction_func_name}.control_scale')
+
+        name_pins_exist = ueMan.array_node_has_pins(array_name, controller)
+
+        aabb_divisor = 3
+        """Magic number to try and get the maya control scale to be similar to that of unreal"""
+
+        # populate array
+        pin_index = 0
+        for control_name in self.metadata.controls:
+            aabb = self.metadata.controls_aabb[control_name]
+            unreal_size = [round(element / aabb_divisor, 4) for element in aabb[1]]
+
+            # rudementary way to check if the bounding box might be flat, if it is then
+            # the first value if applied onto the axis
+            if unreal_size[0] == unreal_size[1] and unreal_size[2] < 0.2:
+                unreal_size[2] = unreal_size[0]
+            elif unreal_size[1] == unreal_size[2] and unreal_size[0] < 0.2:
+                unreal_size[0] = unreal_size[1]
+            elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
+                unreal_size[1] = unreal_size[0]
+
+            if not name_pins_exist:
+                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
+                if existing_pin_count < len(self.metadata.controls_aabb):
+                    controller.insert_array_pin(f'{array_name}.Values',
+                                                -1,
+                                                '')
+
+            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
+                                             f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})',
+                                             False)
+
+            pin_index += 1
+
+    def populate_control_colour(self, controller: unreal.RigVMController):
+
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(self.metadata.controls):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

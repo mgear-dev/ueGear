@@ -160,12 +160,11 @@ class UEGearManager:
 
         self.uegear_components.append(ueg_comp)
 
-        print(ueg_comp)
-        print(f"      NAME : {ueg_comp.name}")
-        print(f"mGear Comp : {ueg_comp.mgear_component}")
-        print(f" Functions : {ueg_comp.functions}")
-        print(f"Guide Name : {guide_name}")
-        print(f"  metadata :\n {ueg_comp.metadata}")
+        print(f"         NAME : {ueg_comp.name}")
+        print(f"   mGear Comp : {ueg_comp.mgear_component}")
+        print(f"    Functions : {ueg_comp.functions}")
+        print(f"   Guide Name : {guide_name}")
+        print(f"     metadata :\n {ueg_comp.metadata}")
         print("--------------------")
 
         bp_controller = self.get_active_controller()

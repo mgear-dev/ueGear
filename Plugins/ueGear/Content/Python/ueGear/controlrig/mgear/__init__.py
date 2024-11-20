@@ -3,7 +3,7 @@ import json
 import unreal
 from .component import mgComponent
 from .rig import mgRig
-
+from .colour import MAYA_LOOKUP
 """
 This container handles all the mGear component data that will be used to deserialise the `*.scd` file.
 """
@@ -73,9 +73,27 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
                 mgear_component.controls = []
                 mgear_component.controls_role = {}
                 mgear_component.controls_aabb = {}
+                mgear_component.controls_colour = {}
 
             mgear_component.controls.append(ctrl["Name"])
             mgear_component.controls_role[ctrl["Name"]] = ctrl["Role"]
+
+            # Store the RGB Color
+            # ::ASSUMPTION:: A control will all have the  same colour
+            shape_category = ctrl["Shape"]
+            for crv_name in shape_category["curves_names"]:
+                crv_color = shape_category[crv_name]["crv_color"]
+
+            if crv_color is None or crv_color == "null":
+                # There is an edge case where the colour is null
+                mgear_component.controls_colour[ctrl["Name"]] = None
+            elif type(crv_color) == type([]):
+                # There is an edge case where the colour is stored as an RGB value
+                mgear_component.controls_colour[ctrl["Name"]] = crv_color
+            else:
+                mgear_component.controls_colour[ctrl["Name"]] = MAYA_LOOKUP[crv_color]
+
+            t = mgear_component.controls_colour[ctrl["Name"]]
 
             # Calculate control size
             bounding_box_data = _calculate_bounding_box(ctrl)

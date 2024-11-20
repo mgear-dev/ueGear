@@ -286,6 +286,7 @@ class Component(base_component.UEComponent):
 
         self.populate_control_scale(controller)
         self.populate_control_shape_offset(controller)
+        self.populate_control_colour(controller)
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """
@@ -377,3 +378,16 @@ class Component(base_component.UEComponent):
                                              False)
 
             pin_index += 1
+
+    def populate_control_colour(self, controller):
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(self.metadata.controls):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

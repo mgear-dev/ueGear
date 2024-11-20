@@ -159,6 +159,7 @@ class Component(base_component.UEComponent):
 
         self.populate_control_shape_orientation(controller)
         self.populate_control_scale(controller)
+        self.populate_control_colour(controller)
 
     def populate_control_shape_orientation(self, controller: unreal.RigVMController = None):
         """Populates the control's shapes orientation"""
@@ -199,3 +200,15 @@ class Component(base_component.UEComponent):
                     f'{construction_node}.control_size.{axis}',
                     str(value),
                     False)
+
+    def populate_control_colour(self, controller):
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        control_name = self.metadata.controls[0]
+        colour = self.metadata.controls_colour[control_name]
+
+        controller.set_pin_default_value(f'{construction_node}.control_colour.R', f"{colour[0]}", False)
+        controller.set_pin_default_value(f'{construction_node}.control_colour.G', f"{colour[1]}", False)
+        controller.set_pin_default_value(f'{construction_node}.control_colour.B', f"{colour[2]}", False)
+        controller.set_pin_default_value(f'{construction_node}.control_colour.A', "1", False)

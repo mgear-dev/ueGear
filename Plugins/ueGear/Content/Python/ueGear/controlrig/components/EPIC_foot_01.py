@@ -154,7 +154,7 @@ class Component(base_component.UEComponent):
             pin_index += 1
 
     def init_input_data(self, controller: unreal.RigVMController):
-        self.set_side_colour(controller)
+        pass
 
     def _set_transform_pin(self, node_name: str, pin_name: str, transform_value: unreal.Transform, controller):
         quat = transform_value.rotation
@@ -235,6 +235,7 @@ class Component(base_component.UEComponent):
         # Creates an ordered list of control transforms
         ordered_ctrl_trans = [None] * 6
         ordered_bounding_box = [None] * 6
+        ordered_colours = [None] * 6
         role_order = ["heel", "tip", "roll", "bk0", "bk1", "fk0"]
 
         for ctrl_name in self.metadata.controls:
@@ -242,25 +243,32 @@ class Component(base_component.UEComponent):
             ctrl_role = self.metadata.controls_role[ctrl_name]
             ctrl_trans = self.metadata.control_transforms[ctrl_name]
             ctrl_bb = self.metadata.controls_aabb[ctrl_name]
+            ctrl_colour = self.metadata.controls_colour[ctrl_name]
             # rudementary way of ordering the output list
             if ctrl_role == role_order[0]:
                 ordered_ctrl_trans[0] = ctrl_trans
                 ordered_bounding_box[0] = ctrl_bb
+                ordered_colours[0] = ctrl_colour
             elif ctrl_role == role_order[1]:
                 ordered_ctrl_trans[1] = ctrl_trans
                 ordered_bounding_box[1] = ctrl_bb
+                ordered_colours[1] = ctrl_colour
             elif ctrl_role == role_order[2]:
                 ordered_ctrl_trans[2] = ctrl_trans
                 ordered_bounding_box[2] = ctrl_bb
+                ordered_colours[2] = ctrl_colour
             elif ctrl_role == role_order[3]:
                 ordered_ctrl_trans[3] = ctrl_trans
                 ordered_bounding_box[3] = ctrl_bb
+                ordered_colours[3] = ctrl_colour
             elif ctrl_role == role_order[4]:
                 ordered_ctrl_trans[4] = ctrl_trans
                 ordered_bounding_box[4] = ctrl_bb
+                ordered_colours[4] = ctrl_colour
             elif ctrl_role == role_order[5]:
                 ordered_ctrl_trans[5] = ctrl_trans
                 ordered_bounding_box[5] = ctrl_bb
+                ordered_colours[5] = ctrl_colour
 
         # Adds a pin to the control_transforms pin on the construction node
         for trans in ordered_ctrl_trans:
@@ -276,6 +284,7 @@ class Component(base_component.UEComponent):
 
         self.populate_control_scale(construction_func_name, ordered_bounding_box, controller)
         self.populate_control_shape_offset(construction_func_name, ordered_bounding_box, controller)
+        self.populate_control_colour(construction_func_name, ordered_colours, controller)
 
     def populate_control_scale(self, node_name, bounding_boxes, controller: unreal.RigVMController):
         reduce_ratio = 4.0
@@ -313,3 +322,11 @@ class Component(base_component.UEComponent):
                                         -1,
                                         f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})'
                                         )
+
+    def populate_control_colour(self, node_name, ordered_colours, controller: unreal.RigVMController):
+        for i, colour in enumerate(ordered_colours):
+            controller.insert_array_pin(f'{node_name}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.A', f"1", False)
