@@ -116,9 +116,6 @@ class Component(base_component.UEComponent):
         self.add_misc_function(node)
 
     def init_input_data(self, controller: unreal.RigVMController):
-
-        self._set_side_colour(controller)
-
         self._connect_bones(controller)
 
     def _connect_bones(self, controller: unreal.RigVMController):
@@ -134,37 +131,6 @@ class Component(base_component.UEComponent):
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{forward_node_name}.Array')
-
-    def _set_side_colour(self, controller: unreal.RigVMController):
-        """Sets the controls default colour depending on the side"""
-
-        construction_node = self.nodes["construction_functions"][0]
-        func_name = construction_node.get_name()
-
-        # Sets the colour channels to be 0
-        for channel in ["R", "G", "B"]:
-            controller.set_pin_default_value(
-                f'{func_name}.colour.{channel}',
-                '0.000000',
-                False)
-
-        if self.metadata.side == "L":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.B',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "R":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.G',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "M" or self.metadata.side == "C":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.R',
-                '1.000000',
-                False)
 
     def populate_control_names(self, controller: unreal.RigVMController):
         import ueGear.controlrig.manager as ueMan
@@ -245,6 +211,7 @@ class Component(base_component.UEComponent):
         self.populate_control_names(controller)
         self.populate_control_scale(controller)
         self.populate_control_shape_offset(controller)
+        self.populate_control_colour(controller)
 
     def populate_control_shape_offset(self, controller: unreal.RigVMController):
         """
@@ -336,3 +303,17 @@ class Component(base_component.UEComponent):
                                              False)
 
             pin_index += 1
+
+    def populate_control_colour(self, controller: unreal.RigVMController):
+
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(self.metadata.controls):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

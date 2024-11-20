@@ -211,3 +211,4 @@ class Component(base_component.UEComponent):
         controller.set_pin_default_value(f'{construction_node}.control_colour.R', f"{colour[0]}", False)
         controller.set_pin_default_value(f'{construction_node}.control_colour.G', f"{colour[1]}", False)
         controller.set_pin_default_value(f'{construction_node}.control_colour.B', f"{colour[2]}", False)
+        controller.set_pin_default_value(f'{construction_node}.control_colour.A', "1", False)

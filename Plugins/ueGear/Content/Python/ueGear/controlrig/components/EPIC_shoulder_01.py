@@ -3,6 +3,7 @@ import unreal
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 
+
 class Component(base_component.UEComponent):
     name = "test_Shoulder"
     mgear_component = "EPIC_shoulder_01"
@@ -86,7 +87,6 @@ class Component(base_component.UEComponent):
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
 
-
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
         populates the bone shoulder joint node
@@ -115,43 +115,8 @@ class Component(base_component.UEComponent):
             controller.set_pin_default_value(
                 f'{construction_node_name}.shoulder_jnt.Type', 'Bone', False)
 
-
     def init_input_data(self, controller: unreal.RigVMController):
-
-        self._set_side_colour(controller)
-
-
-    def _set_side_colour(self, controller: unreal.RigVMController):
-        """Sets the controls default colour depending on the side"""
-
-        construction_node = self.nodes["construction_functions"][0]
-        func_name = construction_node.get_name()
-
-        # Sets the colour channels to be 0
-        for channel in ["R","G","B"]:
-            controller.set_pin_default_value(
-                f'{func_name}.colour.{channel}',
-                '0.000000',
-                False)
-
-        if self.metadata.side == "L":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.B',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "R":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.G',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "M" or self.metadata.side == "C":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.R',
-                '1.000000',
-                False)
-
+        pass
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json
@@ -217,6 +182,7 @@ class Component(base_component.UEComponent):
 
         self.populate_control_scale(controller)
         self.populate_control_shape_offset(controller)
+        self.populate_control_colour(controller)
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """
@@ -246,7 +212,7 @@ class Component(base_component.UEComponent):
         # Calculates the unreal scale for the control and populates it into the array node.
         for control_name in self.metadata.controls:
             aabb = self.metadata.controls_aabb[control_name]
-            unreal_size = [round(element/reduce_ratio, 4) for element in aabb[1]]
+            unreal_size = [round(element / reduce_ratio, 4) for element in aabb[1]]
 
             # todo: this is a test implementation, for a more robust validation, each axis should be checked.
             # rudementary way to check if the bounding box might be flat, if it is then
@@ -308,3 +274,16 @@ class Component(base_component.UEComponent):
                                              False)
 
             pin_index += 1
+
+    def populate_control_colour(self, controller):
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(self.metadata.controls):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

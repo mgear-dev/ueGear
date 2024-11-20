@@ -131,10 +131,11 @@ class Component(base_component.UEComponent):
 
         for idx, individual_index_node in enumerate(individual_bone_node_names):
             if not controller.get_graph().find_node_by_name(individual_index_node):
-                node = controller.add_template_node('DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
-                                             unreal.Vector2D(3500, 800),
-                                             individual_index_node
-                                             )
+                node = controller.add_template_node(
+                    'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+                    unreal.Vector2D(3500, 800),
+                    individual_index_node
+                    )
                 self.add_misc_function(node)
 
                 controller.add_link(f'{array_node_name}.Items',
@@ -208,7 +209,6 @@ class Component(base_component.UEComponent):
 
     def init_input_data(self, controller: unreal.RigVMController):
 
-        self._set_side_colour(controller)
         self._set_mirrored_ik_upvector(controller)
 
     def _set_mirrored_ik_upvector(self, controller: unreal.RigVMController):
@@ -221,44 +221,12 @@ class Component(base_component.UEComponent):
         func_name = forward_function.get_name()
 
         if self.metadata.side == "R":
-
             controller.set_pin_default_value(f'{func_name}.ik_PrimaryAxis',
                                              '(X=-1.000000, Y=0.000000, Z=0.000000)',
                                              True)
             controller.set_pin_default_value(f'{func_name}.ik_SecondaryAxis',
                                              '(X=0.000000, Y=1.000000, Z=0.000000)',
                                              True)
-
-    def _set_side_colour(self, controller: unreal.RigVMController):
-        """Sets the controls default colour depending on the side"""
-
-        construction_node = self.nodes["construction_functions"][0]
-        func_name = construction_node.get_name()
-
-        # Sets the colour channels to be 0
-        for channel in ["R", "G", "B"]:
-            controller.set_pin_default_value(
-                f'{func_name}.colour.{channel}',
-                '0.000000',
-                False)
-
-        if self.metadata.side == "L":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.B',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "R":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.G',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "M" or self.metadata.side == "C":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.R',
-                '1.000000',
-                False)
 
     def _set_transform_pin(self, node_name, pin_name, transform_value, controller):
         quat = transform_value.rotation
@@ -271,17 +239,11 @@ class Component(base_component.UEComponent):
                                          f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
                                          True)
 
-
-
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
 
         Design Decision: All feet IK Controls are built in World Space, oriented to World Space
         """
-        print("--------------------------------------------------")
-        print(" Generating Control Names and Transform Functions")
-        print("--------------------------------------------------")
-
         import ueGear.controlrig.manager as ueMan
 
         # Control names
@@ -348,7 +310,6 @@ class Component(base_component.UEComponent):
         controller.add_link(f'{fk_trans_node_name}.Array',
                             f'{construction_func_name}.fk_control_transforms')
 
-
         # Populate the array node with new pins that contain the name and transform data
 
         # Checks to see if the array has existing pins
@@ -397,6 +358,11 @@ class Component(base_component.UEComponent):
                                            ik_upv_name,
                                            ik_eff_name,
                                            controller)
+
+        self.populate_control_colour(fk_control_names,
+                                     ik_upv_name,
+                                     ik_eff_name,
+                                     controller)
 
     def populate_control_scale(self, fk_names: list[str], ik_upv: str, ik_eff: str, controller: unreal.RigVMController):
         """
@@ -486,3 +452,18 @@ class Component(base_component.UEComponent):
                                              False)
 
             pin_index += 1
+
+    def populate_control_colour(self, fk_names: list[str], ik_upv: str, ik_eff: str,
+                                controller: unreal.RigVMController):
+
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(fk_names + [ik_upv, ik_eff]):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

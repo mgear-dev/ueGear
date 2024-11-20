@@ -44,10 +44,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # calls the super method
         super().create_functions(controller)
 
@@ -61,14 +57,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -82,7 +74,6 @@ class Component(base_component.UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
-                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
@@ -105,9 +96,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             unreal.log_error("[Bone Populate] Failed no Controller found")
             return
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
 
         for bone in bones:
             bone_name = bone.key.name
@@ -123,9 +111,6 @@ class Component(base_component.UEComponent):
         self.add_misc_function(node)
 
     def init_input_data(self, controller: unreal.RigVMController):
-
-        self._set_side_colour(controller)
-
         self._connect_bones(controller)
 
     def _connect_bones(self, controller: unreal.RigVMController):
@@ -141,37 +126,6 @@ class Component(base_component.UEComponent):
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{forward_node_name}.Array')
-
-    def _set_side_colour(self, controller: unreal.RigVMController):
-        """Sets the controls default colour depending on the side"""
-
-        construction_node = self.nodes["construction_functions"][0]
-        func_name = construction_node.get_name()
-
-        # Sets the colour channels to be 0
-        for channel in ["R", "G", "B"]:
-            controller.set_pin_default_value(
-                f'{func_name}.colour.{channel}',
-                '0.000000',
-                False)
-
-        if self.metadata.side == "L":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.B',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "R":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.G',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "M" or self.metadata.side == "C":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.R',
-                '1.000000',
-                False)
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """
@@ -320,3 +274,17 @@ class Component(base_component.UEComponent):
         # TODO: setup an init_controls method and move this method and the populate controls method into it
         self.populate_control_names(controller)
         self.populate_control_scale(controller)
+        self.populate_control_colour(controller)
+
+    def populate_control_colour(self, controller):
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(self.metadata.controls):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

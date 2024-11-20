@@ -211,7 +211,6 @@ class Component(base_component.UEComponent):
     def init_input_data(self, controller: unreal.RigVMController):
 
         # commented out while developing arm
-        self._set_side_colour(controller)
         self._set_mirrored_ik_upvector(controller)
 
     def _set_mirrored_ik_upvector(self, controller: unreal.RigVMController):
@@ -230,37 +229,6 @@ class Component(base_component.UEComponent):
             controller.set_pin_default_value(f'{func_name}.ik_SecondaryAxis',
                                              '(X=0.000000, Y=1.000000, Z=0.000000)',
                                              True)
-
-    def _set_side_colour(self, controller: unreal.RigVMController):
-        """Sets the controls default colour depending on the side"""
-
-        construction_node = self.nodes["construction_functions"][0]
-        func_name = construction_node.get_name()
-
-        # Sets the colour channels to be 0
-        for channel in ["R", "G", "B"]:
-            controller.set_pin_default_value(
-                f'{func_name}.colour.{channel}',
-                '0.000000',
-                False)
-
-        if self.metadata.side == "L":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.B',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "R":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.G',
-                '1.000000',
-                False)
-
-        elif self.metadata.side == "M" or self.metadata.side == "C":
-            controller.set_pin_default_value(
-                f'{func_name}.colour.R',
-                '1.000000',
-                False)
 
     def _set_transform_pin(self, node_name, pin_name, transform_value, controller):
         quat = transform_value.rotation
@@ -389,6 +357,11 @@ class Component(base_component.UEComponent):
             ik_eff_name,
             controller)
 
+        self.populate_control_colour(fk_control_names,
+            ik_upv_name,
+            ik_eff_name,
+            controller)
+
     def populate_control_scale(self, fk_names: list[str], ik_upv: str, ik_eff: str, controller: unreal.RigVMController):
         """
         Generates a scale value per a control
@@ -476,3 +449,18 @@ class Component(base_component.UEComponent):
                                              False)
 
             pin_index += 1
+
+    def populate_control_colour(self, fk_names: list[str], ik_upv: str, ik_eff: str,
+                                              controller: unreal.RigVMController):
+
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(fk_names + [ik_upv, ik_eff]):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)

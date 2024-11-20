@@ -204,13 +204,7 @@ class Component(base_component.UEComponent):
         """
         Generates a scale value per a control
         """
-
         import ueGear.controlrig.manager as ueMan
-
-        # logs the AABB for each control
-        for control_name in self.metadata.controls:
-            print(control_name)
-            print(self.metadata.controls_aabb[control_name])
 
         # Generates the array node
         array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
@@ -301,6 +295,7 @@ class Component(base_component.UEComponent):
 
         self.populate_control_names(controller)
         self.populate_control_scale(controller)
+        self.populate_control_colour(controller)
 
     def get_associated_parent_output(self, name: str, controller: unreal.RigVMController) -> str:
         """
@@ -340,3 +335,17 @@ class Component(base_component.UEComponent):
                             )
 
         return f'{node_name}.Element'
+
+    def populate_control_colour(self, controller: unreal.RigVMController):
+
+        cr_func = self.functions["construction_functions"][0]
+        construction_node = f"{self.name}_{cr_func}"
+
+        for i, control_name in enumerate(self.metadata.controls):
+            colour = self.metadata.controls_colour[control_name]
+
+            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
+            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)
