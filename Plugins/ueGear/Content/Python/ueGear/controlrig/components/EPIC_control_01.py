@@ -40,10 +40,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # calls the super method
         super().create_functions(controller)
 
@@ -57,13 +53,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -98,12 +91,7 @@ class Component(base_component.UEComponent):
             return
         if controller is None:
             return
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
-
         bone_name = bones[0].key.name
-        print(f"  {self.name} > {bone_name}")
 
         # Unique name for this skeleton node array
         array_node_name = f"{self.metadata.fullname}_RigUnit_ItemArray"
@@ -131,7 +119,6 @@ class Component(base_component.UEComponent):
         # Connects the Item Array Node to the functions.
         for evaluation_path in self.nodes.keys():
             for function_node in self.nodes[evaluation_path]:
-                print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Array")
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{function_node.get_name()}.Array')
 
@@ -168,10 +155,6 @@ class Component(base_component.UEComponent):
             construction_node = f"{self.name}_{cr_func}"
 
             ue_cr_node = controller.get_graph().find_node_by_name(construction_node)
-
-            print("Populate Control Shape Orientation")
-            print(construction_node)
-            print(f"Getting {ue_cr_node}")
 
             controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
                                          '90.000000',

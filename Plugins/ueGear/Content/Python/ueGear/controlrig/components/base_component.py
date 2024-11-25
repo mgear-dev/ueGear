@@ -237,7 +237,6 @@ class UEComponent(object):
 
         TODO: This could be made more generic and reusable
         """
-        print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
         controller.add_unit_node_from_struct_path(
@@ -250,8 +249,6 @@ class UEComponent(object):
 
         for bone in bones:
             bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
-
             # Populates the Item Array Node
             controller.insert_array_pin(f'{node_name}.Items', -1, '')
             controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',

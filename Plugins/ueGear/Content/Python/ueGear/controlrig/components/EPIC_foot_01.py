@@ -37,10 +37,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # Calls the super method, which creates the comment block
         super().create_functions(controller)
 
@@ -55,14 +51,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if it does not exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -100,10 +92,6 @@ class Component(base_component.UEComponent):
             unreal.log_error("[Bone Populate] Failed no Controller found")
             return
 
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
-
         # Ball Joint
         ball_jnt = bones[0]
         jnt_name = str(ball_jnt.key.name)
@@ -126,7 +114,6 @@ class Component(base_component.UEComponent):
         """Creates an array node of all the bones
         """
 
-        print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
         node = controller.add_unit_node_from_struct_path(
@@ -141,7 +128,6 @@ class Component(base_component.UEComponent):
 
         for bone in bones:
             bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
 
             # Populates the Item Array Node
             controller.insert_array_pin(f'{node_name}.Items', -1, '')
@@ -181,9 +167,6 @@ class Component(base_component.UEComponent):
         The foot does not rely on control positions as it uses the guideTransforms to place the
         locations where the foot will rotate around.
         """
-        print("--------------------------------------------------")
-        print(" Generating Control Names and Transform Functions")
-        print("--------------------------------------------------")
 
         space_mtx = unreal.Matrix(x_plane=[1.000000, 0.000000, 0.000000, 0.000000],
                                   y_plane=[0.000000, 0.000000, 1.000000, 0.000000],

@@ -36,11 +36,6 @@ class Component(base_component.UEComponent):
     def create_functions(self, controller: unreal.RigVMController = None):
         if controller is None:
             return
-
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # calls the super method
         super().create_functions(controller)
 
@@ -54,14 +49,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -75,7 +66,6 @@ class Component(base_component.UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
-                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
@@ -97,9 +87,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             unreal.log_error("[Bone Populate] Failed no Controller found")
             return
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
 
         filtered_bones = []
         """List of bones that do not contain twist bones"""
@@ -155,8 +142,6 @@ class Component(base_component.UEComponent):
         # Connects the joint node to the Construction function
 
         for function_node in self.nodes["construction_functions"]:
-            print(
-                f"  Creating Construction Connection:   {array_node_name}.Items >> {function_node.get_name()}.fk_joints")
             controller.add_link(f'{array_node_name}.Items',
                                 f'{function_node.get_name()}.fk_joints')
 
@@ -166,8 +151,6 @@ class Component(base_component.UEComponent):
         # Connects the joint node to the Forward function
 
         for function_node in self.nodes["forward_functions"]:
-            print(f"  Creating Forward Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
-
             controller.add_link(f'{upper_bone_node_name}.Element',
                                 f'{function_node.get_name()}.top_bone')
 
@@ -180,8 +163,6 @@ class Component(base_component.UEComponent):
     def _init_master_joint_node(self, controller, node_name: str, bones):
         """Creates an array node of all the bones
         """
-
-        print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
         node = controller.add_unit_node_from_struct_path(
@@ -196,8 +177,6 @@ class Component(base_component.UEComponent):
 
         for bone in bones:
             bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
-
             # Populates the Item Array Node
             controller.insert_array_pin(f'{node_name}.Items', -1, '')
             controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
@@ -244,10 +223,6 @@ class Component(base_component.UEComponent):
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Generates the list nodes of controls names and transforms
         """
-        print("--------------------------------------------------")
-        print(" Generating Control Names and Transform Functions")
-        print("--------------------------------------------------")
-
         import ueGear.controlrig.manager as ueMan
 
         # Control names

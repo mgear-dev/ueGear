@@ -37,10 +37,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # calls the super method
         super().create_functions(controller)
 
@@ -54,14 +50,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -75,7 +67,6 @@ class Component(base_component.UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
-                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
@@ -98,9 +89,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             unreal.log_error("[Bone Populate] Failed no Controller found")
             return
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
 
         bone_name = bones[0].key.name
 

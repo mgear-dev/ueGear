@@ -36,10 +36,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # calls the super method
         super().create_functions(controller)
 
@@ -58,14 +54,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -79,17 +71,12 @@ class Component(base_component.UEComponent):
                     unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
                     continue
 
-                print(ue_cr_node)
                 self.nodes[evaluation_path].append(ue_cr_node)
 
         # Gets the Construction Function Node and sets the control name
 
         func_name = self.functions['construction_functions'][0]
-
-        print(func_name)
-
         construct_func = base_component.get_construction_node(self, f"{self.name}_{func_name}")
-        print(construct_func)
 
         if construct_func is None:
             unreal.log_error("  Create Functions Error - Cannot find construct singleton node")
@@ -107,9 +94,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             unreal.log_error("[Bone Populate] Failed no Controller found")
             return
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
 
         # Unique name for this skeleton node array
         array_node_name = f"{self.metadata.fullname}_RigUnit_ItemArray"
@@ -121,7 +105,6 @@ class Component(base_component.UEComponent):
             # Connects the Item Array Node to the functions.
             for evaluation_path in self.nodes.keys():
                 for function_node in self.nodes[evaluation_path]:
-                    print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
                     controller.add_link(f'{array_node_name}.Items',
                                         f'{function_node.get_name()}.Joints')
 
@@ -139,9 +122,6 @@ class Component(base_component.UEComponent):
         """Create the bone node, that will contain a list of all the bones that need to be
         driven.
         """
-
-        print(" - Init Master Joints")
-
         # Creates an Item Array Node to the control rig
         controller.add_unit_node_from_struct_path(
             '/Script/ControlRig.RigUnit_ItemArray',
@@ -153,7 +133,6 @@ class Component(base_component.UEComponent):
 
         for bone in bones:
             bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
 
             # Populates the Item Array Node
             controller.insert_array_pin(f'{node_name}.Items', -1, '')
@@ -170,9 +149,6 @@ class Component(base_component.UEComponent):
 
         TODO: Refactor this, as it is no longer needed due to relatives now existsing in the json file.
         """
-
-        print(" - Init Output Joints")
-
         # Unique name for this skeleton output array
         array_node_name = f"{self.metadata.fullname}_OutputSkeleton_RigUnit_ItemArray"
 
@@ -262,10 +238,10 @@ class Component(base_component.UEComponent):
 
             if not name_pins_exist:
                 controller.insert_array_pin(f'{names_node}.Values', -1, '',
-                                             print_python_command=True)
+                                             print_python_command=False)
             if not trans_pins_exist:
                 controller.insert_array_pin(f'{trans_node}.Values', -1, '',
-                                             print_python_command=True)
+                                             print_python_command=False)
 
             quat = control_transform.rotation
             pos = control_transform.translation
@@ -273,14 +249,14 @@ class Component(base_component.UEComponent):
             controller.set_pin_default_value(f'{names_node}.Values.{pin_index}',
                                              control_name,
                                              False,
-                                             print_python_command=True)
+                                             print_python_command=False)
 
             controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
                                              f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
                                              f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
                                              f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
                                              True,
-                                             print_python_command=True)
+                                             print_python_command=False)
 
             pin_index += 1
 
