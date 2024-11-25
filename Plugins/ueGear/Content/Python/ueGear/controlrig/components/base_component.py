@@ -245,19 +245,18 @@ class UEComponent(object):
             unreal.Vector2D(-54.908936, 204.649109),
             node_name)
 
-        pin_index = 0  # stores the current pin index that is being updated
-
-        for bone in bones:
+        default_values = ""
+        for i, bone in enumerate(bones):
             bone_name = str(bone.key.name)
-            # Populates the Item Array Node
-            controller.insert_array_pin(f'{node_name}.Items', -1, '')
-            controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
-                                             f'(Type=Bone,Name="{bone_name}")',
-                                             True)
-            controller.set_pin_expansion(f'{node_name}.Items.{str(pin_index)}', True)
-            controller.set_pin_expansion(f'{node_name}.Items', True)
+            default_values += f'(Type=Bone,Name="{bone_name}"),'
 
-            pin_index += 1
+        # trims off the extr ','
+        default_values = default_values[:-1]
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(f'{node_name}.Items',
+                                         f'({default_values})',
+                                         True)
+
 
     # DEVELOPMENT!!!!!!!
 
