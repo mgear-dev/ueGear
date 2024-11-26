@@ -255,7 +255,9 @@ class UEComponent(object):
         # Populates and resizes the pin in one go
         controller.set_pin_default_value(f'{node_name}.Items',
                                          f'({default_values})',
-                                         True)
+                                         True,
+                                         setup_undo_redo=True,
+                                         merge_undo_action=True)
 
 
     # DEVELOPMENT!!!!!!!

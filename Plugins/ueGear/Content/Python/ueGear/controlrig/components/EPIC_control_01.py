@@ -191,7 +191,12 @@ class Component(base_component.UEComponent):
         control_name = self.metadata.controls[0]
         colour = self.metadata.controls_colour[control_name]
 
-        controller.set_pin_default_value(f'{construction_node}.control_colour.R', f"{colour[0]}", False)
-        controller.set_pin_default_value(f'{construction_node}.control_colour.G', f"{colour[1]}", False)
-        controller.set_pin_default_value(f'{construction_node}.control_colour.B', f"{colour[2]}", False)
-        controller.set_pin_default_value(f'{construction_node}.control_colour.A', "1", False)
+        default_value = f"(R={colour[0]}, G={colour[1]}, B={colour[2]}, A=1.0)"
+
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{construction_node}.control_colour',
+            f"{default_value}",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)

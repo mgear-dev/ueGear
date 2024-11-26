@@ -174,20 +174,19 @@ class Component(base_component.UEComponent):
 
         self.add_misc_function(node)
 
-        pin_index = 0  # stores the current pin index that is being updated
-
-        for bone in bones:
+        default_values = ""
+        for i, bone in enumerate(bones):
             bone_name = str(bone.key.name)
+            default_values += f'(Type=Bone,Name="{bone_name}"),'
 
-            # Populates the Item Array Node
-            controller.insert_array_pin(f'{node_name}.Items', -1, '')
-            controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
-                                             f'(Type=Bone,Name="{bone_name}")',
-                                             True)
-            controller.set_pin_expansion(f'{node_name}.Items.{str(pin_index)}', True)
-            controller.set_pin_expansion(f'{node_name}.Items', True)
-
-            pin_index += 1
+        # trims off the extr ','
+        default_values = default_values[:-1]
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(f'{node_name}.Items',
+                                         f'({default_values})',
+                                         True,
+                                         setup_undo_redo=True,
+                                         merge_undo_action=True)
 
     def init_input_data(self, controller: unreal.RigVMController):
 
@@ -294,40 +293,38 @@ class Component(base_component.UEComponent):
 
         # Populate the array node with new pins that contain the name and transform data
 
-        # Checks to see if the array has existing pins
-        name_pins_exist = ueMan.array_node_has_pins(fk_names_node_name, controller)
-        trans_pins_exist = ueMan.array_node_has_pins(fk_trans_node_name, controller)
-
-        pin_index = 0
+        default_values = ""
 
         for control_name in fk_control_names:
             control_transform = self.metadata.control_transforms[control_name]
+            quat = control_transform.rotation
+            pos = control_transform.translation
 
-            if not name_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(fk_names_node_name)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(fk_control_names):
-                    controller.insert_array_pin(f'{fk_names_node_name}.Values',
-                                                -1,
-                                                '')
-            if not trans_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(fk_trans_node_name)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(fk_control_names):
-                    controller.insert_array_pin(f'{fk_trans_node_name}.Values',
-                                                -1,
-                                                '')
+            string_entry = (f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}), "
+                            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)),")
 
-            self._set_transform_pin(fk_trans_node_name,
-                                    f'Values.{pin_index}',
-                                    control_transform,
-                                    controller)
+            default_values += string_entry
 
-            controller.set_pin_default_value(f'{fk_names_node_name}.Values.{pin_index}',
-                                             control_name,
-                                             False)
+        # trims off the extr ','
+        default_values = default_values[:-1]
 
-            pin_index += 1
+        controller.set_pin_default_value(
+            f"{fk_trans_node_name}.Values",
+            f"({default_values})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
+        # Populate names
+        names = ",".join([name for name in fk_control_names])
+        controller.set_pin_default_value(
+            f'{fk_names_node_name}.Values',
+            f"({names})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
 
         # post processes
         self.populate_control_scale(
@@ -367,9 +364,7 @@ class Component(base_component.UEComponent):
         controller.add_link(f'{array_name}.Array',
                             f'{construction_func_name}.control_sizes')
 
-        pins_exist = ueMan.array_node_has_pins(array_name, controller)
-        pin_index = 0
-
+        default_values = ""
         # Calculates the unreal scale for the control and populates it into the array node.
         for control_name in fk_names + [ik_upv, ik_eff]:
             aabb = self.metadata.controls_aabb[control_name]
@@ -384,18 +379,19 @@ class Component(base_component.UEComponent):
             elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
                 unreal_size[1] = unreal_size[0]
 
-            if not pins_exist:
-                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls_aabb):
-                    controller.insert_array_pin(f'{array_name}.Values',
-                                                -1,
-                                                '')
+            default_values += f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]}),'
 
-            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
-                                             f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})',
-                                             False)
+        # trims off the extr ','
+        default_values = default_values[:-1]
 
-            pin_index += 1
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{array_name}.Values',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
 
     def populate_control_shape_offset(self, fk_names: list[str], ik_upv: str, ik_eff: str,
                                       controller: unreal.RigVMController):
@@ -415,25 +411,25 @@ class Component(base_component.UEComponent):
         controller.add_link(f'{array_name}.Array',
                             f'{construction_func_name}.control_offsets')
 
-        pins_exist = ueMan.array_node_has_pins(array_name, controller)
-        pin_index = 0
-
+        default_values = ""
         for control_name in fk_names + [ik_upv, ik_eff]:
             aabb = self.metadata.controls_aabb[control_name]
             bb_center = aabb[0]
 
-            if not pins_exist:
-                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls_aabb):
-                    controller.insert_array_pin(f'{array_name}.Values',
-                                                -1,
-                                                '')
+            string_entry = f'(X={bb_center[0]}, Y={bb_center[1]}, Z={bb_center[2]}),'
 
-            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
-                                             f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})',
-                                             False)
+            default_values += string_entry
 
-            pin_index += 1
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        controller.set_pin_default_value(
+            f'{array_name}.Values',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
 
     def populate_control_colour(self, fk_names: list[str], ik_upv: str, ik_eff: str,
                                 controller: unreal.RigVMController):
@@ -441,11 +437,19 @@ class Component(base_component.UEComponent):
         cr_func = self.functions["construction_functions"][0]
         construction_node = f"{self.name}_{cr_func}"
 
+        default_values = ""
         for i, control_name in enumerate(fk_names + [ik_upv, ik_eff]):
             colour = self.metadata.controls_colour[control_name]
+            string_entry = f"(R={colour[0]}, G={colour[1]}, B={colour[2]}, A=1.0),"
+            default_values += string_entry
 
-            controller.insert_array_pin(f'{construction_node}.control_colours', -1, '')
-            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.R', f"{colour[0]}", False)
-            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.G', f"{colour[1]}", False)
-            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.B', f"{colour[2]}", False)
-            controller.set_pin_default_value(f'{construction_node}.control_colours.{i}.A', "1", False)
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{construction_node}.control_colours',
+            f"({default_values})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)

@@ -176,7 +176,9 @@ class Component(base_component.UEComponent):
         # Populates and resizes the pin in one go
         controller.set_pin_default_value(f'{names_node}.Values',
                                          f"({default_values})",
-                                         True)
+                                         True,
+                                         setup_undo_redo=True,
+                                         merge_undo_action=True)
 
     # TODO: setup an init_controls method and move this method and the populate controls method into it
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
@@ -215,7 +217,9 @@ class Component(base_component.UEComponent):
         controller.set_pin_default_value(
             f"{trans_node}.Values",
             f"({default_values})",
-            True)
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
         self.populate_control_names(controller)
         self.populate_control_scale(controller)
@@ -288,7 +292,9 @@ class Component(base_component.UEComponent):
         controller.set_pin_default_value(
             f'{array_name}.Values',
             f'({default_values})',
-            True)
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """
@@ -310,7 +316,6 @@ class Component(base_component.UEComponent):
         """Magic number to try and get the maya control scale to be similar to that of unreal"""
 
         default_values = ""
-
         # populate array
         for i, control_name in enumerate(self.metadata.controls):
             aabb = self.metadata.controls_aabb[control_name]
@@ -334,7 +339,9 @@ class Component(base_component.UEComponent):
         controller.set_pin_default_value(
             f'{array_name}.Values',
             f'({default_values})',
-            True)
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
     def populate_control_colour(self, controller: unreal.RigVMController):
         cr_func = self.functions["construction_functions"][0]
@@ -354,4 +361,6 @@ class Component(base_component.UEComponent):
         controller.set_pin_default_value(
             f'{construction_node}.control_colours',
             f"({default_values})",
-            True)
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
