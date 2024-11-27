@@ -110,63 +110,40 @@ class Component(base_component.UEComponent):
         """Updates the transform data for the controls generated, with the data from the mgear json
         file.
         """
-        import ueGear.controlrig.manager as ueMan
-
-        names_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_names", controller)
-        trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
-
-        node_names = controller.get_graph().find_node_by_name(names_node)
-        node_trans = controller.get_graph().find_node_by_name(trans_node)
-
-        self.add_misc_function(node_names)
-        self.add_misc_function(node_trans)
-
-        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
-        # values
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{trans_node}.Array',
-                            f'{construction_func_name}.world_control_transforms')
-        controller.add_link(f'{names_node}.Array',
-                            f'{construction_func_name}.control_names')
 
-        # Checks the pins
-        name_pins_exist = ueMan.array_node_has_pins(names_node, controller)
-        trans_pins_exist = ueMan.array_node_has_pins(trans_node, controller)
-
-        pin_index = 0
+        default_values = ""
 
         for control_name in self.metadata.controls:
             control_transform = self.metadata.control_transforms[control_name]
-
-            if not name_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(names_node)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls):
-                    controller.insert_array_pin(f'{names_node}.Values',
-                                                -1,
-                                                '')
-            if not trans_pins_exist:
-                found_node = controller.get_graph().find_node_by_name(trans_node)
-                existing_pin_count = len(found_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls):
-                    controller.insert_array_pin(f'{trans_node}.Values',
-                                                -1,
-                                                '')
-
             quat = control_transform.rotation
             pos = control_transform.translation
 
-            controller.set_pin_default_value(f'{names_node}.Values.{pin_index}',
-                                             control_name,
-                                             False)
+            string_entry = (f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}), "
+                            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)),")
 
-            controller.set_pin_default_value(f"{trans_node}.Values.{pin_index}",
-                                             f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
-                                             f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
-                                             f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-                                             True)
+            default_values += string_entry
 
-            pin_index += 1
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        controller.set_pin_default_value(
+            f"{construction_func_name}.world_control_transforms",
+            f"({default_values})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
+        # Populate names
+        names = ",".join([control_name for control_name in self.metadata.controls])
+        controller.set_pin_default_value(
+            f'{construction_func_name}.control_names',
+            f"({names})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
 
         self.populate_control_scale(controller)
         self.populate_control_shape_offset(controller)
@@ -176,27 +153,15 @@ class Component(base_component.UEComponent):
         """
         Generates a scale value per a control
         """
-        import ueGear.controlrig.manager as ueMan
-
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
         # connects the node of scales to the construction node
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_sizes')
-
-        pins_exist = ueMan.array_node_has_pins(array_name, controller)
 
         reduce_ratio = 4.0
         """Magic number to try and get the maya control scale to be similar to that of unreal.
         As the mGear uses a square and ueGear uses a cirlce.
         """
 
-        pin_index = 0
-
+        default_values = ""
         # Calculates the unreal scale for the control and populates it into the array node.
         for control_name in self.metadata.controls:
             aabb = self.metadata.controls_aabb[control_name]
@@ -212,56 +177,43 @@ class Component(base_component.UEComponent):
             elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
                 unreal_size[1] = unreal_size[0]
 
-            if not pins_exist:
-                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls_aabb):
-                    controller.insert_array_pin(f'{array_name}.Values',
-                                                -1,
-                                                '')
+            default_values += f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]}),'
 
-            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
-                                             f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})',
-                                             False)
+        # trims off the extr ','
+        default_values = default_values[:-1]
 
-            pin_index += 1
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{construction_func_name}.control_sizes',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
     def populate_control_shape_offset(self, controller: unreal.RigVMController):
         """
         As some controls have there pivot at the same position as the transform, but the control is actually moved
         away from that pivot point. We use the bounding box position as an offset for the control shape.
         """
-        import ueGear.controlrig.manager as ueMan
-
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_offset", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
-        # connects the node of scales to the construction node
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_offset')
 
-        pins_exist = ueMan.array_node_has_pins(array_name, controller)
-
-        pin_index = 0
-
-        for control_name in self.metadata.controls:
+        default_values = ""
+        for i, control_name in enumerate(self.metadata.controls):
             aabb = self.metadata.controls_aabb[control_name]
             bb_center = aabb[0]
+            string_entry = f'(X={bb_center[0]}, Y={bb_center[1]}, Z={bb_center[2]}),'
 
-            if not pins_exist:
-                existing_pin_count = len(array_node.get_pins()[0].get_sub_pins())
-                if existing_pin_count < len(self.metadata.controls_aabb):
-                    controller.insert_array_pin(f'{array_name}.Values',
-                                                -1,
-                                                '')
+            default_values += string_entry
 
-            controller.set_pin_default_value(f'{array_name}.Values.{pin_index}',
-                                             f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})',
-                                             False)
+        # trims off the extr ','
+        default_values = default_values[:-1]
 
-            pin_index += 1
+        controller.set_pin_default_value(
+            f'{construction_func_name}.control_offset',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
     def populate_control_colour(self, controller):
         cr_func = self.functions["construction_functions"][0]

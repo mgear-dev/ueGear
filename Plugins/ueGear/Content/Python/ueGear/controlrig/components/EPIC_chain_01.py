@@ -121,18 +121,9 @@ class Component(base_component.UEComponent):
                             f'{forward_node_name}.Array')
 
     def populate_control_names(self, controller: unreal.RigVMController):
-        import ueGear.controlrig.manager as ueMan
-
-        names_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_names", controller)
-        node_names = controller.get_graph().find_node_by_name(names_node)
-
-        self.add_misc_function(node_names)
-
         # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
         # values
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{names_node}.Array',
-                            f'{construction_func_name}.control_names')
 
         default_values = ""
         for control_name in self.metadata.controls:
@@ -142,7 +133,7 @@ class Component(base_component.UEComponent):
         default_values = default_values[:-1]
 
         # Populates and resizes the pin in one go
-        controller.set_pin_default_value(f'{names_node}.Values',
+        controller.set_pin_default_value(f'{construction_func_name}.control_names',
                                          f"({default_values})",
                                          True,
                                          setup_undo_redo=True,
@@ -153,17 +144,7 @@ class Component(base_component.UEComponent):
         """Updates the transform data for the controls generated, with the data from the mgear json
         file.
         """
-        import ueGear.controlrig.manager as ueMan
-
-        trans_node = ueMan.create_array_node(f"{self.metadata.fullname}_control_transforms", controller)
-        node_trans = controller.get_graph().find_node_by_name(trans_node)
-        self.add_misc_function(node_trans)
-
-        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
-        # values
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{trans_node}.Array',
-                            f'{construction_func_name}.control_transforms')
 
         default_values = ""
         for i, control_name in enumerate(self.metadata.controls):
@@ -183,7 +164,7 @@ class Component(base_component.UEComponent):
 
         # Populates and resizes the pin in one go
         controller.set_pin_default_value(
-            f"{trans_node}.Values",
+            f"{construction_func_name}.control_transforms",
             f"({default_values})",
             True,
             setup_undo_redo=True,
@@ -199,17 +180,7 @@ class Component(base_component.UEComponent):
         As some controls have there pivot at the same position as the transform, but the control is actually moved
         away from that pivot point. We use the bounding box position as an offset for the control shape.
         """
-        import ueGear.controlrig.manager as ueMan
-
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_offset", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
-        # connects the node of scales to the construction node
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_offsets')
 
         default_values = ""
         for i, control_name in enumerate(self.metadata.controls):
@@ -223,7 +194,7 @@ class Component(base_component.UEComponent):
         default_values = default_values[:-1]
 
         controller.set_pin_default_value(
-            f'{array_name}.Values',
+            f'{construction_func_name}.control_offsets',
             f'({default_values})',
             True,
             setup_undo_redo=True,
@@ -233,17 +204,7 @@ class Component(base_component.UEComponent):
         """
         Generates a scale value per a control
         """
-        import ueGear.controlrig.manager as ueMan
-
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
-        # connects the node of scales to the construction node
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_scale')
 
         reduce_ratio = 4.0
         """Magic number to try and get the maya control scale to be similar to that of unreal.
@@ -273,7 +234,7 @@ class Component(base_component.UEComponent):
 
         # Populates and resizes the pin in one go
         controller.set_pin_default_value(
-            f'{array_name}.Values',
+            f'{construction_func_name}.control_scale',
             f'({default_values})',
             True,
             setup_undo_redo=True,

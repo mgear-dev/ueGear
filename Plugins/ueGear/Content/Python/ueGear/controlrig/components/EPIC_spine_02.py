@@ -207,24 +207,7 @@ class Component(base_component.UEComponent):
         """Updates the transform data for the controls generated, with the data from the mgear json
         file.
         """
-        import ueGear.controlrig.manager as ueMan
-
-        names_node = ueMan.create_array_node("control_names", controller)
-        trans_node = ueMan.create_array_node("control_transforms", controller)
-
-        node_names = controller.get_graph().find_node_by_name(names_node)
-        node_trans = controller.get_graph().find_node_by_name(trans_node)
-
-        self.add_misc_function(node_names)
-        self.add_misc_function(node_trans)
-
-        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
-        # values
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{trans_node}.Array',
-                            f'{construction_func_name}.fk_world_transforms')
-        controller.add_link(f'{names_node}.Array',
-                            f'{construction_func_name}.fk_world_keys')
 
         default_values = ""
         for i, control_name in enumerate(self.metadata.controls):
@@ -242,7 +225,7 @@ class Component(base_component.UEComponent):
         default_values = default_values[:-1]
 
         controller.set_pin_default_value(
-            f"{trans_node}.Values",
+            f"{construction_func_name}.fk_world_transforms",
             f"({default_values})",
             True,
             setup_undo_redo=True,
@@ -251,12 +234,11 @@ class Component(base_component.UEComponent):
         # Populate control names
         names = ",".join([name for name in self.metadata.controls])
         controller.set_pin_default_value(
-            f'{names_node}.Values',
+            f'{construction_func_name}.fk_world_keys',
             f"({names})",
             True,
             setup_undo_redo=True,
             merge_undo_action=True)
-
 
         self.populate_control_scale(controller)
         self.populate_control_shape_offset(controller)

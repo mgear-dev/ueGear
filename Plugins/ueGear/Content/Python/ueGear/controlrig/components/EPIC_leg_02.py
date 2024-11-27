@@ -225,7 +225,8 @@ class Component(base_component.UEComponent):
 
         Design Decision: All feet IK Controls are built in World Space, oriented to World Space
         """
-        import ueGear.controlrig.manager as ueMan
+        # Gets the construction function name
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
 
         # Control names
         fk_control_names = []
@@ -233,9 +234,7 @@ class Component(base_component.UEComponent):
         ik_eff_name = ""
 
         # Filter our required names and transforms
-
         for ctrl_name in self.metadata.controls:
-
             # Use the controls.Role metadata to detect the type
             ctrl_role = self.metadata.controls_role[ctrl_name]
             if "fk" in ctrl_role:
@@ -244,9 +243,6 @@ class Component(base_component.UEComponent):
                 ik_upv_name = ctrl_name
             elif "ik" == ctrl_role:
                 ik_eff_name = ctrl_name
-
-        # Gets the construction function name
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
 
         # SETUP IK DATA
 
@@ -273,24 +269,6 @@ class Component(base_component.UEComponent):
                                 controller)
 
         # SETUP FK DATA
-
-        # Generates the array nodes for fk names and transforms
-        fk_names_node_name = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_names", controller)
-        fk_trans_node_name = ueMan.create_array_node(f"{self.metadata.fullname}_fk_control_transforms", controller)
-
-        fk_names_node = controller.get_graph().find_node_by_name(fk_names_node_name)
-        fk_trans_node = controller.get_graph().find_node_by_name(fk_trans_node_name)
-
-        self.add_misc_function(fk_names_node)
-        self.add_misc_function(fk_trans_node)
-
-        # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default
-        # values
-        controller.add_link(f'{fk_names_node_name}.Array',
-                            f'{construction_func_name}.fk_control_names')
-        controller.add_link(f'{fk_trans_node_name}.Array',
-                            f'{construction_func_name}.fk_control_transforms')
-
         # Populate the array node with new pins that contain the name and transform data
 
         default_values = ""
@@ -310,7 +288,7 @@ class Component(base_component.UEComponent):
         default_values = default_values[:-1]
 
         controller.set_pin_default_value(
-            f"{fk_trans_node_name}.Values",
+            f"{construction_func_name}.fk_control_transforms",
             f"({default_values})",
             True,
             setup_undo_redo=True,
@@ -319,7 +297,7 @@ class Component(base_component.UEComponent):
         # Populate names
         names = ",".join([name for name in fk_control_names])
         controller.set_pin_default_value(
-            f'{fk_names_node_name}.Values',
+            f'{construction_func_name}.fk_control_names',
             f"({names})",
             True,
             setup_undo_redo=True,
@@ -347,22 +325,13 @@ class Component(base_component.UEComponent):
         """
         Generates a scale value per a control
         """
-        import ueGear.controlrig.manager as ueMan
-
         reduce_ratio = 5.0
         """Magic number to try and get the maya control scale to be similar to that of unreal.
         As the mGear uses a square and ueGear uses a cirlce.
         """
 
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_scales", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
         # connects the node of scales to the construction node
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_sizes')
 
         default_values = ""
         # Calculates the unreal scale for the control and populates it into the array node.
@@ -386,7 +355,7 @@ class Component(base_component.UEComponent):
 
         # Populates and resizes the pin in one go
         controller.set_pin_default_value(
-            f'{array_name}.Values',
+            f'{construction_func_name}.control_sizes',
             f'({default_values})',
             True,
             setup_undo_redo=True,
@@ -399,17 +368,7 @@ class Component(base_component.UEComponent):
         As some controls have there pivot at the same position as the transform, but the control is actually moved
         away from that pivot point. We use the bounding box position as an offset for the control shape.
         """
-        import ueGear.controlrig.manager as ueMan
-
-        # Generates the array node
-        array_name = ueMan.create_array_node(f"{self.metadata.fullname}_control_offset", controller)
-        array_node = controller.get_graph().find_node_by_name(array_name)
-        self.add_misc_function(array_node)
-
-        # connects the node of scales to the construction node
         construction_func_name = self.nodes["construction_functions"][0].get_name()
-        controller.add_link(f'{array_name}.Array',
-                            f'{construction_func_name}.control_offsets')
 
         default_values = ""
         for control_name in fk_names + [ik_upv, ik_eff]:
@@ -424,7 +383,7 @@ class Component(base_component.UEComponent):
         default_values = default_values[:-1]
 
         controller.set_pin_default_value(
-            f'{array_name}.Values',
+            f'{construction_func_name}.control_offsets',
             f'({default_values})',
             True,
             setup_undo_redo=True,

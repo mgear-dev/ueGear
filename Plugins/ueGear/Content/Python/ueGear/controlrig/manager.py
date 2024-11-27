@@ -149,6 +149,7 @@ class UEGearManager:
             unreal.log_error(f"Component not found : {guide_type}")
             return
 
+        # Instantiates the component
         ueg_comp = ue_comp_classes[0]()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname

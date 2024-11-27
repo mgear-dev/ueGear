@@ -197,7 +197,7 @@ class UEComponent(object):
         self.nodes["misc_functions"].append(node)
 
     def get_misc_functions(self):
-        """Gets all miscilanois functions relating to this component"""
+        """Gets all miscellaneous functions relating to this component"""
         return self.nodes["misc_functions"]
 
     def set_side_colour(self, controller: unreal.RigVMController):
@@ -239,7 +239,7 @@ class UEComponent(object):
         """
 
         # Creates an Item Array Node to the control rig
-        controller.add_unit_node_from_struct_path(
+        node = controller.add_unit_node_from_struct_path(
             '/Script/ControlRig.RigUnit_ItemArray',
             'Execute',
             unreal.Vector2D(-54.908936, 204.649109),
@@ -259,6 +259,7 @@ class UEComponent(object):
                                          setup_undo_redo=True,
                                          merge_undo_action=True)
 
+        return node
 
     # DEVELOPMENT!!!!!!!
 
