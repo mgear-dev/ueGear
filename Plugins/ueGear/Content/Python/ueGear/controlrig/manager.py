@@ -81,6 +81,14 @@ class UEGearManager:
         """
         self._active_blueprint = bp
 
+    def get_compile_mode(self) -> bool:
+        """Gets the Auto Compile status on the Blueprint of the active blueprint"""
+        return self._active_blueprint.get_auto_vm_recompile()
+
+    def set_compile_mode(self,active=True):
+        """Sets the Auto Compile status on the Blueprint of the active blueprint"""
+        self._active_blueprint.set_auto_vm_recompile(active)
+
     def build_world_control(self, force_build=False):
         """
         Generates the world contol. The control will come in at world origin
@@ -909,6 +917,10 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
 
     gear_manager.set_active_blueprint(cr_bp)
 
+    # Deactivate Autocompile, to speed up builds
+    compile_status = gear_manager.get_compile_mode()
+    gear_manager.set_compile_mode(False)
+
     # todo: commented out as the folder should only be deleted if it is empty.
     # if cr_bp is None:
     #     unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
@@ -924,3 +936,6 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.populate_parents()
     gear_manager.connect_components()
     gear_manager.group_components()
+
+    # Sets the Autocompiler back to how it was before building
+    gear_manager.set_compile_mode(compile_status)
