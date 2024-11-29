@@ -40,12 +40,23 @@ class UEGearManager:
         """
         Initialises the ueGear Manager, making sure that the plugin exists and the factory has been accessed.
         """
+        self.reset()
+
         unreal.load_module('ControlRigDeveloper')
         self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
 
         # # Generates the 'Create', 'Forward' and 'Backwards' nodes
         # self.create_solves()
+
+    def reset(self):
+        """Clears all the stored blueprint data"""
+        self._factory = None
+        self._cr_blueprints = []
+        self._active_blueprint = None
+        self._ue_gear_standard_library = None
+        self.mg_rig = None
+        self.uegear_components = []
 
     def get_open_controlrig_blueprints(self):
         """Gets all open Control Rig Blueprints
@@ -85,7 +96,7 @@ class UEGearManager:
         """Gets the Auto Compile status on the Blueprint of the active blueprint"""
         return self._active_blueprint.get_auto_vm_recompile()
 
-    def set_compile_mode(self,active=True):
+    def set_compile_mode(self, active=True):
         """Sets the Auto Compile status on the Blueprint of the active blueprint"""
         self._active_blueprint.set_auto_vm_recompile(active)
 
@@ -154,7 +165,7 @@ class UEGearManager:
 
         # If component not found, report error and exit early
         if ue_comp_classes is None or not ue_comp_classes:
-            unreal.log_error(f"Component not found : {guide_type}")
+            unreal.log_warning(f"Component not found : {guide_type}")
             return
 
         # Instantiates the component
@@ -303,15 +314,29 @@ class UEGearManager:
                     is_sequence = str(first_driven_node.get_node_title()) == "Sequence"
 
                     if is_sequence:
-                        source_node_name = p_func
+                        # source_node_name = p_func
                         new_connection_node_name = c_func
                         seq_node_name = f'{source_node_name}_RigVMFunction_Sequence'
+                        # seq_node_name = first_driven_node.get_name()
 
                         # Generate next available plug on the Sequence Node
-                        new_pin = bp_controller.add_aggregate_pin(seq_node_name, '', '')
+                        new_output_pin = bp_controller.add_aggregate_pin(seq_node_name,
+                                                        '',
+                                                        '',
+                                                        setup_undo_redo=False)
 
-                        bp_controller.add_link(new_pin,
-                                               f'{new_connection_node_name}.ExecuteContext')
+                        # To try and force a refresh, we get the sequence node, and try to query for the newly
+                        # created pin, this would be the last pin in the list.
+                        if new_output_pin is None or new_output_pin == "":
+                            out_pins = first_driven_node.get_aggregate_outputs()
+                            latest_pin = out_pins[-1]
+                            output_pin_name = seq_node_name + "." + latest_pin.get_name()
+                            bp_controller.add_link(output_pin_name,
+                                                   f'{new_connection_node_name}.ExecuteContext')
+                        else:
+                            bp_controller.add_link(new_output_pin,
+                                                   f'{new_connection_node_name}.ExecuteContext')
+
 
                     else:
                         source_node_name = p_func
@@ -324,7 +349,7 @@ class UEGearManager:
                         bp_controller.add_unit_node_from_struct_path(
                             '/Script/RigVM.RigVMFunction_Sequence',
                             'Execute',
-                            unreal.Vector2D(1125.814540, 650.259969),
+                            unreal.Vector2D(0.0, 1000.0),
                             seq_node_name)
 
                         # Connect Parent/Source node to the sequence node
@@ -466,9 +491,14 @@ class UEGearManager:
 
     def connect_components(self):
         """Connects all the built components"""
+        import time
 
+        s_t_a = time.time()
         self.connect_execution()
+        print(f"   Connect Execution: {time.time() - s_t_a}")
+        s_t_a = time.time()
         self.connect_construction_functions()
+        print(f"   Connect Construction: {time.time() - s_t_a}")
 
         return
 
