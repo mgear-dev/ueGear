@@ -40,12 +40,23 @@ class UEGearManager:
         """
         Initialises the ueGear Manager, making sure that the plugin exists and the factory has been accessed.
         """
+        self.reset()
+
         unreal.load_module('ControlRigDeveloper')
         self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
 
         # # Generates the 'Create', 'Forward' and 'Backwards' nodes
         # self.create_solves()
+
+    def reset(self):
+        """Clears all the stored blueprint data"""
+        self._factory = None
+        self._cr_blueprints = []
+        self._active_blueprint = None
+        self._ue_gear_standard_library = None
+        self.mg_rig = None
+        self.uegear_components = []
 
     def get_open_controlrig_blueprints(self):
         """Gets all open Control Rig Blueprints
@@ -80,6 +91,14 @@ class UEGearManager:
         The Control Rig Blueprint that will be modified by the  manager, is referred to as the "Active Blueprint"
         """
         self._active_blueprint = bp
+
+    def get_compile_mode(self) -> bool:
+        """Gets the Auto Compile status on the Blueprint of the active blueprint"""
+        return self._active_blueprint.get_auto_vm_recompile()
+
+    def set_compile_mode(self, active=True):
+        """Sets the Auto Compile status on the Blueprint of the active blueprint"""
+        self._active_blueprint.set_auto_vm_recompile(active)
 
     def build_world_control(self, force_build=False):
         """
@@ -129,11 +148,6 @@ class UEGearManager:
         """Create an individual component from the mgear scene desciptor file.
 
         """
-
-        print("------------------------------")
-        print(f" BUILDING COMPONENT: {name}")
-        print("------------------------------")
-
         if self._active_blueprint is None:
             unreal.log_error("ueGear Manager > Cannot create Control Rig Blueprint, please specify active blueprint.")
 
@@ -151,21 +165,15 @@ class UEGearManager:
 
         # If component not found, report error and exit early
         if ue_comp_classes is None or not ue_comp_classes:
-            unreal.log_error(f"Component not found : {guide_type}")
+            unreal.log_warning(f"Component not found : {guide_type}")
             return
 
+        # Instantiates the component
         ueg_comp = ue_comp_classes[0]()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname
 
         self.uegear_components.append(ueg_comp)
-
-        print(f"         NAME : {ueg_comp.name}")
-        print(f"   mGear Comp : {ueg_comp.mgear_component}")
-        print(f"    Functions : {ueg_comp.functions}")
-        print(f"   Guide Name : {guide_name}")
-        print(f"     metadata :\n {ueg_comp.metadata}")
-        print("--------------------")
 
         bp_controller = self.get_active_controller()
 
@@ -207,17 +215,13 @@ class UEGearManager:
                     node_count += 1
 
             comment_size = unreal.Vector2D(500, node_count * 300)
-            # print(f"Comment Size {comment_size}")
             controller.set_node_size(ue_comp.comment_node, comment_size)
 
             # TODO: Rezise comment to encapsulate the entirety of control rig functions
             # TODO: Query the nodes pins and pin names to try and estimate the possible size of the node, then use that to drive the layout.
 
-            # print("GROUP COMPONENTS")
             for node in ue_comp.get_misc_functions():
                 (w, h) = calculate_node_size(node)
-                # print(w, h)
-
                 controller.set_node_position(node, pos + unreal.Vector2D(40, 450))
 
         # for i, ue_comp in enumerate(self.uegear_components):
@@ -240,9 +244,6 @@ class UEGearManager:
         Assigns all the ueGear components parent child relationships.
         It does this by searching for the associated component by name.
         """
-        print("---------------------------------")
-        print(" Finding Parent Associations")
-        print("---------------------------------")
 
         # Find the world component if it exists
         world_component = self.get_uegear_world_component()
@@ -258,21 +259,18 @@ class UEGearManager:
             if comp.metadata.parent_fullname:
                 parent_comp_name = comp.metadata.parent_fullname
 
-                print(f" {comp.name} > Finding parent component: {parent_comp_name}")
-
                 # parent_comp = self.mg_rig.components.get(parent_comp_name, None)
                 parent_component = self.get_uegear_component(parent_comp_name)
                 if parent_component is None:
                     print(f"    Could not find parent component > {parent_comp_name}")
                     continue
 
-                print(f"      > Found parent component: {parent_comp_name}")
                 comp.set_parent(parent_component)
 
             elif comp.metadata.parent_fullname is None and world_component:
                 # Component has no parent specified, and a World Component exists
                 # Set the World Component as the parent
-                print(f" {comp.name} > Has no parent, World Component Exists")
+                # print(f" {comp.name} > Has no parent, World Component Exists")
                 comp.set_parent(world_component)
 
     def connect_execution(self):
@@ -307,7 +305,6 @@ class UEGearManager:
                 target_pins = execute_pin.get_linked_target_pins()
 
                 if len(target_pins) == 0:
-                    print("Pin not connected, setting up basic connection")
                     bp_controller.add_link(f'{p_func}.ExecuteContext',
                                            f'{c_func}.ExecuteContext')
                 else:
@@ -317,21 +314,31 @@ class UEGearManager:
                     is_sequence = str(first_driven_node.get_node_title()) == "Sequence"
 
                     if is_sequence:
-                        print("Sequence Node, insert new pin and connect")
-
-                        source_node_name = p_func
+                        # source_node_name = p_func
                         new_connection_node_name = c_func
                         seq_node_name = f'{source_node_name}_RigVMFunction_Sequence'
+                        # seq_node_name = first_driven_node.get_name()
 
                         # Generate next available plug on the Sequence Node
-                        new_pin = bp_controller.add_aggregate_pin(seq_node_name, '', '')
+                        new_output_pin = bp_controller.add_aggregate_pin(seq_node_name,
+                                                        '',
+                                                        '',
+                                                        setup_undo_redo=False)
 
-                        bp_controller.add_link(new_pin,
-                                               f'{new_connection_node_name}.ExecuteContext')
+                        # To try and force a refresh, we get the sequence node, and try to query for the newly
+                        # created pin, this would be the last pin in the list.
+                        if new_output_pin is None or new_output_pin == "":
+                            out_pins = first_driven_node.get_aggregate_outputs()
+                            latest_pin = out_pins[-1]
+                            output_pin_name = seq_node_name + "." + latest_pin.get_name()
+                            bp_controller.add_link(output_pin_name,
+                                                   f'{new_connection_node_name}.ExecuteContext')
+                        else:
+                            bp_controller.add_link(new_output_pin,
+                                                   f'{new_connection_node_name}.ExecuteContext')
+
 
                     else:
-                        print("Creating Sequence Node for execution")
-
                         source_node_name = p_func
                         connected_node_name = first_driven_node.get_name()
                         new_connection_node_name = c_func
@@ -342,7 +349,7 @@ class UEGearManager:
                         bp_controller.add_unit_node_from_struct_path(
                             '/Script/RigVM.RigVMFunction_Sequence',
                             'Execute',
-                            unreal.Vector2D(1125.814540, 650.259969),
+                            unreal.Vector2D(0.0, 1000.0),
                             seq_node_name)
 
                         # Connect Parent/Source node to the sequence node
@@ -422,22 +429,13 @@ class UEGearManager:
             parent_comp_name = comp.metadata.parent_fullname
             parent_pin_name = comp.metadata.parent_localname
 
-            print(f" -- {comp.name} --")
-
             if comp.parent_node is None:
                 print(f"  Parent Node does not exist in graph: {parent_comp_name}")
                 continue
 
-            print(f"  parent: {parent_comp_name}")
-            print(f"  parent port: {parent_pin_name}")
-            print(f"  Relationship Parent: {comp.parent_node.name}")
-
             if comp.metadata.parent_fullname is None and comp.parent_node.name == "world_ctl":
                 # Defaulting to the world control, the output pin is "root"
                 parent_pin_name = "root"
-
-                print("    Connect to World Control")
-                print(f"      Parent Pin: {parent_pin_name}")
 
                 parent_comp = comp.parent_node
 
@@ -460,9 +458,6 @@ class UEGearManager:
                                        f"{c_func_name}.parent")
 
             elif comp.metadata.parent_fullname == comp.parent_node.name:
-                print("  Connect via relationships/Association")
-                print(f"      Parent Pin: {parent_pin_name}")
-
                 parent_comp = comp.parent_node
 
                 comp_functions = comp.nodes[construction_key]
@@ -485,14 +480,9 @@ class UEGearManager:
                 pin = parent_comp.get_associated_parent_output(parent_pin_name, bp_controller)
 
                 if pin:
-                    print(f"Associated Parent Pin : {pin}")
-                    print(f"{pin} > {c_func_name}.parent ")
-
                     bp_controller.add_link(pin,
                                            f"{c_func_name}.parent")
                 else:
-                    print(f"{p_func_name}.{parent_pin_name} > {c_func_name}.parent ")
-
                     bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
                                            f"{c_func_name}.parent")
 
@@ -501,14 +491,14 @@ class UEGearManager:
 
     def connect_components(self):
         """Connects all the built components"""
+        import time
 
+        s_t_a = time.time()
         self.connect_execution()
-
-        print("---------------------------------")
-        print("     Connecting Components       ")
-        print("---------------------------------")
-
+        print(f"   Connect Execution: {time.time() - s_t_a}")
+        s_t_a = time.time()
         self.connect_construction_functions()
+        print(f"   Connect Construction: {time.time() - s_t_a}")
 
         return
 
@@ -526,15 +516,7 @@ class UEGearManager:
             if root_comp == comp:
                 continue
 
-            print(f" -- {comp.name} --")
-
-            print(f"  parent: {comp.metadata.parent_fullname}")
-            print(f"  parent port: {comp.metadata.parent_localname}")
-            print(f"  Relationship Parent: {comp.parent_node.name}")
-
             if comp.metadata.parent_fullname is None and comp.parent_node.name == "world_ctl":
-                print("   Connect to World Control")
-
                 keys = ['construction_functions',
                         'forward_functions',
                         'backwards_functions']
@@ -553,14 +535,9 @@ class UEGearManager:
                     comp_function = comp_functions[0]
                     parent_function = parent_functions[0]
 
-                    print(f"   Function Name: {comp_function}")
-                    # print(comp_function.get_pins())  # Gets all the pins that are available on the function
                     for pin in comp_function.get_pins():
                         pin_name = pin.get_display_name()
                         pin_direction = pin.get_direction()
-                        print(f"      {pin_name} : {pin_direction}")
-
-                    print(parent_function)
 
                     # Connects the parent function node to the chile function node..
 
@@ -919,9 +896,6 @@ def calculate_node_size(node: unreal.RigVMUnitNode):
             if len(pin_name) > len(longest_output_name):
                 longest_output_name = pin_name
 
-    # print(f"{len(input_pins)} > {node_name} > {len(outpu_pins)}")
-    # print(f"{len(longest_input_name)} > {node_name} > {len(longest_output_name)}")
-
     offset = 10
     char_width = 2
     char_height = 7
@@ -945,14 +919,6 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     TEST_CONTROLRIG_PATH = output_path
     TEST_CONTROLRIG_NAME = rig_name
     TEST_CONTROLRIG_SKM = skeleton_package
-
-    print("-------------------------------------------")
-    print(" Creating Control Rig from mGear .gnx file")
-    print(f"   {rig_name}")
-    print(f"   {skeleton_package}")
-    print(f"   {output_path}")
-    print(f"   {gnx_path}")
-    print("-------------------------------------------")
 
     # Converts teh json data into a class based structure, filters out non-required metadata.
     mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
@@ -981,6 +947,10 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
 
     gear_manager.set_active_blueprint(cr_bp)
 
+    # Deactivate Autocompile, to speed up builds
+    compile_status = gear_manager.get_compile_mode()
+    gear_manager.set_compile_mode(False)
+
     # todo: commented out as the folder should only be deleted if it is empty.
     # if cr_bp is None:
     #     unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
@@ -996,3 +966,6 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.populate_parents()
     gear_manager.connect_components()
     gear_manager.group_components()
+
+    # Sets the Autocompiler back to how it was before building
+    gear_manager.set_compile_mode(compile_status)
