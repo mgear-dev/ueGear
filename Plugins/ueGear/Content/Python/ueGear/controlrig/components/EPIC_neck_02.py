@@ -127,7 +127,78 @@ class Component(base_component.UEComponent):
         controller.add_link(f'{bone_node_name}.Items',
                             f'{forward_node_name}.Array')
 
-    def populate_control_scale(self, controller: unreal.RigVMController):
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        """Updates the transform data for the controls generated, with the data from the mgear json
+        file.
+        """
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        default_values = ""
+
+        ik_control_names = []
+        fk_control_names = []
+
+        for control_name in self.metadata.controls:
+            if "_ik" in control_name:
+                ik_control_names.append(control_name)
+            else:
+                fk_control_names.append(control_name)
+
+        ordered_control_names = fk_control_names + ik_control_names
+        for control_name in ordered_control_names:
+            control_transform = self.metadata.control_transforms[control_name]
+            quat = control_transform.rotation
+            pos = control_transform.translation
+
+            string_entry = (f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}), "
+                            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)),")
+
+            default_values += string_entry
+
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        controller.set_pin_default_value(
+            f"{construction_func_name}.control_transforms",
+            f"({default_values})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
+
+        # TODO: setup an init_controls method and move this method and the populate controls method into it
+        self.populate_control_names(ordered_control_names, controller)
+        self.populate_control_scale(ordered_control_names, controller)
+        self.populate_control_shape_offset(ordered_control_names, controller)
+        self.populate_control_colour(ordered_control_names, controller)
+
+    def populate_control_shape_offset(self, ordered_control_names, controller: unreal.RigVMController):
+        """
+        As some controls have there pivot at the same position as the transform, but the control is actually moved
+        away from that pivot point. We use the bounding box position as an offset for the control shape.
+        """
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        default_values = ""
+        for i, control_name in enumerate(ordered_control_names):
+            aabb = self.metadata.controls_aabb[control_name]
+            bb_center = aabb[0]
+            string_entry = f'(X={bb_center[0]}, Y={bb_center[1]}, Z={bb_center[2]}),'
+
+            default_values += string_entry
+
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        controller.set_pin_default_value(
+            f'{construction_func_name}.control_offsets',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
+
+    def populate_control_scale(self, ordered_control_names, controller: unreal.RigVMController):
         """
         Generates a scale value per a control
         """
@@ -140,7 +211,7 @@ class Component(base_component.UEComponent):
 
         default_values = ""
         # Calculates the unreal scale for the control and populates it into the array node.
-        for i, control_name in enumerate(self.metadata.controls):
+        for i, control_name in enumerate(ordered_control_names):
             aabb = self.metadata.controls_aabb[control_name]
             unreal_size = [round(element/reduce_ratio, 4) for element in aabb[1]]
 
@@ -167,11 +238,11 @@ class Component(base_component.UEComponent):
             setup_undo_redo=True,
             merge_undo_action=True)
 
-    def populate_control_names(self, controller: unreal.RigVMController):
+    def populate_control_names(self, ordered_control_names, controller: unreal.RigVMController):
         construction_func_name = self.nodes["construction_functions"][0].get_name()
 
         default_values = ""
-        for control_name in self.metadata.controls:
+        for control_name in ordered_control_names:
             default_values += f"{control_name},"
 
         # trims off the extr ','
@@ -184,47 +255,12 @@ class Component(base_component.UEComponent):
                                          setup_undo_redo=True,
                                          merge_undo_action=True)
 
-    def populate_control_transforms(self, controller: unreal.RigVMController = None):
-        """Updates the transform data for the controls generated, with the data from the mgear json
-        file.
-        """
-        construction_func_name = self.nodes["construction_functions"][0].get_name()
-
-        default_values = ""
-
-        for control_name in self.metadata.controls:
-            control_transform = self.metadata.control_transforms[control_name]
-            quat = control_transform.rotation
-            pos = control_transform.translation
-
-            string_entry = (f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
-                            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}), "
-                            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)),")
-
-            default_values += string_entry
-
-        # trims off the extr ','
-        default_values = default_values[:-1]
-
-        controller.set_pin_default_value(
-            f"{construction_func_name}.fk_transforms",
-            f"({default_values})",
-            True,
-            setup_undo_redo=True,
-            merge_undo_action=True)
-
-
-        # TODO: setup an init_controls method and move this method and the populate controls method into it
-        self.populate_control_names(controller)
-        self.populate_control_scale(controller)
-        self.populate_control_colour(controller)
-
-    def populate_control_colour(self, controller):
+    def populate_control_colour(self, ordered_control_names, controller):
         cr_func = self.functions["construction_functions"][0]
         construction_node = f"{self.name}_{cr_func}"
 
         default_values = ""
-        for i, control_name in enumerate(self.metadata.controls):
+        for i, control_name in enumerate(ordered_control_names):
             colour = self.metadata.controls_colour[control_name]
             string_entry = f"(R={colour[0]}, G={colour[1]}, B={colour[2]}, A=1.0),"
 
