@@ -115,37 +115,16 @@ Can only read data fom a dataset in constructino event > read user data
 
 - Control Rig Functions do not return the size when queried.
 
-# WIP
-
-- [ ] Component Shape fitting - #21
-  - [x] Global controls
-  - [x] Spine
-  - [ ] Neck
-    - [ ] Add shape offsetting
-    - [ ] Handl building of FK and IK, even though IK is not implemented yet
-  - [ ] Shoulder
-  - [ ] Arm
-
-Mass updates or queries to all assets use "Editor Utility Tasks"
-    - It is a editor utility blueprint(Create it from the context menu)
 
 # TODO
-- [ ] Rig Components to Create
-  - [X] Hands
-  - [X] Metacarpal
-  - [X] Neck
-  - [X] Feet
-  - [X] Weapon
-  - [X] Head
-  - [ ] all associated face components
+
+- [ ] Leg
+  - IKRef is used to constrain the IK hierarchy to different objects.
+
 
 - [ ] Control Shape Orientation
   - [ ] Spine
-  - [ ] Arms FK
-  - [ ] Legs FK
-
-- [ ] Control Rig implementation
-  - [ ] Automatic matching
+  - [ ] Neck
 
 - [ ] Backwards Solve
 
@@ -157,3 +136,17 @@ Mass updates or queries to all assets use "Editor Utility Tasks"
 # How to set limits
 
 Limits are not available to be set via a construction node in `5.3`, they only appear in `5.4+`
+
+# FUN
+- Create a C++ method that is exposed to python that allows for bulk attributes to be updated
+  - Test it by using the colour update task.
+  - Test it by calling multiple individual pins being updated.
+- Find Name use in blueprint
+- Find selected pin uses
+- Find node that created control
+- Find node that drives control
+- Find node that drives joint
+- Copy Pin > Paste Connect (for nodes that are far away from each other)
+- Get Selected Node
+- Select and focus viewport on Node
+- Details Panel, add a right click copy data, right click paste data. If data types match then paste succeeds. Usecase: Copying transforms data
