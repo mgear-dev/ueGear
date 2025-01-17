@@ -4,6 +4,7 @@ import unreal
 from .component import mgComponent
 from .rig import mgRig
 from .colour import MAYA_LOOKUP
+
 """
 This container handles all the mGear component data that will be used to deserialise the `*.scd` file.
 """
@@ -93,8 +94,6 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             else:
                 mgear_component.controls_colour[ctrl["Name"]] = MAYA_LOOKUP[crv_color]
 
-            t = mgear_component.controls_colour[ctrl["Name"]]
-
             # Calculate control size
             bounding_box_data = _calculate_bounding_box(ctrl)
             mgear_component.controls_aabb[ctrl["Name"]] = bounding_box_data
@@ -104,6 +103,14 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             world_rot = ctrl["QuaternionWorldRotation"]
             world_pos = [world_pos['x'], world_pos['y'], world_pos['z']]
             ue_quaternion = unreal.Quat(world_rot[0], world_rot[1], world_rot[2], world_rot[3])
+
+            # Setting the transform with a euler instead of quaternion, due to slight difference in how
+            # unreal handles them
+            world_euler = ctrl["WorldRotation"]
+            euler = unreal.Vector(x=world_euler['x'],
+                                  y=world_euler['y'],
+                                  z=world_euler['z'])
+            ue_quaternion.set_from_euler(euler)
 
             ue_trans = unreal.Transform()
             ue_trans.set_editor_property("translation", world_pos)
@@ -185,6 +192,7 @@ def _calculate_maya_bb_center(control_data: dict) -> list:
         bb_center.append(center)
 
     return bb_center
+
 
 def _calculate_min_max_points(control_data: dict):
     """
