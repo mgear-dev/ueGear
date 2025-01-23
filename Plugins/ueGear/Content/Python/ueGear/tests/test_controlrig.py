@@ -161,18 +161,18 @@ def test_create_spine_shoulders_control():
     gear_manager.build_world_control()
 
     # Builds component by name
-    # gear_manager.build_component('global_C0', ignore_parent=True)
-    # gear_manager.build_component('local_C0', ignore_parent=True)
-    # gear_manager.build_component('root_C0', ignore_parent=True)
+    gear_manager.build_component('global_C0', ignore_parent=True)
+    gear_manager.build_component('local_C0', ignore_parent=True)
+    gear_manager.build_component('root_C0', ignore_parent=True)
     gear_manager.build_component('body_C0', ignore_parent=True)
     gear_manager.build_component('spine_C0', ignore_parent=True)
 
-    gear_manager.build_component('neck_C0', ignore_parent=True)
+    # gear_manager.build_component('neck_C0', ignore_parent=True)
 
     gear_manager.build_component('shoulder_L0', ignore_parent=True)
     # gear_manager.build_component('shoulder_R0', ignore_parent=True)
 
-    # gear_manager.build _component('arm_L0', ignore_parent=True)
+    gear_manager.build_component('arm_L0', ignore_parent=True)
     # gear_manager.build_component('arm_R0', ignore_parent=True)
 
     gear_manager.build_component('leg_L0', ignore_parent=True)
