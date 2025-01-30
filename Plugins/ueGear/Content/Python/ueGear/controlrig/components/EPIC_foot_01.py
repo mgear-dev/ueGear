@@ -13,7 +13,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ["construct_IK_foot"],
                           'forward_functions': ["forward_IK_foot"],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_IK_foot'],
                           }
         self.cr_variables = {}
 
@@ -91,7 +91,7 @@ class Component(base_component.UEComponent):
 
     def populate_bones(self, bones: list[unreal.RigBoneElement] = None, controller: unreal.RigVMController = None):
         """
-        Populates the ball joint data on the foot nodes.
+        Populates the ball joint data on the foot nodes/functions.
         """
         if bones is None or len(bones) != 1:
             unreal.log_error("[Bone Populate] Failed - No Bones found")
@@ -109,15 +109,19 @@ class Component(base_component.UEComponent):
         jnt_name = str(ball_jnt.key.name)
 
         # Assign ball joint to the construct node
-
         construction_node = self.nodes["construction_functions"][0]
         controller.set_pin_default_value(f'{construction_node.get_name()}.ball_joint',
                                          f'(Type=Bone, Name="{jnt_name}")',
                                          True)
 
         # Assign ball joint to the forward node
-
         forward_node = self.nodes["forward_functions"][0]
+        controller.set_pin_default_value(f'{forward_node.get_name()}.ball_joint',
+                                         f'(Type=Bone, Name="{jnt_name}")',
+                                         True)
+
+        # Assign ball joint to the backwards node
+        forward_node = self.nodes["backwards_functions"][0]
         controller.set_pin_default_value(f'{forward_node.get_name()}.ball_joint',
                                          f'(Type=Bone, Name="{jnt_name}")',
                                          True)

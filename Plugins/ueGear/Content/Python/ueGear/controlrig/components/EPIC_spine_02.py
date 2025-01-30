@@ -12,7 +12,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_FK_spine'],
                           'forward_functions': ['forward_FK_spine'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_FK_spine'],
                           }
         self.cr_variables = {}
 

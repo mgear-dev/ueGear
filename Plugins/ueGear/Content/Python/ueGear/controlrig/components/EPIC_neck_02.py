@@ -20,7 +20,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_neck'],
                           'forward_functions': ['forward_neck'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_neck'],
                           }
         self.cr_variables = {}
 
@@ -52,6 +52,9 @@ class Component(base_component.UEComponent):
 
             # Skip the forward function creation if no joints are needed to be driven
             if evaluation_path == 'forward_functions' and self.metadata.joints is None:
+                continue
+            # Skip the backwards function creation if no joints are needed to be driven
+            if evaluation_path == 'backwards_functions' and self.metadata.joints is None:
                 continue
 
             for cr_func in self.functions[evaluation_path]:
@@ -120,12 +123,16 @@ class Component(base_component.UEComponent):
 
         construction_node_name = self.nodes["construction_functions"][0].get_name()
         forward_node_name = self.nodes["forward_functions"][0].get_name()
+        backwards_node_name = self.nodes["backwards_functions"][0].get_name()
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{construction_node_name}.fk_joints')
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{forward_node_name}.Array')
+
+        controller.add_link(f'{bone_node_name}.Items',
+                            f'{backwards_node_name}.fk_joints')
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """

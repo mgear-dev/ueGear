@@ -13,7 +13,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_IK_leg'],
                           'forward_functions': ['forward_IK_leg'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_IK_leg'],
                           }
         self.cr_variables = {}
 
@@ -152,10 +152,7 @@ class Component(base_component.UEComponent):
                 )
 
         # Connects the joint node to the Construction function
-
         for function_node in self.nodes["construction_functions"]:
-            print(
-                f"  Creating Construction Connection:   {array_node_name}.Items >> {function_node.get_name()}.fk_joints")
             controller.add_link(f'{array_node_name}.Items',
                                 f'{function_node.get_name()}.fk_joints')
 
@@ -163,10 +160,7 @@ class Component(base_component.UEComponent):
                                 f'{function_node.get_name()}.effector_joint')
 
         # Connects the joint node to the Forward function
-
         for function_node in self.nodes["forward_functions"]:
-            print(f"  Creating Forward Connection:   {array_node_name}.Items >> {function_node.get_name()}.Joints")
-
             controller.add_link(f'{upper_bone_node_name}.Element',
                                 f'{function_node.get_name()}.top_bone')
 
@@ -175,6 +169,11 @@ class Component(base_component.UEComponent):
 
             controller.add_link(f'{lower_bone_node_name}.Element',
                                 f'{function_node.get_name()}.end_bone')
+
+        # Connects the joint node to the Construction function
+        for function_node in self.nodes["backwards_functions"]:
+            controller.add_link(f'{array_node_name}.Items',
+                                f'{function_node.get_name()}.fk_joints')
 
     def _init_master_joint_node(self, controller, node_name: str, bones):
         """Creates an array node of all the bones

@@ -13,7 +13,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_FK_singleton'],
                           'forward_functions': ['forward_FK_singleton'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_FK_singleton'],
                           }
         self.cr_variables = {}
 
@@ -52,6 +52,10 @@ class Component(base_component.UEComponent):
 
             # Skip the forward function creation if no joints are needed to be driven
             if evaluation_path == 'forward_functions' and self.metadata.joints is None:
+                continue
+
+            # Skip the backwards function creation if no joints are needed to be driven
+            if evaluation_path == 'backwards_functions' and self.metadata.joints is None:
                 continue
 
             for cr_func in self.functions[evaluation_path]:
@@ -128,7 +132,7 @@ class Component(base_component.UEComponent):
         controller.set_pin_expansion(f'{array_node_name}.Items.0', True)
         controller.set_pin_expansion(f'{array_node_name}.Items', True)
 
-        # Connects the Item Array Node to the functions.
+        # Connects the Item Array Node to the create/forward/backwards functions.
         for evaluation_path in self.nodes.keys():
             for function_node in self.nodes[evaluation_path]:
                 print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Array")
