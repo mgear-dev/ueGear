@@ -122,7 +122,7 @@ class Component(base_component.UEComponent):
         forward_node_name = self.nodes["forward_functions"][0].get_name()
 
         controller.add_link(f'{bone_node_name}.Items',
-                            f'{construction_node_name}.fk_transforms')
+                            f'{construction_node_name}.fk_joints')
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{forward_node_name}.Array')
