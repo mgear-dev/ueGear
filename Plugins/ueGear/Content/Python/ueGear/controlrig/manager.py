@@ -298,6 +298,10 @@ class UEGearManager:
                 if len(comp_nodes) > 1:
                     unreal.log_error(f"There should not be more then one node per a function > {comp.name}")
 
+                if parent_nodes is None:
+                    unreal.log_warning(f"No parent nodes found for {comp}")
+                    continue
+
                 p_func = parent_nodes.get_name()
                 c_func = comp_nodes[0].get_name()
 
@@ -311,7 +315,7 @@ class UEGearManager:
                     bp_controller.add_link(f'{p_func}.ExecuteContext',
                                            f'{c_func}.ExecuteContext')
 
-                    print(f"CONNECTION: {p_func} > {c_func}")
+                    print(f"CONNECTION: {p_func}.ExecuteContext > {c_func}.ExecuteContext")
 
                 else:
                     # Checks if the pin belongs to a branch node, if not creates a branch node.
@@ -329,10 +333,13 @@ class UEGearManager:
                         # Generate next available plug on the Sequence Node
                         new_pin = bp_controller.add_aggregate_pin(seq_node_name, '', '')
 
-                        bp_controller.add_link(new_pin,
+                        try:
+                            bp_controller.add_link(new_pin,
                                                f'{new_connection_node_name}.ExecuteContext')
+                            print(f"CONNECTION: {new_pin} > {new_connection_node_name}.ExecuteContext")
+                        except:
+                            print(f"FAILED: to connect {new_pin} > {new_connection_node_name}.ExecuteContext")
 
-                        print(f"CONNECTION: {new_pin} > {new_connection_node_name}")
 
                     else:
                         # print("Creating Sequence Node for execution")
@@ -362,8 +369,8 @@ class UEGearManager:
                         bp_controller.add_link(f'{seq_node_name}.B',
                                                f'{new_connection_node_name}.ExecuteContext')
 
-                        print(f"CONNECTION: {seq_node_name}.A > {connected_node_name}")
-                        print(f"CONNECTION: {seq_node_name}.B > {new_connection_node_name}")
+                        print(f"CONNECTION: {seq_node_name}.A > {connected_node_name}.ExecuteContext")
+                        print(f"CONNECTION: {seq_node_name}.B > {new_connection_node_name}.ExecuteContext")
 
 
 
@@ -442,6 +449,39 @@ class UEGearManager:
             print(f"  parent: {parent_comp_name}")
             print(f"  parent port: {parent_pin_name}")
             print(f"  Relationship Parent: {comp.parent_node.name}")
+
+            # component is an locater port, which is made up of an array.
+            # This plug needs to get converted from an array out plug to the correct plug index
+            if parent_pin_name is not None:
+                if parent_pin_name.endswith('_loc'):
+                    loc_index = str(int(parent_pin_name.split("_")[0]))
+                    parent_node_name = comp.parent_node.nodes[construction_key][0].get_name()
+
+                    # Creates an At Node, Sets its Index and connects it to the output locator
+
+                    at_node_name = parent_node_name+"_output_loc_"+str(loc_index)
+                    at_node = bp_controller.add_template_node(
+                        'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
+                        unreal.Vector2D(3500, 800),
+                        at_node_name
+                    )
+
+                    comp.parent_node.add_misc_function(at_node)
+
+                    bp_controller.set_pin_default_value(
+                        f'{at_node_name}.Index',
+                        loc_index,
+                        False)
+
+                    bp_controller.add_link(
+                        f'{parent_node_name}.loc',
+                        f'{at_node_name}.Array'
+                    )
+
+                    c_func_name = comp.nodes[construction_key][0].get_name()
+                    bp_controller.add_link(f"{at_node_name}.Element",
+                                           f"{c_func_name}.parent")
+                    continue
 
             if comp.metadata.parent_fullname is None and comp.parent_node.name == "world_ctl":
                 # Defaulting to the world control, the output pin is "root"
