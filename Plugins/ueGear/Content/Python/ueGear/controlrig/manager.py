@@ -307,17 +307,20 @@ class UEGearManager:
                 target_pins = execute_pin.get_linked_target_pins()
 
                 if len(target_pins) == 0:
-                    print("Pin not connected, setting up basic connection")
+                    # print("Pin not connected, setting up basic connection")
                     bp_controller.add_link(f'{p_func}.ExecuteContext',
                                            f'{c_func}.ExecuteContext')
+
+                    print(f"CONNECTION: {p_func} > {c_func}")
+
                 else:
                     # Checks if the pin belongs to a branch node, if not creates a branch node.
 
                     first_driven_node = target_pins[0].get_node()
-                    is_sequence = str(first_driven_node.get_node_title()) == "Sequence"
+                    is_sequence_node = str(first_driven_node.get_node_title()) == "Sequence"
 
-                    if is_sequence:
-                        print("Sequence Node, insert new pin and connect")
+                    if is_sequence_node:
+                        # print("Sequence Node, insert new pin and connect")
 
                         source_node_name = p_func
                         new_connection_node_name = c_func
@@ -329,8 +332,10 @@ class UEGearManager:
                         bp_controller.add_link(new_pin,
                                                f'{new_connection_node_name}.ExecuteContext')
 
+                        print(f"CONNECTION: {new_pin} > {new_connection_node_name}")
+
                     else:
-                        print("Creating Sequence Node for execution")
+                        # print("Creating Sequence Node for execution")
 
                         source_node_name = p_func
                         connected_node_name = first_driven_node.get_name()
@@ -356,6 +361,12 @@ class UEGearManager:
                                                f'{connected_node_name}.ExecuteContext')
                         bp_controller.add_link(f'{seq_node_name}.B',
                                                f'{new_connection_node_name}.ExecuteContext')
+
+                        print(f"CONNECTION: {seq_node_name}.A > {connected_node_name}")
+                        print(f"CONNECTION: {seq_node_name}.B > {new_connection_node_name}")
+
+
+
 
     def _find_parent_node_function(self, component, function_name: str):
         """Recursively looks at the function, then if one does not exist looks for
@@ -922,9 +933,9 @@ def calculate_node_size(node: unreal.RigVMUnitNode):
     # print(f"{len(input_pins)} > {node_name} > {len(outpu_pins)}")
     # print(f"{len(longest_input_name)} > {node_name} > {len(longest_output_name)}")
 
-    offset = 10
-    char_width = 2
-    char_height = 7
+    offset = 11
+    char_width = 3
+    char_height = 8
 
     width = len(longest_input_name) * char_width + offset + \
             len(node_name) * char_width + offset + \
