@@ -40,10 +40,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # calls the super method
         super().create_functions(controller)
 
@@ -61,13 +57,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if doesn't exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -102,12 +95,7 @@ class Component(base_component.UEComponent):
             return
         if controller is None:
             return
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
-
         bone_name = bones[0].key.name
-        print(f"  {self.name} > {bone_name}")
 
         # Unique name for this skeleton node array
         array_node_name = f"{self.metadata.fullname}_RigUnit_ItemArray"
@@ -135,7 +123,6 @@ class Component(base_component.UEComponent):
         # Connects the Item Array Node to the create/forward/backwards functions.
         for evaluation_path in self.nodes.keys():
             for function_node in self.nodes[evaluation_path]:
-                print(f"  Creating Connection:   {array_node_name}.Items >> {function_node.get_name()}.Array")
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{function_node.get_name()}.Array')
 
@@ -173,10 +160,6 @@ class Component(base_component.UEComponent):
 
             ue_cr_node = controller.get_graph().find_node_by_name(construction_node)
 
-            print("Populate Control Shape Orientation")
-            print(construction_node)
-            print(f"Getting {ue_cr_node}")
-
             controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
                                          '90.000000',
                                          False)
@@ -212,7 +195,12 @@ class Component(base_component.UEComponent):
         control_name = self.metadata.controls[0]
         colour = self.metadata.controls_colour[control_name]
 
-        controller.set_pin_default_value(f'{construction_node}.control_colour.R', f"{colour[0]}", False)
-        controller.set_pin_default_value(f'{construction_node}.control_colour.G', f"{colour[1]}", False)
-        controller.set_pin_default_value(f'{construction_node}.control_colour.B', f"{colour[2]}", False)
-        controller.set_pin_default_value(f'{construction_node}.control_colour.A', "1", False)
+        default_value = f"(R={colour[0]}, G={colour[1]}, B={colour[2]}, A=1.0)"
+
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{construction_node}.control_colour',
+            f"{default_value}",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)

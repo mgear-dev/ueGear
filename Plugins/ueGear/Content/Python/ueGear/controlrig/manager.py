@@ -40,12 +40,23 @@ class UEGearManager:
         """
         Initialises the ueGear Manager, making sure that the plugin exists and the factory has been accessed.
         """
+        self.reset()
+
         unreal.load_module('ControlRigDeveloper')
         self._factory = unreal.ControlRigBlueprintFactory
         self.get_open_controlrig_blueprints()
 
         # # Generates the 'Create', 'Forward' and 'Backwards' nodes
         # self.create_solves()
+
+    def reset(self):
+        """Clears all the stored blueprint data"""
+        self._factory = None
+        self._cr_blueprints = []
+        self._active_blueprint = None
+        self._ue_gear_standard_library = None
+        self.mg_rig = None
+        self.uegear_components = []
 
     def get_open_controlrig_blueprints(self):
         """Gets all open Control Rig Blueprints
@@ -80,6 +91,14 @@ class UEGearManager:
         The Control Rig Blueprint that will be modified by the  manager, is referred to as the "Active Blueprint"
         """
         self._active_blueprint = bp
+
+    def get_compile_mode(self) -> bool:
+        """Gets the Auto Compile status on the Blueprint of the active blueprint"""
+        return self._active_blueprint.get_auto_vm_recompile()
+
+    def set_compile_mode(self, active=True):
+        """Sets the Auto Compile status on the Blueprint of the active blueprint"""
+        self._active_blueprint.set_auto_vm_recompile(active)
 
     def build_world_control(self, force_build=False):
         """
@@ -151,9 +170,10 @@ class UEGearManager:
 
         # If component not found, report error and exit early
         if ue_comp_classes is None or not ue_comp_classes:
-            unreal.log_error(f"Component not found : {guide_type}")
+            unreal.log_warning(f"Component not found : {guide_type}")
             return
 
+        # Instantiates the component
         ueg_comp = ue_comp_classes[0]()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname
@@ -354,7 +374,7 @@ class UEGearManager:
                         bp_controller.add_unit_node_from_struct_path(
                             '/Script/RigVM.RigVMFunction_Sequence',
                             'Execute',
-                            unreal.Vector2D(1125.814540, 650.259969),
+                            unreal.Vector2D(0.0, 1000.0),
                             seq_node_name)
 
                         # Connect Parent/Source node to the sequence node
@@ -368,12 +388,6 @@ class UEGearManager:
                                                f'{connected_node_name}.ExecuteContext')
                         bp_controller.add_link(f'{seq_node_name}.B',
                                                f'{new_connection_node_name}.ExecuteContext')
-
-                        print(f"CONNECTION: {seq_node_name}.A > {connected_node_name}.ExecuteContext")
-                        print(f"CONNECTION: {seq_node_name}.B > {new_connection_node_name}.ExecuteContext")
-
-
-
 
     def _find_parent_node_function(self, component, function_name: str):
         """Recursively looks at the function, then if one does not exist looks for
@@ -450,7 +464,7 @@ class UEGearManager:
             print(f"  parent port: {parent_pin_name}")
             print(f"  Relationship Parent: {comp.parent_node.name}")
 
-            # component is an locater port, which is made up of an array.
+            # component is an 'locater' port, which is made up of an array.
             # This plug needs to get converted from an array out plug to the correct plug index
             if parent_pin_name is not None:
                 if parent_pin_name.endswith('_loc'):
@@ -1032,6 +1046,10 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
 
     gear_manager.set_active_blueprint(cr_bp)
 
+    # Deactivate Autocompile, to speed up builds
+    compile_status = gear_manager.get_compile_mode()
+    gear_manager.set_compile_mode(False)
+
     # todo: commented out as the folder should only be deleted if it is empty.
     # if cr_bp is None:
     #     unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
@@ -1047,3 +1065,6 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.populate_parents()
     gear_manager.connect_components()
     gear_manager.group_components()
+
+    # Sets the Autocompiler back to how it was before building
+    gear_manager.set_compile_mode(compile_status)

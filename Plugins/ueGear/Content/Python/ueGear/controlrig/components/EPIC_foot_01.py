@@ -37,10 +37,6 @@ class Component(base_component.UEComponent):
         if controller is None:
             return
 
-        print("-------------------------------")
-        print(" Create ControlRig Functions")
-        print("-------------------------------")
-
         # Calls the super method, which creates the comment block
         super().create_functions(controller)
 
@@ -55,14 +51,10 @@ class Component(base_component.UEComponent):
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
 
-                print(f"  New Node Name: {new_node_name}")
-
                 ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
 
                 # Create Component if it does not exist
                 if ue_cr_node is None:
-                    print("  Generating CR Node...")
-                    print(new_node_name)
                     ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
                                                                                      cr_func,
                                                                                      unreal.Vector2D(0.0, 0.0),
@@ -100,10 +92,6 @@ class Component(base_component.UEComponent):
             unreal.log_error("[Bone Populate] Failed no Controller found")
             return
 
-        print("-----------------")
-        print(" Populate Bones")
-        print("-----------------")
-
         # Ball Joint
         ball_jnt = bones[0]
         jnt_name = str(ball_jnt.key.name)
@@ -130,7 +118,6 @@ class Component(base_component.UEComponent):
         """Creates an array node of all the bones
         """
 
-        print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
         node = controller.add_unit_node_from_struct_path(
@@ -145,7 +132,6 @@ class Component(base_component.UEComponent):
 
         for bone in bones:
             bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
 
             # Populates the Item Array Node
             controller.insert_array_pin(f'{node_name}.Items', -1, '')
@@ -185,9 +171,6 @@ class Component(base_component.UEComponent):
         The foot does not rely on control positions as it uses the guideTransforms to place the
         locations where the foot will rotate around.
         """
-        print("--------------------------------------------------")
-        print(" Generating Control Names and Transform Functions")
-        print("--------------------------------------------------")
 
         space_mtx = unreal.Matrix(x_plane=[1.000000, 0.000000, 0.000000, 0.000000],
                                   y_plane=[0.000000, 0.000000, 1.000000, 0.000000],
@@ -274,17 +257,27 @@ class Component(base_component.UEComponent):
                 ordered_bounding_box[5] = ctrl_bb
                 ordered_colours[5] = ctrl_colour
 
+        default_values = ""
         # Adds a pin to the control_transforms pin on the construction node
         for trans in ordered_ctrl_trans:
             quat = trans.rotation
             pos = trans.translation
-            controller.insert_array_pin(f'{construction_func_name}.control_transforms',
-                                        -1,
-                                        f"("
-                                        f"Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}),"
-                                        f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
-                                        f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))"
-                                        )
+
+            string_entry = (f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}), "
+                            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000)),")
+            default_values += string_entry
+
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f"{construction_func_name}.control_transforms",
+            f"({default_values})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
         self.populate_control_scale(construction_func_name, ordered_bounding_box, controller)
         self.populate_control_shape_offset(construction_func_name, ordered_bounding_box, controller)
@@ -296,6 +289,7 @@ class Component(base_component.UEComponent):
         As the mGear uses a square and ueGear uses a cirlce.
         """
 
+        default_values = ""
         for aabb in bounding_boxes:
             unreal_size = [round(element / reduce_ratio, 4) for element in aabb[1]]
 
@@ -308,10 +302,18 @@ class Component(base_component.UEComponent):
             elif unreal_size[0] == unreal_size[2] and unreal_size[1] < 0.2:
                 unreal_size[1] = unreal_size[0]
 
-            controller.insert_array_pin(f'{node_name}.control_sizes',
-                                        -1,
-                                        f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]})'
-                                        )
+            default_values += f'(X={unreal_size[0]},Y={unreal_size[1]},Z={unreal_size[2]}),'
+
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{node_name}.control_sizes',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
     def populate_control_shape_offset(self, node_name, bounding_boxes, controller: unreal.RigVMController):
         """
@@ -319,18 +321,35 @@ class Component(base_component.UEComponent):
         away from that pivot point. We use the bounding box position as an offset for the control shape.
         """
 
+        default_values = ""
         for aabb in bounding_boxes:
             bb_center = aabb[0]
+            string_entry = f'(X={bb_center[0]}, Y={bb_center[1]}, Z={bb_center[2]}),'
+            default_values += string_entry
 
-            controller.insert_array_pin(f'{node_name}.control_offsets',
-                                        -1,
-                                        f'(X={bb_center[0]},Y={bb_center[1]},Z={bb_center[2]})'
-                                        )
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        controller.set_pin_default_value(
+            f'{node_name}.control_offsets',
+            f'({default_values})',
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
 
     def populate_control_colour(self, node_name, ordered_colours, controller: unreal.RigVMController):
-        for i, colour in enumerate(ordered_colours):
-            controller.insert_array_pin(f'{node_name}.control_colours', -1, '')
-            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.R', f"{colour[0]}", False)
-            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.G', f"{colour[1]}", False)
-            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.B', f"{colour[2]}", False)
-            controller.set_pin_default_value(f'{node_name}.control_colours.{i}.A', f"1", False)
+        default_values = ""
+
+        for colour in ordered_colours:
+            default_values += f"(R={colour[0]}, G={colour[1]}, B={colour[2]}, A=1.0),"
+
+        # trims off the extr ','
+        default_values = default_values[:-1]
+
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(
+            f'{node_name}.control_colours',
+            f"({default_values})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
