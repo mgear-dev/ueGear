@@ -20,7 +20,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_neck'],
                           'forward_functions': ['forward_neck'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_neck'],
                           }
         self.cr_variables = {}
 

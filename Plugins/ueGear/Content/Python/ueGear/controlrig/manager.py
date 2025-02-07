@@ -468,6 +468,7 @@ class UEGearManager:
             # This plug needs to get converted from an array out plug to the correct plug index
             if parent_pin_name is not None:
                 if parent_pin_name.endswith('_loc'):
+                    print(f"_loc found in {parent_pin_name}")
                     loc_index = str(int(parent_pin_name.split("_")[0]))
                     parent_node_name = comp.parent_node.nodes[construction_key][0].get_name()
 
@@ -497,7 +498,7 @@ class UEGearManager:
                                            f"{c_func_name}.parent")
                     continue
 
-            if comp.metadata.parent_fullname is None and comp.parent_node.name == "world_ctl":
+            if parent_comp_name is None and comp.parent_node.name == "world_ctl":
                 # Defaulting to the world control, the output pin is "root"
                 parent_pin_name = "root"
 
@@ -524,7 +525,7 @@ class UEGearManager:
                 bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
                                        f"{c_func_name}.parent")
 
-            elif comp.metadata.parent_fullname == comp.parent_node.name:
+            elif parent_comp_name == comp.parent_node.name:
                 print("  Connect via relationships/Association")
                 print(f"      Parent Pin: {parent_pin_name}")
 
@@ -544,6 +545,14 @@ class UEGearManager:
                 # Connects the parent function node to the chile function node..
                 p_func_name = parent_function.get_name()
                 c_func_name = comp_function.get_name()
+
+                # Checks parent node has output pin with the specified name
+                found_pin = parent_function.find_pin(parent_pin_name)
+                if found_pin:
+                    if found_pin.get_direction() == unreal.RigVMPinDirection.OUTPUT:
+                        bp_controller.add_link(f"{p_func_name}.{parent_pin_name}",
+                                               f"{c_func_name}.parent")
+                        continue
 
                 # Function that returns the correct pin from the name of the parent_pin_name
                 # If no pin is found then we fall back to specified parent mGear name.
@@ -1066,5 +1075,5 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.connect_components()
     gear_manager.group_components()
 
-    # Sets the Autocompiler back to how it was before building
+    # Sets the auto-compiler back to how it was before building
     gear_manager.set_compile_mode(compile_status)
