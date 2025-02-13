@@ -13,7 +13,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_chain'],
                           'forward_functions': ['forward_chain'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_chain'],
                           }
         self.cr_variables = {}
 
@@ -113,12 +113,16 @@ class Component(base_component.UEComponent):
 
         construction_node_name = self.nodes["construction_functions"][0].get_name()
         forward_node_name = self.nodes["forward_functions"][0].get_name()
+        backwards_node_name = self.nodes["backwards_functions"][0].get_name()
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{construction_node_name}.fk_bones')
 
         controller.add_link(f'{bone_node_name}.Items',
                             f'{forward_node_name}.Array')
+
+        controller.add_link(f'{bone_node_name}.Items',
+                            f'{backwards_node_name}.chain_joints')
 
     def populate_control_names(self, controller: unreal.RigVMController):
         # Connecting nodes needs to occur first, else the array node does not know the type and will not accept default

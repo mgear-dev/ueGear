@@ -10,12 +10,13 @@ from ueGear import assets
 # TO BE REMOVED FROM FINAL RELEASE
 import importlib
 from ueGear.controlrig import manager as ueM
+from ueGear.controlrig import manager
 from ueGear.controlrig.components import *
 from ueGear.controlrig import components
 from ueGear.controlrig.mgear import component, rig
 
-from ueGear.controlrig.components import EPIC_foot_01 as epic_comp
-from ueGear.controlrig.components import EPIC_leg_02 as epic_comp_2
+from ueGear.controlrig.components import EPIC_control_01 as epic_comp
+from ueGear.controlrig.components import EPIC_meta_01 as epic_comp_2
 
 importlib.reload(epic_comp)
 importlib.reload(epic_comp_2)
@@ -24,6 +25,7 @@ importlib.reload(mgear)
 importlib.reload(component)
 importlib.reload(rig)
 importlib.reload(ueM)
+importlib.reload(manager)
 
 # ---
 
@@ -130,9 +132,11 @@ def test_create_spine_shoulders_control():
     - No active control rig is set, so it should generate a new control rig
     """
     TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\controlrig\butcher_data.gnx"
+    # TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\test_assets\ball_boss\Boss_rig_data.gnx"
     TEST_CONTROLRIG_PATH = "/Game/TEST"
     TEST_CONTROLRIG_NAME = "test_create_rig"
     TEST_CONTROLRIG_SKM = "/Game/ButcherBoy/ButcherBoy_Master"
+    # TEST_CONTROLRIG_SKM = "/Game/Characters/Boss/Ball_man"
 
     # Converts teh json data into a class based structure, filters out non-required metadata.
     mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
@@ -161,32 +165,35 @@ def test_create_spine_shoulders_control():
     gear_manager.build_world_control()
 
     # Builds component by name
-    # gear_manager.build_component('global_C0', ignore_parent=True)
-    # gear_manager.build_component('local_C0', ignore_parent=True)
-    # gear_manager.build_component('root_C0', ignore_parent=True)
+    gear_manager.build_component('global_C0', ignore_parent=True)
+    gear_manager.build_component('local_C0', ignore_parent=True)
+    gear_manager.build_component('root_C0', ignore_parent=True)
     gear_manager.build_component('body_C0', ignore_parent=True)
     gear_manager.build_component('spine_C0', ignore_parent=True)
-
-    gear_manager.build_component('neck_C0', ignore_parent=True)
-
+    #
+    # gear_manager.build_component('neck_C0', ignore_parent=True)
+    #
     gear_manager.build_component('shoulder_L0', ignore_parent=True)
     # gear_manager.build_component('shoulder_R0', ignore_parent=True)
-
-    # gear_manager.build _component('arm_L0', ignore_parent=True)
+    #
+    gear_manager.build_component('arm_L0', ignore_parent=True)
     # gear_manager.build_component('arm_R0', ignore_parent=True)
-
-    gear_manager.build_component('leg_L0', ignore_parent=True)
+    #
+    # gear_manager.build_component('leg_L0', ignore_parent=True)
     # gear_manager.build_component('leg_R0', ignore_parent=True)
-    # #
-    gear_manager.build_component('foot_L0', ignore_parent=True)
+    # # #
+    # gear_manager.build_component('foot_L0', ignore_parent=True)
     # gear_manager.build_component('foot_R0', ignore_parent=True)
+    #
+    gear_manager.build_component("finger_L0")
+    gear_manager.build_component("finger_L1")
+    gear_manager.build_component("finger_L2")
+    gear_manager.build_component("finger_L3")
+    gear_manager.build_component("thumb_L0")
+    gear_manager.build_component("meta_L0")
 
-    # gear_manager.build_component("finger_L0")
-    # gear_manager.build_component("finger_L1")
-    # gear_manager.build_component("finger_L2")
-    # gear_manager.build_component("finger_L3")
-    # gear_manager.build_component("thumb_L0")
-    # gear_manager.build_component("meta_L0")
+    gear_manager.build_component("backFinBase_L0")
+    gear_manager.build_component("spine_L0")
 
     # At this point there are many components created, but not connected to one another
 
@@ -259,8 +266,8 @@ def test_manager_create_control_rig():
 # test_create_control_rig_bp()
 # test_create_fk_control()
 
-test_create_spine_shoulders_control()
-
 # test_build_mgRig()
 
 # test_manager_create_control_rig()
+
+test_create_spine_shoulders_control()

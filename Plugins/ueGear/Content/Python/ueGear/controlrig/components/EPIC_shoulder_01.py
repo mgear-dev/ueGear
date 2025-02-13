@@ -13,7 +13,7 @@ class Component(base_component.UEComponent):
 
         self.functions = {'construction_functions': ['construct_shoulder'],
                           'forward_functions': ['forward_shoulder'],
-                          'backwards_functions': [],
+                          'backwards_functions': ['backwards_shoulder'],
                           }
         self.cr_variables = {}
 
@@ -94,8 +94,9 @@ class Component(base_component.UEComponent):
 
         construction_node = self.nodes["construction_functions"][0]
         forward_node = self.nodes["forward_functions"][0]
+        backwards_node = self.nodes["backwards_functions"][0]
 
-        for function in [construction_node, forward_node]:
+        for function in [construction_node, forward_node, backwards_node]:
             construction_node_name = function.get_name()
 
             controller.set_pin_default_value(
