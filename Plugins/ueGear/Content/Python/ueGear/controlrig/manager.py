@@ -312,6 +312,8 @@ class UEGearManager:
                 comp_nodes = comp.nodes[func_key]
 
                 if len(comp_nodes) == 0:
+                    # The component contains no forward solve nodes ( in other words it doesn't drive a joint )
+                    # No connection is required
                     continue
 
                 # check parent node and comp node should always only be one node
@@ -319,7 +321,7 @@ class UEGearManager:
                     unreal.log_error(f"There should not be more then one node per a function > {comp.name}")
 
                 if parent_nodes is None:
-                    unreal.log_warning(f"No parent nodes found for {comp}")
+                    unreal.log_error(f"No parent nodes found for {comp}")
                     continue
 
                 p_func = parent_nodes.get_name()
