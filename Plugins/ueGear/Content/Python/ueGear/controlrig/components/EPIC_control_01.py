@@ -204,3 +204,12 @@ class Component(base_component.UEComponent):
             True,
             setup_undo_redo=True,
             merge_undo_action=True)
+
+class ManualComponent(Component):
+    def __init__(self):
+        super().__init__()
+
+        self.functions = {'construction_functions': ['manual_construct_FK_singleton'],
+                          'forward_functions': ['forward_FK_singleton'],
+                          'backwards_functions': ['backwards_FK_singleton'],
+                          }

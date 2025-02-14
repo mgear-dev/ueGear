@@ -144,9 +144,16 @@ class UEGearManager:
         ueg_comp.populate_control_shape_orientation(controller)
         ueg_comp.populate_control_scale(controller)
 
-    def build_component(self, name, ignore_parent=True):
+    def build_component(self, name, manual_component=False):
         """Create an individual component from the mgear scene desciptor file.
 
+        name:
+            name of the component that will be getting built.
+        manual_component:
+            If enabled the builder will try and utilise the manual components classes.
+            These are the second class that exists in the component.py file. These
+            classes have there controls generated using Python and not the
+            Construction nodes.
         """
 
         print("------------------------------")
@@ -173,8 +180,17 @@ class UEGearManager:
             unreal.log_warning(f"Component not found : {guide_type}")
             return
 
+        print("Build Component")
+        print(ue_comp_classes)
+
         # Instantiates the component
-        ueg_comp = ue_comp_classes[0]()
+        if manual_component:
+            # If manual component is enabled then it will try and instanciate the
+            # second class in the component file, which should be the manual component
+            ueg_comp = ue_comp_classes[1]()
+        else:
+            ueg_comp = ue_comp_classes[0]()
+
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname
 
