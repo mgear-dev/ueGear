@@ -4,6 +4,7 @@ from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
 from ueGear.controlrig.helpers import controls
 
+
 class Component(base_component.UEComponent):
     name = "test_FK"
     mgear_component = "EPIC_control_01"
@@ -19,15 +20,15 @@ class Component(base_component.UEComponent):
 
         # Control Rig Inputs
         self.cr_inputs = {'construction_functions': ['parent'],
-                       'forward_functions': [],
-                       'backwards_functions': [],
-                       }
+                          'forward_functions': [],
+                          'backwards_functions': [],
+                          }
 
         # Control Rig Outputs
         self.cr_output = {'construction_functions': ['root'],
-                       'forward_functions': [],
-                       'backwards_functions': [],
-                       }
+                          'forward_functions': [],
+                          'backwards_functions': [],
+                          }
 
         # mGear
         self.inputs = []
@@ -117,10 +118,10 @@ class Component(base_component.UEComponent):
         pos = control_transform.translation
 
         controller.set_pin_default_value(f"{const_func}.control_world_transform",
-            f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
-            f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
-            f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
-            True)
+                                         f"(Rotation=(X={quat.x},Y={quat.y},Z={quat.z},W={quat.w}), "
+                                         f"Translation=(X={pos.x},Y={pos.y},Z={pos.z}),"
+                                         f"Scale3D=(X=1.000000,Y=1.000000,Z=1.000000))",
+                                         True)
 
         self.populate_control_shape_orientation(controller)
         self.populate_control_scale(controller)
@@ -135,8 +136,8 @@ class Component(base_component.UEComponent):
             ue_cr_node = controller.get_graph().find_node_by_name(construction_node)
 
             controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
-                                         '90.000000',
-                                         False)
+                                             '90.000000',
+                                             False)
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """Calculates the size of the control from the Bounding Box"""
@@ -147,15 +148,14 @@ class Component(base_component.UEComponent):
             control_name = self.metadata.controls[0]
             aabb = self.metadata.controls_aabb[control_name]
             reduce_ratio = 6.0
-            unreal_size = [round(element/reduce_ratio, 4) for element in aabb[1]]
+            unreal_size = [round(element / reduce_ratio, 4) for element in aabb[1]]
 
-            for axis, value in zip(["X", "Y", "Z",], unreal_size):
+            for axis, value in zip(["X", "Y", "Z", ], unreal_size):
 
                 # an ugly way to ensure that the bounding box is not 100% flat,
                 # causing the control to be scaled flat on Z
                 if axis == "Z" and value <= 1.0:
                     value = unreal_size[0]
-
 
                 controller.set_pin_default_value(
                     f'{construction_node}.control_size.{axis}',
@@ -179,6 +179,7 @@ class Component(base_component.UEComponent):
             setup_undo_redo=True,
             merge_undo_action=True)
 
+
 class ManualComponent(Component):
     name = "Manual_FK_Singleton"
 
@@ -189,6 +190,8 @@ class ManualComponent(Component):
                           'forward_functions': ['forward_FK_singleton'],
                           'backwards_functions': ['backwards_FK_singleton'],
                           }
+
+        self.is_manual = True
 
     def create_functions(self, controller: unreal.RigVMController):
         if controller is None:
@@ -241,29 +244,23 @@ class ManualComponent(Component):
             print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
 
-            # Set the colour, required before build
-            new_control.colour = self.metadata.controls_colour[control_name]
-
-            # Generate the Control
-            new_control.build(hierarchy_controller)
-
-            print(new_control)
-            print(new_control.rig_key)
-
+            # stored metadata values
             control_transform = self.metadata.control_transforms[control_name]
             control_colour = self.metadata.controls_colour[control_name]
             control_aabb = self.metadata.controls_aabb[control_name]
             control_offset = control_aabb[0]
             control_scale = control_aabb[1]
 
+            # Set the colour, required before build
+            new_control.colour = control_colour
+            new_control.shape_name = "RoundedSquare_Thick"
 
-            new_control.transform(pos=[0, 0, 0])
-            new_control.shape_transform(pos=[0, 0, 50])
+            # Generate the Control
+            new_control.build(hierarchy_controller)
 
-
-
-
-
+            # Sets the controls position, and offset translation and scale of the shape
+            new_control.set_transform(quat_transform=control_transform)
+            new_control.shape_transform(pos=control_offset, scale=control_scale)
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         # todo: populates the generated controls transform data

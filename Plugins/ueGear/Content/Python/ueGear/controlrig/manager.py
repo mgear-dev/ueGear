@@ -211,11 +211,10 @@ class UEGearManager:
         # Create Function Nodes
         ueg_comp.create_functions(bp_controller)
 
-        # todo: This is extermly ugly
-        try:
+        # Only evaluates manual building on manual controls
+        # This is required to be placed here as we need to pass in the hierarchy controller.
+        if ueg_comp.is_manual:
             ueg_comp.generate_manual_controls(self._active_blueprint.get_hierarchy_controller())
-        except:
-            pass
 
         # Setup Driven Joint
         bones = get_driven_joints(self, ueg_comp)
@@ -268,17 +267,12 @@ class UEGearManager:
         # for i, ue_comp in enumerate(self.uegear_components):
         #     ue_comp.comment_node
 
-    def build_components(self, ignore_component_names: list = None, ignore_component_types: list = None):
+    def build_components(self, manual_components: bool = False):
         """Builds all components
-
-        ignore_component_names : list(str) - list of names that will be ignored if the name of the component matches
-        ignore_component_type : list(str) - list of types that will not be build, if found component matches
-
-        # todo: implement the ignore functionality
         """
 
         for comp in self.mg_rig.components.values():
-            self.build_component(comp.fullname)
+            self.build_component(comp.fullname, manual_components)
 
     def populate_parents(self):
         """
@@ -382,7 +376,7 @@ class UEGearManager:
 
                         try:
                             bp_controller.add_link(new_pin,
-                                               f'{new_connection_node_name}.ExecuteContext')
+                                                   f'{new_connection_node_name}.ExecuteContext')
                             print(f"CONNECTION: {new_pin} > {new_connection_node_name}.ExecuteContext")
                         except:
                             print(f"FAILED: to connect {new_pin} > {new_connection_node_name}.ExecuteContext")
@@ -491,7 +485,7 @@ class UEGearManager:
             print(f"  parent port: {parent_pin_name}")
             print(f"  Relationship Parent: {comp.parent_node.name}")
 
-            # component is an 'locater' port, which is made up of an array.
+            # component is an 'locator' port, which is made up of an array.
             # This plug needs to get converted from an array out plug to the correct plug index
             if parent_pin_name is not None:
                 if parent_pin_name.endswith('_loc'):
@@ -501,7 +495,7 @@ class UEGearManager:
 
                     # Creates an At Node, Sets its Index and connects it to the output locator
 
-                    at_node_name = parent_node_name+"_output_loc_"+str(loc_index)
+                    at_node_name = parent_node_name + "_output_loc_" + str(loc_index)
                     at_node = bp_controller.add_template_node(
                         'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
                         unreal.Vector2D(3500, 800),

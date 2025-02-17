@@ -314,9 +314,9 @@ def test_manual_create_spine_shoulders_control():
 
     # Builds component by name
     gear_manager.build_component('global_C0', manual_component=True)
-    # gear_manager.build_component('local_C0', manual_component=True)
-    # gear_manager.build_component('root_C0', manual_component=True)
-    # gear_manager.build_component('body_C0', manual_component=True)
+    gear_manager.build_component('local_C0', manual_component=True)
+    gear_manager.build_component('root_C0', manual_component=True)
+    gear_manager.build_component('body_C0', manual_component=True)
     # gear_manager.build_component('spine_C0', ignore_parent=True)
     #
     # gear_manager.build_component('neck_C0', ignore_parent=True)

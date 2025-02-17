@@ -137,7 +137,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
     return rig
 
 
-def _calculate_bounding_box(control_data: dict) -> list[int]:
+def _calculate_bounding_box(control_data: dict) -> tuple[list, list]:
     """
     Calculates a bounding box around the control, by evaluating the control points.
 

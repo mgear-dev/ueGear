@@ -1,5 +1,6 @@
 import unreal
 
+
 class CR_Control:
     """
     Control Rig Wrapper
@@ -16,6 +17,8 @@ class CR_Control:
         """Stores the Hierarchy controller that is used to modify the skeleton hierarchy"""
 
         self.colour = [1, 0, 0]
+
+        self.shape_name = 'Default'
 
         self.settings = unreal.RigControlSettings()
 
@@ -50,7 +53,7 @@ class CR_Control:
         self.settings.display_name = 'None'
         self.settings.draw_limits = True
         self.settings.shape_color = unreal.LinearColor(self.colour[0], self.colour[1], self.colour[2], 1.000000)
-        self.settings.shape_name = 'Default'
+        self.settings.shape_name = self.shape_name
         self.settings.shape_visible = True
         self.settings.is_transient_control = False
         self.settings.limit_enabled = [
@@ -82,68 +85,82 @@ class CR_Control:
 
     def shape_transform(self, pos=None, rotation=None, scale=None):
         if pos is None:
-            pos = [0,0,0]
+            pos = [0, 0, 0]
         if rotation is None:
-            rotation = [0,0,0]
+            rotation = [0, 0, 0]
         if scale is None:
-            scale = [1,1,1]
+            scale = [1, 1, 1]
 
-        self.hierarchy_ctrlr.get_hierarchy().set_control_shape_transform(self.rig_key,
-                                                         unreal.Transform(location=pos,
-                                                                          rotation=rotation,
-                                                                          scale=scale),
-                                                         True)
+        rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
+        rig_hrc.set_control_shape_transform(
+            self.rig_key,
+            unreal.Transform(
+                location=pos,
+                rotation=rotation,
+                scale=scale
+            ),
+            True
+        )
 
     def min(self, pos=None, rotation=None, scale=None):
         if pos is None:
-            pos = [0,0,0]
+            pos = [0, 0, 0]
         if rotation is None:
-            rotation = [0,0,0]
+            rotation = [0, 0, 0]
         if scale is None:
-            scale = [1,1,1]
-        self.hierarchy_ctrlr.get_hierarchy().set_control_value(self.rig_key,
-                                               unreal.RigHierarchy.make_control_value_from_euler_transform(
-                                                   unreal.EulerTransform(location=[0.000000, 0.000000, 0.000000],
-                                                                         rotation=[0.000000, 0.000000, 0.000000],
-                                                                         scale=[1.000000, 1.000000, 1.000000])),
-                                               unreal.RigControlValueType.MINIMUM)
+            scale = [1, 1, 1]
+        self.hierarchy_ctrlr.get_hierarchy().set_control_value(
+            self.rig_key,
+            unreal.RigHierarchy.make_control_value_from_euler_transform(
+                unreal.EulerTransform(
+                    location=pos,
+                    rotation=rotation,
+                    scale=scale
+                )
+            ),
+            unreal.RigControlValueType.MINIMUM)
 
     def max(self, pos=None, rotation=None, scale=None):
         if pos is None:
-            pos = [0,0,0]
+            pos = [0, 0, 0]
         if rotation is None:
-            rotation = [0,0,0]
+            rotation = [0, 0, 0]
         if scale is None:
-            scale = [1,1,1]
+            scale = [1, 1, 1]
         self.hierarchy_ctrlr.get_hierarchy().set_control_value(self.rig_key,
-                                               unreal.RigHierarchy.make_control_value_from_euler_transform(
-                                                   unreal.EulerTransform(location=pos,
-                                                                         rotation=rotation,
-                                                                         scale=scale)),
-                                               unreal.RigControlValueType.MAXIMUM)
+                                                               unreal.RigHierarchy.make_control_value_from_euler_transform(
+                                                                   unreal.EulerTransform(location=pos,
+                                                                                         rotation=rotation,
+                                                                                         scale=scale)),
+                                                               unreal.RigControlValueType.MAXIMUM)
 
     def offset(self, pos=None, rotation=None, scale=None):
         if pos is None:
-            pos = [0,0,0]
+            pos = [0, 0, 0]
         if rotation is None:
-            rotation = [0,0,0]
+            rotation = [0, 0, 0]
         if scale is None:
-            scale = [1,1,1]
+            scale = [1, 1, 1]
 
-        self.hierarchy_ctrlr.get_hierarchy().set_control_offset_transform(self.rig_key,
-                                                          unreal.Transform(location=pos,
-                                                                           rotation=rotation,
-                                                                           scale=scale),
-                                                          True,
-                                                          True)
+        rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
+        rig_hrc.set_control_offset_transform(
+            self.rig_key,
+            unreal.Transform(
+                location=pos,
+                rotation=rotation,
+                scale=scale
+            ),
+            True,
+            True
+        )
 
     def transform(self, pos=None, rotation=None, scale=None):
         if pos is None:
-            pos = [0,0,0]
+            pos = [0, 0, 0]
         if rotation is None:
-            rotation = [0,0,0]
+            rotation = [0, 0, 0]
         if scale is None:
-            scale = [1,1,1]
+            scale = [1, 1, 1]
 
         self.hierarchy_ctrlr.get_hierarchy().set_control_value(
             self.rig_key,
@@ -156,3 +173,46 @@ class CR_Control:
             ),
             unreal.RigControlValueType.CURRENT
         )
+
+    def set_transform(self,
+                      quat_transform: unreal.Transform = None,
+                      euler_transform: unreal.EulerTransform = None):
+        """
+        Populates the transform data for the control, using either an Euler Transform
+        or a Quaternion (standard Unreal Transform)
+        """
+        if quat_transform is None and euler_transform is None:
+            print("Cannot Set transform, no Transform object passed in")
+            return
+
+        if euler_transform:
+            self.hierarchy_ctrlr.get_hierarchy().set_control_value(
+                self.rig_key,
+                unreal.RigHierarchy.make_control_value_from_euler_transform(
+                    euler_transform
+                ),
+                unreal.RigControlValueType.CURRENT
+            )
+
+        if quat_transform:
+            self.hierarchy_ctrlr.get_hierarchy().set_control_value(
+                self.rig_key,
+                unreal.RigHierarchy.make_control_value_from_transform(
+                    quat_transform
+                ),
+                unreal.RigControlValueType.CURRENT
+            )
+
+    def set_parent(self, parent_name=None, parent_type: unreal.RigElementType = None,
+                   parent_rekey: unreal.RigElementKey = None):
+        rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
+
+        # Child Rig Element Key
+        child_rekey = unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=self.name)
+
+        # Creates a parent rig element key if one metadata passed in.
+        if parent_name and parent_type:
+            parent_rekey = unreal.RigElementKey(type=parent_type, name=parent_name)
+
+        # updated hierarchy
+        rig_hrc.set_parent(parent_rekey, child_rekey, True)
