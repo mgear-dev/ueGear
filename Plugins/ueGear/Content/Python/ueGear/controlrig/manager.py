@@ -100,6 +100,7 @@ class UEGearManager:
         """Sets the Auto Compile status on the Blueprint of the active blueprint"""
         self._active_blueprint.set_auto_vm_recompile(active)
 
+    # todo: Add "manual" build for world control
     def build_world_control(self, force_build=False):
         """
         Generates the world contol. The control will come in at world origin
@@ -182,15 +183,17 @@ class UEGearManager:
 
         print("Build Component")
         print(ue_comp_classes)
+        print(guide_type)
+
+        ueg_comp_class = ue_comp_classes[0]
 
         # Instantiates the component
         if manual_component:
             # If manual component is enabled then it will try and instanciate the
             # second class in the component file, which should be the manual component
-            ueg_comp = ue_comp_classes[1]()
-        else:
-            ueg_comp = ue_comp_classes[0]()
+            ueg_comp_class = ue_comp_classes[1]
 
+        ueg_comp = ueg_comp_class()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname
 
@@ -207,6 +210,12 @@ class UEGearManager:
 
         # Create Function Nodes
         ueg_comp.create_functions(bp_controller)
+
+        # todo: This is extermly ugly
+        try:
+            ueg_comp.generate_manual_controls(self._active_blueprint.get_hierarchy_controller())
+        except:
+            pass
 
         # Setup Driven Joint
         bones = get_driven_joints(self, ueg_comp)

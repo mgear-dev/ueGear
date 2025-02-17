@@ -2,7 +2,7 @@ import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
 from ueGear.controlrig.components import base_component
-
+from ueGear.controlrig.helpers import controls
 
 class Component(base_component.UEComponent):
     name = "test_FK"
@@ -180,6 +180,8 @@ class Component(base_component.UEComponent):
             merge_undo_action=True)
 
 class ManualComponent(Component):
+    name = "Manual_FK_Singleton"
+
     def __init__(self):
         super().__init__()
 
@@ -187,3 +189,82 @@ class ManualComponent(Component):
                           'forward_functions': ['forward_FK_singleton'],
                           'backwards_functions': ['backwards_FK_singleton'],
                           }
+
+    def create_functions(self, controller: unreal.RigVMController):
+        if controller is None:
+            return
+
+        # calls the super method and creates the comment block
+        base_component.UEComponent.create_functions(self, controller)
+
+        # Generate Function Nodes
+        for evaluation_path in self.functions.keys():
+
+            # Skip the forward function creation if no joints are needed to be driven
+            if evaluation_path == 'forward_functions' and self.metadata.joints is None:
+                continue
+
+            # Skip the backwards function creation if no joints are needed to be driven
+            if evaluation_path == 'backwards_functions' and self.metadata.joints is None:
+                continue
+
+            for cr_func in self.functions[evaluation_path]:
+                new_node_name = f"{self.name}_{cr_func}"
+
+                ue_cr_node = controller.get_graph().find_node_by_name(new_node_name)
+
+                # Create Component if doesn't exist
+                if ue_cr_node is None:
+                    ue_cr_ref_node = controller.add_external_function_reference_node(CONTROL_RIG_FUNCTION_PATH,
+                                                                                     cr_func,
+                                                                                     unreal.Vector2D(0.0, 0.0),
+                                                                                     node_name=new_node_name)
+                    # In Unreal, Ref Node inherits from Node
+                    ue_cr_node = ue_cr_ref_node
+                else:
+                    # if exists, add it to the nodes
+                    self.nodes[evaluation_path].append(ue_cr_node)
+
+                    unreal.log_error(f"  Cannot create function {new_node_name}, it already exists")
+                    continue
+
+                self.nodes[evaluation_path].append(ue_cr_node)
+
+    def generate_manual_controls(self, hierarchy_controller):
+        """Creates all the manual controls in the designated structure"""
+
+        # EXPERIMENTAL! Should be passd in
+        # blueprint = unreal.ControlRigBlueprint.get_currently_open_rig_blueprints()[0]
+        # hierarchy_controller = blueprint.get_hierarchy_controller()
+
+        for control_name in self.metadata.controls:
+            print(f"Initializing Manual Control - {control_name}")
+            new_control = controls.CR_Control(name=control_name)
+
+            # Set the colour, required before build
+            new_control.colour = self.metadata.controls_colour[control_name]
+
+            # Generate the Control
+            new_control.build(hierarchy_controller)
+
+            print(new_control)
+            print(new_control.rig_key)
+
+            control_transform = self.metadata.control_transforms[control_name]
+            control_colour = self.metadata.controls_colour[control_name]
+            control_aabb = self.metadata.controls_aabb[control_name]
+            control_offset = control_aabb[0]
+            control_scale = control_aabb[1]
+
+
+            new_control.transform(pos=[0, 0, 0])
+            new_control.shape_transform(pos=[0, 0, 50])
+
+
+
+
+
+
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        # todo: populates the generated controls transform data
+        pass

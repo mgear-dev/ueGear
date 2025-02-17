@@ -18,15 +18,14 @@ from ueGear.controlrig.mgear import component, rig
 from ueGear.controlrig.components import EPIC_control_01 as epic_comp
 from ueGear.controlrig.components import EPIC_meta_01 as epic_comp_2
 
-from ueGear.controlrig import helpers
 from ueGear.controlrig.helpers import controls
 
 importlib.reload(epic_comp)
 importlib.reload(epic_comp_2)
-importlib.reload(components)
-importlib.reload(mgear)
-importlib.reload(component)
-importlib.reload(rig)
+# importlib.reload(components)
+# importlib.reload(mgear)
+# importlib.reload(component)
+# importlib.reload(rig)
 importlib.reload(ueM)
 importlib.reload(manager)
 importlib.reload(controls)
@@ -169,18 +168,18 @@ def test_create_spine_shoulders_control():
     gear_manager.build_world_control()
 
     # Builds component by name
-    gear_manager.build_component('global_C0', ignore_parent=True)
-    gear_manager.build_component('local_C0', ignore_parent=True)
-    gear_manager.build_component('root_C0', ignore_parent=True)
-    gear_manager.build_component('body_C0', ignore_parent=True)
-    gear_manager.build_component('spine_C0', ignore_parent=True)
+    gear_manager.build_component('global_C0')
+    gear_manager.build_component('local_C0')
+    gear_manager.build_component('root_C0')
+    gear_manager.build_component('body_C0')
+    # gear_manager.build_component('spine_C0', ignore_parent=True)
     #
     # gear_manager.build_component('neck_C0', ignore_parent=True)
     #
-    gear_manager.build_component('shoulder_L0', ignore_parent=True)
+    # gear_manager.build_component('shoulder_L0', ignore_parent=True)
     # gear_manager.build_component('shoulder_R0', ignore_parent=True)
     #
-    gear_manager.build_component('arm_L0', ignore_parent=True)
+    # gear_manager.build_component('arm_L0', ignore_parent=True)
     # gear_manager.build_component('arm_R0', ignore_parent=True)
     #
     # gear_manager.build_component('leg_L0', ignore_parent=True)
@@ -189,15 +188,15 @@ def test_create_spine_shoulders_control():
     # gear_manager.build_component('foot_L0', ignore_parent=True)
     # gear_manager.build_component('foot_R0', ignore_parent=True)
     #
-    gear_manager.build_component("finger_L0")
-    gear_manager.build_component("finger_L1")
-    gear_manager.build_component("finger_L2")
-    gear_manager.build_component("finger_L3")
-    gear_manager.build_component("thumb_L0")
-    gear_manager.build_component("meta_L0")
+    # gear_manager.build_component("finger_L0")
+    # gear_manager.build_component("finger_L1")
+    # gear_manager.build_component("finger_L2")
+    # gear_manager.build_component("finger_L3")
+    # gear_manager.build_component("thumb_L0")
+    # gear_manager.build_component("meta_L0")
 
-    gear_manager.build_component("backFinBase_L0")
-    gear_manager.build_component("spine_L0")
+    # gear_manager.build_component("backFinBase_L0")
+    # gear_manager.build_component("spine_L0")
 
     # At this point there are many components created, but not connected to one another
 
@@ -314,10 +313,10 @@ def test_manual_create_spine_shoulders_control():
     gear_manager.build_world_control()
 
     # Builds component by name
-    gear_manager.build_component('global_C0', manual_component=False)
-    gear_manager.build_component('local_C0', manual_component=False)
-    gear_manager.build_component('root_C0', manual_component=False)
-    gear_manager.build_component('body_C0', manual_component=False)
+    gear_manager.build_component('global_C0', manual_component=True)
+    # gear_manager.build_component('local_C0', manual_component=True)
+    # gear_manager.build_component('root_C0', manual_component=True)
+    # gear_manager.build_component('body_C0', manual_component=True)
     # gear_manager.build_component('spine_C0', ignore_parent=True)
     #
     # gear_manager.build_component('neck_C0', ignore_parent=True)
@@ -368,4 +367,6 @@ def test_manual_create_spine_shoulders_control():
 # test_create_spine_shoulders_control()
 
 # test_manual_build()
+
+# test_create_spine_shoulders_control()
 test_manual_create_spine_shoulders_control()
