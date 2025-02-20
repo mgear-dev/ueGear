@@ -54,6 +54,9 @@ class mgComponent:
     """Some components contain guide transforms, these transforms are used to place
     underlying articulation positions."""
 
+    control_relatives: dict = None
+    """Lookup table that stores the relationship between the name and the control"""
+
     def __init__(self) -> None:
         pass
 

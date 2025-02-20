@@ -24,7 +24,8 @@ class UEGearManager:
     """The mGear rig description, that is used to generate the ueGear 'Control Rig'"""
 
     uegear_components: list[components.base_component.UEComponent] = []
-    """Keeps track of all the created components that relate the the mGear Rig being created"""
+    """Keeps track of all the created components that relate the the mGear Rig being created. There
+    are the components that were deserialised fomr the `.gnx` file"""
 
     # Thought: We could create a wrapper object that encompasses both mgear and ueGear rigs. keeping them more coupled, for easier data manipulation. but this will add to complexity.
 
@@ -313,6 +314,36 @@ class UEGearManager:
                 # Set the World Component as the parent
                 print(f" {comp.name} > Has no parent, World Component Exists")
                 comp.set_parent(world_component)
+
+        # initialises the manual parenting of python generated controls
+        self.populate_manual_parents()
+
+    def populate_manual_parents(self):
+        # todo: once world control is generating a manual control then this can be updated to handle it. Currently cannot mix manual and procedural
+        hrc_controller = self._active_blueprint.get_hierarchy_controller()
+
+        for component in self.uegear_components:
+
+            # Skip world control if found.
+            if component.metadata.comp_type == "world_ctrl":
+                continue
+
+            # If the component has no parent, then we continue.
+            if component.parent_node is None:
+                continue
+                # world_component = self.get_uegear_world_component()
+                # parent_control_relatives['root'] = world_component.metadata.controls[0]
+
+            parent_control_relatives = component.parent_node.metadata.control_relatives
+            if parent_control_relatives is None:
+                continue
+
+            # finds the parent name by looking up the parent_localname
+            parent_control_name = parent_control_relatives[component.metadata.parent_localname]
+            hrc_controller.set_parent(
+                unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=component.root_control_name),
+                unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=parent_control_name),
+                True)
 
     def connect_execution(self):
         """Connects the individual functions Execution port, in order of parent hierarchy"""

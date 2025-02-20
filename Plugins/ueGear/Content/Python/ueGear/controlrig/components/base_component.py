@@ -54,6 +54,9 @@ class UEComponent(object):
     is_manual: bool = False
     """If this component is manual then this will be set to true"""
 
+    root_control_name = None
+    """Stores the root control for the component. This is used to reparent the generated node with the parent node"""
+
     def __init__(self):
         self.functions = {'construction_functions': [],
                           'forward_functions': [],

@@ -236,9 +236,9 @@ class ManualComponent(Component):
     def generate_manual_controls(self, hierarchy_controller):
         """Creates all the manual controls in the designated structure"""
 
-        # EXPERIMENTAL! Should be passd in
-        # blueprint = unreal.ControlRigBlueprint.get_currently_open_rig_blueprints()[0]
-        # hierarchy_controller = blueprint.get_hierarchy_controller()
+        # as this is a singleton, we know that there is only one control that will be getting created.
+        # So we store that, as the control that will be parented to the parent components control
+        self.root_control_name =self.metadata.controls[0]
 
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")
