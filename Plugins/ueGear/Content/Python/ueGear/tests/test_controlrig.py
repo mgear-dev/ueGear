@@ -23,7 +23,7 @@ from ueGear.controlrig.helpers import controls
 importlib.reload(epic_comp)
 importlib.reload(epic_comp_2)
 # importlib.reload(components)
-# importlib.reload(mgear)
+importlib.reload(mgear)
 # importlib.reload(component)
 # importlib.reload(rig)
 importlib.reload(ueM)
@@ -172,21 +172,21 @@ def test_create_spine_shoulders_control():
     gear_manager.build_component('local_C0')
     gear_manager.build_component('root_C0')
     gear_manager.build_component('body_C0')
-    # gear_manager.build_component('spine_C0', ignore_parent=True)
+    gear_manager.build_component('spine_C0')
+
+    # gear_manager.build_component('neck_C0')
     #
-    # gear_manager.build_component('neck_C0', ignore_parent=True)
+    gear_manager.build_component('shoulder_L0')
+    # gear_manager.build_component('shoulder_R0')
     #
-    # gear_manager.build_component('shoulder_L0', ignore_parent=True)
-    # gear_manager.build_component('shoulder_R0', ignore_parent=True)
+    gear_manager.build_component('arm_L0')
+    # # gear_manager.build_component('arm_R0')
     #
-    # gear_manager.build_component('arm_L0', ignore_parent=True)
-    # gear_manager.build_component('arm_R0', ignore_parent=True)
+    gear_manager.build_component('leg_L0')
+    # gear_manager.build_component('leg_R0')
     #
-    # gear_manager.build_component('leg_L0', ignore_parent=True)
-    # gear_manager.build_component('leg_R0', ignore_parent=True)
-    # # #
-    # gear_manager.build_component('foot_L0', ignore_parent=True)
-    # gear_manager.build_component('foot_R0', ignore_parent=True)
+    gear_manager.build_component('foot_L0')
+    # gear_manager.build_component('foot_R0')
     #
     # gear_manager.build_component("finger_L0")
     # gear_manager.build_component("finger_L1")
@@ -317,8 +317,8 @@ def test_manual_create_spine_shoulders_control():
     gear_manager.build_component('local_C0', manual_component=True)
     gear_manager.build_component('root_C0', manual_component=True)
     gear_manager.build_component('body_C0', manual_component=True)
-    # gear_manager.build_component('spine_C0', ignore_parent=True)
-    #
+    gear_manager.build_component('spine_C0', manual_component=True)
+
     # gear_manager.build_component('neck_C0', ignore_parent=True)
     #
     # gear_manager.build_component('shoulder_L0', ignore_parent=True)
@@ -368,5 +368,5 @@ def test_manual_create_spine_shoulders_control():
 
 # test_manual_build()
 
-# test_create_spine_shoulders_control()
-test_manual_create_spine_shoulders_control()
+test_create_spine_shoulders_control()
+# test_manual_create_spine_shoulders_control()

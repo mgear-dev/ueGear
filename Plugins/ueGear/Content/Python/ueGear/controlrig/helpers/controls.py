@@ -127,12 +127,14 @@ class CR_Control:
             rotation = [0, 0, 0]
         if scale is None:
             scale = [1, 1, 1]
-        self.hierarchy_ctrlr.get_hierarchy().set_control_value(self.rig_key,
-                                                               unreal.RigHierarchy.make_control_value_from_euler_transform(
-                                                                   unreal.EulerTransform(location=pos,
-                                                                                         rotation=rotation,
-                                                                                         scale=scale)),
-                                                               unreal.RigControlValueType.MAXIMUM)
+        rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
+        rig_hrc.set_control_value(
+            self.rig_key,
+            unreal.RigHierarchy.make_control_value_from_euler_transform(
+                unreal.EulerTransform(location=pos,
+                                      rotation=rotation,
+                                      scale=scale)),
+            unreal.RigControlValueType.MAXIMUM)
 
     def offset(self, pos=None, rotation=None, scale=None):
         if pos is None:

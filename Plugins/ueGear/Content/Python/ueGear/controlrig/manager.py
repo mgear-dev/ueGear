@@ -324,6 +324,10 @@ class UEGearManager:
 
         for component in self.uegear_components:
 
+            # skips any manual component building, if component is not manual.
+            if not component.is_manual:
+                continue
+
             # Skip world control if found.
             if component.metadata.comp_type == "world_ctrl":
                 continue
