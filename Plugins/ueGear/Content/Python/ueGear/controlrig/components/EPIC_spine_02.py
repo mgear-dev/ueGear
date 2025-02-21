@@ -1,7 +1,8 @@
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
-from ueGear.controlrig.components import base_component
+from ueGear.controlrig.components import base_component, EPIC_control_01
+from ueGear.controlrig.helpers import controls
 
 class Component(base_component.UEComponent):
     name = "test_Spine"
@@ -349,3 +350,54 @@ class Component(base_component.UEComponent):
             True,
             setup_undo_redo=True,
             merge_undo_action=True)
+
+
+class ManualComponent(Component):
+    name = "Manual_EPIC_spine_02"
+
+    def __init__(self):
+        super().__init__()
+
+        self.functions = {'construction_functions': ['manual_construct_FK_spine'],
+                          'forward_functions': ['forward_FK_spine'],
+                          'backwards_functions': ['backwards_FK_spine'],
+                          }
+
+        self.is_manual = True
+
+    def create_functions(self, controller: unreal.RigVMController):
+        EPIC_control_01.ManualComponent.create_functions(self, controller)
+
+    def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Creates all the manual controls in the designated structure"""
+
+        self.root_control_name = self.metadata.controls[0]
+
+        for control_name in self.metadata.controls:
+            print(f"Initializing Manual Control - {control_name}")
+            new_control = controls.CR_Control(name=control_name)
+
+            # stored metadata values
+            control_transform = self.metadata.control_transforms[control_name]
+            control_colour = self.metadata.controls_colour[control_name]
+            control_aabb = self.metadata.controls_aabb[control_name]
+            control_offset = control_aabb[0]
+            control_scale = [control_aabb[1][0] / 4.0,
+                             control_aabb[1][1] / 4.0,
+                             control_aabb[1][2] / 4.0]
+
+            # Set the colour, required before build
+            new_control.colour = control_colour
+            new_control.shape_name = "Box_Thick"
+
+            # Generate the Control
+            new_control.build(hierarchy_controller)
+
+            # Sets the controls position, and offset translation and scale of the shape
+            print(control_transform)
+            new_control.set_transform(quat_transform=control_transform)
+            new_control.shape_transform(pos=control_offset, scale=control_scale)
+
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        # todo: populates the generated controls transform data
+        pass

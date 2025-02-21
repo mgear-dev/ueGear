@@ -117,18 +117,8 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             ue_trans.set_editor_property("translation", world_pos)
             ue_trans.set_editor_property("rotation", ue_quaternion)
 
-            if "spine" in ctrl["Name"]:
-                print("-- BEFORE: " + ctrl["Name"])
-                print(ue_trans.rotation.euler())
-                print(ue_trans.rotation.rotator())
-
             # Converts from Maya space into Unreal Space
             ue_trans = _convert_maya_matrix(ue_trans.to_matrix())
-
-            if "spine" in ctrl["Name"]:
-                print("-- AFTER")
-                print(ue_trans.rotation.euler())
-                print("\n==")
 
             if mgear_component.control_transforms is None:
                 mgear_component.control_transforms = {}
@@ -267,8 +257,6 @@ def _calculate_bb(min, max):
 
 
 def _convert_maya_matrix(maya_mtx: unreal.Matrix) -> unreal.Transform:
-    print("C MTX -- 1")
-
     # Reorient Matrix
     # This matrix is used to turn left hand rule into right hand rule
     plane_x = unreal.Plane(x=1, y=0, z=0, w=0)

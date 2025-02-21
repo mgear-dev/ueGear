@@ -16,7 +16,7 @@ from ueGear.controlrig import components
 from ueGear.controlrig.mgear import component, rig
 
 from ueGear.controlrig.components import EPIC_control_01 as epic_comp
-from ueGear.controlrig.components import EPIC_meta_01 as epic_comp_2
+from ueGear.controlrig.components import EPIC_spine_02 as epic_comp_2
 
 from ueGear.controlrig.helpers import controls
 
@@ -313,10 +313,10 @@ def test_manual_create_spine_shoulders_control():
     gear_manager.build_world_control()
 
     # Builds component by name
-    gear_manager.build_component('global_C0', manual_component=True)
-    gear_manager.build_component('local_C0', manual_component=True)
-    gear_manager.build_component('root_C0', manual_component=True)
-    gear_manager.build_component('body_C0', manual_component=True)
+    # gear_manager.build_component('global_C0', manual_component=True)
+    # gear_manager.build_component('local_C0', manual_component=True)
+    # gear_manager.build_component('root_C0', manual_component=True)
+    # gear_manager.build_component('body_C0', manual_component=True)
     gear_manager.build_component('spine_C0', manual_component=True)
 
     # gear_manager.build_component('neck_C0', ignore_parent=True)
@@ -368,5 +368,5 @@ def test_manual_create_spine_shoulders_control():
 
 # test_manual_build()
 
-test_create_spine_shoulders_control()
-# test_manual_create_spine_shoulders_control()
+# test_create_spine_shoulders_control()
+test_manual_create_spine_shoulders_control()

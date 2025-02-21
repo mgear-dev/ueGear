@@ -25,6 +25,16 @@ class CR_Control:
     def build(self, hierarchy_controller):
         self.hierarchy_ctrlr = hierarchy_controller
 
+        rig_hierarchy = self.hierarchy_ctrlr.get_hierarchy()
+
+        # If control exists then store the rig key and return early
+        control_key = unreal.RigElementKey(unreal.RigElementType.CONTROL, self.name)
+        control_exists = rig_hierarchy.find_control(control_key)
+        if control_exists:
+            self.rig_key = control_exists.key
+            print("   - Control already exists.")
+            return
+
         self._setup_default_control_configuration()
 
         self.rig_key = self.hierarchy_ctrlr.add_control(
@@ -184,26 +194,47 @@ class CR_Control:
         or a Quaternion (standard Unreal Transform)
         """
         if quat_transform is None and euler_transform is None:
-            print("Cannot Set transform, no Transform object passed in")
+            print("Cannot Set transform, no Transform or Quaternion Transform object passed in")
             return
 
+        rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
+
         if euler_transform:
-            self.hierarchy_ctrlr.get_hierarchy().set_control_value(
+            rig_hrc.set_control_value(
                 self.rig_key,
-                unreal.RigHierarchy.make_control_value_from_euler_transform(
+                rig_hrc.make_control_value_from_euler_transform(
                     euler_transform
                 ),
                 unreal.RigControlValueType.CURRENT
             )
 
         if quat_transform:
-            self.hierarchy_ctrlr.get_hierarchy().set_control_value(
+            # rig_hrc.set_control_value(
+            #     self.rig_key,
+            #     rig_hrc.make_control_value_from_transform(
+            #         quat_transform
+            #     ),
+            #     unreal.RigControlValueType.CURRENT
+            # )
+
+            # - Local Transform -
+
+
+            # rig_hrc.set_control_offset_transform(
+            #     self.rig_key,
+            #     quat_transform, True, True
+            # )
+
+            rig_hrc.set_global_transform(
                 self.rig_key,
-                unreal.RigHierarchy.make_control_value_from_transform(
-                    quat_transform
-                ),
-                unreal.RigControlValueType.CURRENT
-            )
+                quat_transform, True, True)
+
+
+            # rig_hrc.set_local_transform(
+            #     self.rig_key,
+            #     unreal.Transform(), False, True)
+
+
 
     def set_parent(self, parent_name=None, parent_type: unreal.RigElementType = None,
                    parent_rekey: unreal.RigElementKey = None):
