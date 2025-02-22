@@ -57,6 +57,9 @@ class UEComponent(object):
     root_control_name = None
     """Stores the root control for the component. This is used to reparent the generated node with the parent node"""
 
+    root_control_children = None
+    """List of control roles that need to be parented to the parent's output control"""
+
     def __init__(self):
         self.functions = {'construction_functions': [],
                           'forward_functions': [],

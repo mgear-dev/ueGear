@@ -30,7 +30,8 @@ class CR_Control:
         # If control exists then store the rig key and return early
         control_key = unreal.RigElementKey(unreal.RigElementType.CONTROL, self.name)
         control_exists = rig_hierarchy.find_control(control_key)
-        if control_exists:
+
+        if control_exists.index > -1:
             self.rig_key = control_exists.key
             print("   - Control already exists.")
             return
@@ -93,22 +94,25 @@ class CR_Control:
         )
         self.settings.primary_axis = unreal.RigControlAxis.X
 
-    def shape_transform(self, pos=None, rotation=None, scale=None):
-        if pos is None:
-            pos = [0, 0, 0]
-        if rotation is None:
-            rotation = [0, 0, 0]
-        if scale is None:
-            scale = [1, 1, 1]
-
+    def shape_transform_global(self, pos=None, rotation=None, scale=None):
         rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
+        shape_trans = rig_hrc.get_global_control_shape_transform(self.rig_key)
+
+        if pos:
+            shape_trans.translation = unreal.Vector(pos[0], pos[1], pos[2])
+
+        if rotation:
+            temp_quat = unreal.Quat()
+            temp_quat.set_from_euler(unreal.Vector(rotation[0], rotation[1], rotation[2]))
+            shape_trans.rotation = temp_quat
+
+        if scale:
+            temp_scale = unreal.Vector(scale[0], scale[1], scale[2])
+            shape_trans.scale3d = temp_scale
+
         rig_hrc.set_control_shape_transform(
             self.rig_key,
-            unreal.Transform(
-                location=pos,
-                rotation=rotation,
-                scale=scale
-            ),
+            shape_trans,
             True
         )
 

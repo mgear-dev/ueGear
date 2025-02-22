@@ -53,6 +53,8 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         mgear_component.data_contracts = {}
         mgear_component.joint_relatives = data_component['jointRelatives']
         mgear_component.control_relatives = data_component['controlRelatives']
+        mgear_component.alias_relatives = data_component['aliasRelatives']
+        mgear_component.settings = data_component['Settings']
 
         # checks if guide transforms exists, as not all components have this attribute.
         if guide_transforms:
