@@ -459,34 +459,46 @@ class ManualComponent(Component):
         # todo: populates the generated controls transform data
 
         fk_controls = []
+        ik_controls = []
+
+        # Groups all the controls into ik and fk lists
 
         for role_key in self.control_by_role.keys():
-
             # Generates the list of fk controls
             if 'fk' in role_key or "chest" in role_key:
                 control = self.control_by_role[role_key]
                 fk_controls.append(control)
+            else:
+                control = self.control_by_role[role_key]
+                ik_controls.append(control)
 
         construction_func_name = self.nodes["construction_functions"][0].get_name()
 
         # Populate control names
         # Converts RigElementKey into one long string of key data.
 
-        control_metadata = []
-        for entry in fk_controls:
-            if entry.rig_key.type == unreal.RigElementType.CONTROL:
-                t = "Control"
-            if entry.rig_key.type == unreal.RigElementType.NULL:
-                t = "Null"
-            n = entry.rig_key.name
-            entry = f'(Type={t}, Name="{n}")'
-            control_metadata.append(entry)
+        def update_input_plug(plug_name, control_list):
+            """
+            Simple helper function making the plug population reusable for ik and fk
+            """
+            control_metadata = []
+            for entry in control_list:
+                if entry.rig_key.type == unreal.RigElementType.CONTROL:
+                    t = "Control"
+                if entry.rig_key.type == unreal.RigElementType.NULL:
+                    t = "Null"
+                n = entry.rig_key.name
+                entry = f'(Type={t}, Name="{n}")'
+                control_metadata.append(entry)
 
-        concatinated_controls = ",".join(control_metadata)
+            concatinated_controls = ",".join(control_metadata)
 
-        controller.set_pin_default_value(
-            f'{construction_func_name}.fk_controls',
-            f"({concatinated_controls})",
-            True,
-            setup_undo_redo=True,
-            merge_undo_action=True)
+            controller.set_pin_default_value(
+                f'{construction_func_name}.{plug_name}',
+                f"({concatinated_controls})",
+                True,
+                setup_undo_redo=True,
+                merge_undo_action=True)
+
+        update_input_plug("fk_controls", fk_controls)
+        update_input_plug("ik_controls", ik_controls)
