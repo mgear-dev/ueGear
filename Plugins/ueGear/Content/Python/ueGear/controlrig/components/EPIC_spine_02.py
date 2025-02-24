@@ -365,20 +365,62 @@ class ManualComponent(Component):
 
         self.is_manual = True
 
+        # todo: Add this to all Manual Components
+
+        # Stores the controls by Role, in a lookup table.
+        self.control_by_role = dict()
+        # These are the roles that will be parented directly under the parent component.
+        self.root_controls_children = ["spinePosition", "ik0", "ik1", "fk0", "pelvis"]
+
+        self.hierarchy_schematic_roles = {"ik0": ["tan", "tan0"],
+                                          "ik1": ["tan1"]
+                                          }
+
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
 
-    def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
-        """Creates all the manual controls in the designated structure"""
+        self.setup_hierarchy_roles()
 
+    def setup_hierarchy_roles(self):
+        """Manual controls have some dynamic control creation. This function sets up the
+        control relationship for the dynamic control hierarchy."""
+
+        # Calculate the amount of fk's based on the division amount
+        fk_count = self.metadata.settings['division']
+        for i in range(fk_count):
+            parent_role = f"fk{i}"
+            child_index = i+1
+            child_role = f"fk{child_index}"
+
+            # end of the fk chain, parent the chest control
+            if child_index >= fk_count:
+                self.hierarchy_schematic_roles[parent_role] = ['chest']
+                continue
+
+            self.hierarchy_schematic_roles[parent_role] = [child_role]
+
+    # todo: Move this to Parent Class
+    def initialize_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Performs the hierarchical restructuring of the internal components controls"""
+        # Parent control hierarchy using roles
+        for parent_role in self.hierarchy_schematic_roles.keys():
+            child_roles = self.hierarchy_schematic_roles[parent_role]
+
+            parent_ctrl = self.control_by_role[parent_role]
+
+            for child_role in child_roles:
+                child_ctrl = self.control_by_role[child_role]
+                hierarchy_controller.set_parent(child_ctrl.rig_key, parent_ctrl.rig_key)
+
+    def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Creates all the manual controls for the Spine"""
+
+        # todo: Remove the 'root control name' and replace it with 'root_control_children'
         self.root_control_name = self.metadata.controls[0]
         self.root_controls_children = []
 
         # Stores the controls by Name
         control_table = dict()
-
-        # Stores the controls by Role, in a lookup table.
-        control_by_role = dict()
 
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")
@@ -408,41 +450,43 @@ class ManualComponent(Component):
 
             # Stores the control by role, for loopup purposes later
             role = self.metadata.controls_role[control_name]
-            control_by_role[role] = new_control
+            self.control_by_role[role] = new_control
 
-
-        # These are the roles that will be parented directly under the parent component.
-        self.root_controls_children = ["spinePosition", "ik0", "ik1", "fk0", "pelvis"]
-
-        self.hierarchy_schematic_roles = {"ik0": ["tan", "tan0"],
-                                          "ik1": ["tan1"]
-                                          }
-
-        # Calculate the amount of fk's based on the division amount
-        fk_count = self.metadata.settings['division']
-        for i in range(fk_count):
-            parent_role = f"fk{i}"
-            child_index = i+1
-            child_role = f"fk{child_index}"
-
-            # end of the fk chain, parent the chest control
-            if child_index >= fk_count:
-                self.hierarchy_schematic_roles[parent_role] = ['chest']
-                continue
-
-            self.hierarchy_schematic_roles[parent_role] = [child_role]
-
-        # Parent control hierarchy using roles
-        for parent_role in self.hierarchy_schematic_roles.keys():
-            child_roles = self.hierarchy_schematic_roles[parent_role]
-
-            parent_ctrl = control_by_role[parent_role]
-
-            for child_role in child_roles:
-                child_ctrl = control_by_role[child_role]
-                hierarchy_controller.set_parent(child_ctrl.rig_key, parent_ctrl.rig_key)
+        self.initialize_hierarchy(hierarchy_controller)
 
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         # todo: populates the generated controls transform data
-        pass
+
+        fk_controls = []
+
+        for role_key in self.control_by_role.keys():
+
+            # Generates the list of fk controls
+            if 'fk' in role_key or "chest" in role_key:
+                control = self.control_by_role[role_key]
+                fk_controls.append(control)
+
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        # Populate control names
+        # Converts RigElementKey into one long string of key data.
+
+        control_metadata = []
+        for entry in fk_controls:
+            if entry.rig_key.type == unreal.RigElementType.CONTROL:
+                t = "Control"
+            if entry.rig_key.type == unreal.RigElementType.NULL:
+                t = "Null"
+            n = entry.rig_key.name
+            entry = f'(Type={t}, Name="{n}")'
+            control_metadata.append(entry)
+
+        concatinated_controls = ",".join(control_metadata)
+
+        controller.set_pin_default_value(
+            f'{construction_func_name}.fk_controls',
+            f"({concatinated_controls})",
+            True,
+            setup_undo_redo=True,
+            merge_undo_action=True)
