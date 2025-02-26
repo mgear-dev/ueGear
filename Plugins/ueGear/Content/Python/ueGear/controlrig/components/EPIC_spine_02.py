@@ -456,8 +456,6 @@ class ManualComponent(Component):
 
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
-        # todo: populates the generated controls transform data
-
         fk_controls = []
         ik_controls = []
 

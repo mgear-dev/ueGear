@@ -213,31 +213,27 @@ class CR_Control:
             )
 
         if quat_transform:
-            # rig_hrc.set_control_value(
-            #     self.rig_key,
-            #     rig_hrc.make_control_value_from_transform(
-            #         quat_transform
-            #     ),
-            #     unreal.RigControlValueType.CURRENT
-            # )
-
-            # - Local Transform -
-
-
-            # rig_hrc.set_control_offset_transform(
-            #     self.rig_key,
-            #     quat_transform, True, True
-            # )
 
             rig_hrc.set_global_transform(
                 self.rig_key,
-                quat_transform, True, True)
+                quat_transform,
+                initial=True,
+                affect_children=False)
 
+            initial_local_trans = rig_hrc.get_local_transform(self.rig_key, True)
 
-            # rig_hrc.set_local_transform(
-            #     self.rig_key,
-            #     unreal.Transform(), False, True)
+            rig_hrc.set_local_transform(
+                self.rig_key,
+                unreal.Transform(),
+                initial=True,
+                affect_children=False)
 
+            rig_hrc.set_control_offset_transform(
+                self.rig_key,
+                initial_local_trans,
+                initial=True,
+                affect_children=False
+            )
 
 
     def set_parent(self, parent_name=None, parent_type: unreal.RigElementType = None,
