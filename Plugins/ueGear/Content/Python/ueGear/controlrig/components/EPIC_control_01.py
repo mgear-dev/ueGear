@@ -193,6 +193,8 @@ class ManualComponent(Component):
 
         self.is_manual = True
 
+        self.root_control_children = ["ctl"]
+
     def create_functions(self, controller: unreal.RigVMController):
         if controller is None:
             return
@@ -235,10 +237,6 @@ class ManualComponent(Component):
 
     def generate_manual_controls(self, hierarchy_controller):
         """Creates all the manual controls in the designated structure"""
-
-        # as this is a singleton, we know that there is only one control that will be getting created.
-        # So we store that, as the control that will be parented to the parent components control
-        self.root_control_children = self.metadata.controls[0]
 
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")

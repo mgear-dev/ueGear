@@ -322,7 +322,6 @@ class UEGearManager:
         # todo: once world control is generating a manual control then this can be updated to handle it. Currently cannot mix manual and procedural
         hrc_controller = self._active_blueprint.get_hierarchy_controller()
 
-        print("-- Populate Manual Parents --")
         for component in self.uegear_components:
 
             # skips any manual component building, if component is not manual.

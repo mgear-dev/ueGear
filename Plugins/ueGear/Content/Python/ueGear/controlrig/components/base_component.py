@@ -61,7 +61,7 @@ class UEComponent(object):
     # """Stores the root control for the component. This is used to reparent the generated node with the parent node"""
 
     root_control_children: list[str] = None
-    """List of control roles that need to be parented to the parent's output control"""
+    """List of Control Roles will be used to look up controls that will be parented to the Parent Component."""
 
     control_by_role: dict[str, CR_Control]
     """Stores the controls by there role name, so they can easily be looked up"""
