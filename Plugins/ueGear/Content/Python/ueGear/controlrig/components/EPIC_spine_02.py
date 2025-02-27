@@ -40,11 +40,6 @@ class Component(base_component.UEComponent):
         # calls the super method
         super().create_functions(controller)
 
-        # TODO:
-        # [ ] Check how many bones exist, as that will drive the fk system
-        # [ ] Add input for ik
-        # [ ] Calculate output bones joints
-
         # Generate Function Nodes
         for evaluation_path in self.functions.keys():
 
@@ -365,12 +360,8 @@ class ManualComponent(Component):
 
         self.is_manual = True
 
-        # todo: Add this to all Manual Components
-
-        # Stores the controls by Role, in a lookup table.
-        self.control_by_role = dict()
         # These are the roles that will be parented directly under the parent component.
-        self.root_controls_children = ["spinePosition", "ik0", "ik1", "fk0", "pelvis"]
+        self.root_control_children = ["spinePosition", "ik0", "ik1", "fk0", "pelvis"]
 
         self.hierarchy_schematic_roles = {"ik0": ["tan", "tan0"],
                                           "ik1": ["tan1"]
@@ -414,11 +405,6 @@ class ManualComponent(Component):
 
     def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
         """Creates all the manual controls for the Spine"""
-
-        # todo: Remove the 'root control name' and replace it with 'root_control_children'
-        self.root_control_name = self.metadata.controls[0]
-        self.root_controls_children = []
-
         # Stores the controls by Name
         control_table = dict()
 

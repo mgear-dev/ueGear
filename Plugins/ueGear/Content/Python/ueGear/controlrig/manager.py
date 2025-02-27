@@ -322,6 +322,7 @@ class UEGearManager:
         # todo: once world control is generating a manual control then this can be updated to handle it. Currently cannot mix manual and procedural
         hrc_controller = self._active_blueprint.get_hierarchy_controller()
 
+        print("-- Populate Manual Parents --")
         for component in self.uegear_components:
 
             # skips any manual component building, if component is not manual.
@@ -344,10 +345,15 @@ class UEGearManager:
 
             # finds the parent name by looking up the parent_localname
             parent_control_name = parent_control_relatives[component.metadata.parent_localname]
-            hrc_controller.set_parent(
-                unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=component.root_control_name),
-                unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=parent_control_name),
-                True)
+
+            for child_ctrl_role in component.root_control_children:
+                # gets the control from the role name, using the lookup table
+                child_ctrl = component.control_by_role[child_ctrl_role]
+
+                hrc_controller.set_parent(
+                    child_ctrl.rig_key,
+                    unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=parent_control_name),
+                    True)
 
     def connect_execution(self):
         """Connects the individual functions Execution port, in order of parent hierarchy"""

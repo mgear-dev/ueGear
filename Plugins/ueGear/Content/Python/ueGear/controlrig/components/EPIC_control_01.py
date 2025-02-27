@@ -238,7 +238,7 @@ class ManualComponent(Component):
 
         # as this is a singleton, we know that there is only one control that will be getting created.
         # So we store that, as the control that will be parented to the parent components control
-        self.root_control_name =self.metadata.controls[0]
+        self.root_control_children = self.metadata.controls[0]
 
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")
@@ -260,7 +260,11 @@ class ManualComponent(Component):
 
             # Sets the controls position, and offset translation and scale of the shape
             new_control.set_transform(quat_transform=control_transform)
-            new_control.shape_transform(pos=control_offset, scale=control_scale)
+            new_control.shape_transform_global(pos=control_offset, scale=control_scale)
+
+            # Stores the control by role, for loopup purposes later
+            role = self.metadata.controls_role[control_name]
+            self.control_by_role[role] = new_control
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         # todo: populates the generated controls transform data

@@ -2,6 +2,7 @@ __all__ = ['UEComponent']
 
 import unreal
 
+from ueGear.controlrig.helpers.controls import CR_Control
 from ueGear.controlrig.mgear import mgComponent
 
 
@@ -51,14 +52,23 @@ class UEComponent(object):
     comment_node: unreal.RigVMCommentNode = None
     """Stores a reference to the comment node that will be used to group functions together"""
 
+    #------------ MANUAL Attributes ---------------
+
     is_manual: bool = False
     """If this component is manual then this will be set to true"""
 
-    root_control_name = None
-    """Stores the root control for the component. This is used to reparent the generated node with the parent node"""
+    # root_control_name = None
+    # """Stores the root control for the component. This is used to reparent the generated node with the parent node"""
 
-    root_control_children = None
+    root_control_children: list[str] = None
     """List of control roles that need to be parented to the parent's output control"""
+
+    control_by_role: dict[str, CR_Control]
+    """Stores the controls by there role name, so they can easily be looked up"""
+
+
+
+    #==============================================
 
     def __init__(self):
         self.functions = {'construction_functions': [],
@@ -78,6 +88,11 @@ class UEComponent(object):
 
         self.inputs = []
         self.outputs = []
+
+        # -- Manual Attributes --
+        self.is_manual = False
+        self.root_control_children = []
+        self.control_by_role = {}
 
     @property
     def pos(self):
