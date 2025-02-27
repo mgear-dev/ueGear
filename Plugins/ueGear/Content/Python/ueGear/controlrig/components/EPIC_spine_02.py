@@ -370,9 +370,9 @@ class ManualComponent(Component):
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
 
-        self.setup_hierarchy_roles()
+        self.setup_dynamic_hierarchy_roles()
 
-    def setup_hierarchy_roles(self):
+    def setup_dynamic_hierarchy_roles(self):
         """Manual controls have some dynamic control creation. This function sets up the
         control relationship for the dynamic control hierarchy."""
 
