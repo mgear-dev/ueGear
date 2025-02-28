@@ -249,6 +249,9 @@ class ManualComponent(Component):
 
         self.hierarchy_schematic_roles = {"ctl": ["orbit"]}
 
+        self.control_shape = {"orbit": "Sphere_Thick",
+                              "ctl": "Box_Thick"}
+
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
 
@@ -260,6 +263,7 @@ class ManualComponent(Component):
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
+            role = self.metadata.controls_role[control_name]
 
             # stored metadata values
             control_transform = self.metadata.control_transforms[control_name]
@@ -272,11 +276,7 @@ class ManualComponent(Component):
 
             # Set the colour, required before build
             new_control.colour = control_colour
-
-            new_control.shape_name = "Box_Thick"
-
-            if self.metadata.controls_role[control_name] == "orbit":
-                new_control.shape_name = "Sphere_Thick"
+            new_control.shape_name = self.control_shape[role]
 
             # Generate the Control
             new_control.build(hierarchy_controller)
@@ -288,7 +288,6 @@ class ManualComponent(Component):
             control_table[control_name] = new_control
 
             # Stores the control by role, for loopup purposes later
-            role = self.metadata.controls_role[control_name]
             self.control_by_role[role] = new_control
 
         self.initialize_hierarchy(hierarchy_controller)
