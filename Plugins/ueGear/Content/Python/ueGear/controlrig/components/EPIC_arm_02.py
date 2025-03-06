@@ -437,6 +437,11 @@ class ManualComponent(Component):
             "upv": "Diamond_Thick"
         }
 
+        # todo: implement noodle
+        # Roles that will not be generated
+        # This is more of a developmental ignore, as we have not implemented this part of the component yet.
+        self.skip_roles = ["cns", "roll", "mid", "tweak", "Bendy", "Rot"]
+
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
 
@@ -467,17 +472,13 @@ class ManualComponent(Component):
         # Stores the controls by Name
         control_table = dict()
 
-        # todo: implement noodle
-        # roles that have not been implemented yet
-        skip_roles = ["cns", "roll", "mid", "tweak", "Bendy", "Rot"]
-
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
 
             # Skip a control that contains a role that has any of the keywords to skip
-            if any([skip in role for skip in skip_roles]):
+            if any([skip in role for skip in self.skip_roles]):
                 continue
 
             # stored metadata values

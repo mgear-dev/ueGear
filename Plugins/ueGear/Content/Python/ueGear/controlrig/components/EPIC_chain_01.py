@@ -1,8 +1,8 @@
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
-from ueGear.controlrig.components import base_component
-
+from ueGear.controlrig.components import base_component, EPIC_control_01
+from ueGear.controlrig.helpers import controls
 
 class Component(base_component.UEComponent):
     name = "chain"
@@ -265,3 +265,137 @@ class Component(base_component.UEComponent):
             True,
             setup_undo_redo=True,
             merge_undo_action=True)
+
+
+class ManualComponent(Component):
+    name = "EPIC_chain_01"
+
+    def __init__(self):
+        super().__init__()
+
+        self.functions = {'construction_functions': ['manual_construct_chain'],
+                          'forward_functions': ['forward_chain'],
+                          'backwards_functions': ['backwards_chain']
+                          }
+
+        self.is_manual = True
+
+        # These are the roles that will be parented directly under the parent component.
+        self.root_control_children = ["fk0"]
+
+        self.hierarchy_schematic_roles = {}
+
+        # Default to fall back onto
+        self.default_shape = "Box_Thick"
+        self.control_shape = {}
+
+    def create_functions(self, controller: unreal.RigVMController):
+        EPIC_control_01.ManualComponent.create_functions(self, controller)
+        self.setup_dynamic_hierarchy_roles(fk_count=len(self.metadata.controls))
+
+    def setup_dynamic_hierarchy_roles(self, fk_count, end_control_role=None):
+        """Manual controls have some dynamic control creation. This function sets up the
+        control relationship for the dynamic control hierarchy."""
+
+        # Calculate the amount of fk's based on the division amount
+        for i in range(fk_count):
+            parent_role = f"fk{i}"
+            child_index = i+1
+            child_role = f"fk{child_index}"
+
+            # end of the fk chain, parent the end control if one specified
+            if child_index >= fk_count:
+                if end_control_role:
+                    self.hierarchy_schematic_roles[parent_role] = [end_control_role]
+                continue
+
+            self.hierarchy_schematic_roles[parent_role] = [child_role]
+
+    def initialize_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Performs the hierarchical restructuring of the internal components controls"""
+        # Parent control hierarchy using roles
+        for parent_role in self.hierarchy_schematic_roles.keys():
+            child_roles = self.hierarchy_schematic_roles[parent_role]
+
+            parent_ctrl = self.control_by_role[parent_role]
+
+            for child_role in child_roles:
+                child_ctrl = self.control_by_role[child_role]
+                hierarchy_controller.set_parent(child_ctrl.rig_key, parent_ctrl.rig_key)
+
+    def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Creates all the manual controls for the Spine"""
+        # Stores the controls by Name
+        control_table = dict()
+
+        for control_name in self.metadata.controls:
+            print(f"Initializing Manual Control - {control_name}")
+            new_control = controls.CR_Control(name=control_name)
+            role = self.metadata.controls_role[control_name]
+
+            # stored metadata values
+            control_transform = self.metadata.control_transforms[control_name]
+            control_colour = self.metadata.controls_colour[control_name]
+            control_aabb = self.metadata.controls_aabb[control_name]
+            control_offset = control_aabb[0]
+            control_scale = [control_aabb[1][0] / 4.0,
+                             control_aabb[1][1] / 4.0,
+                             control_aabb[1][2] / 4.0]
+
+            # Set the colour, required before build
+            new_control.colour = control_colour
+            if role not in self.control_shape.keys():
+                new_control.shape_name = self.default_shape
+            else:
+                new_control.shape_name = self.control_shape[role]
+
+            # Generate the Control
+            new_control.build(hierarchy_controller)
+
+            # Sets the controls position, and offset translation and scale of the shape
+            new_control.set_transform(quat_transform=control_transform)
+            new_control.shape_transform_global(pos=control_offset,
+                                               scale=control_scale,
+                                               rotation=[90, 0, 0])
+
+            control_table[control_name] = new_control
+
+            # Stores the control by role, for loopup purposes later
+            self.control_by_role[role] = new_control
+
+        self.initialize_hierarchy(hierarchy_controller)
+
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        controls = []
+
+        for role_key in self.control_by_role.keys():
+            control = self.control_by_role[role_key]
+            controls.append(control)
+
+        def update_input_plug(plug_name, control_list):
+            """
+            Simple helper function making the plug population reusable for ik and fk
+            """
+            control_metadata = []
+            for entry in control_list:
+                if entry.rig_key.type == unreal.RigElementType.CONTROL:
+                    t = "Control"
+                if entry.rig_key.type == unreal.RigElementType.NULL:
+                    t = "Null"
+                n = entry.rig_key.name
+                entry = f'(Type={t}, Name="{n}")'
+                control_metadata.append(entry)
+
+            concatinated_controls = ",".join(control_metadata)
+
+            controller.set_pin_default_value(
+                f'{construction_func_name}.{plug_name}',
+                f"({concatinated_controls})",
+                True,
+                setup_undo_redo=True,
+                merge_undo_action=True)
+
+        update_input_plug("controls", controls)

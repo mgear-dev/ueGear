@@ -343,14 +343,13 @@ class ManualComponent(Component):
 
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
-        self.setup_dynamic_hierarchy_roles(end_control_role="head")
+        self.setup_dynamic_hierarchy_roles(self.metadata.settings['division'], end_control_role="head")
 
-    def setup_dynamic_hierarchy_roles(self, end_control_role=None):
+    def setup_dynamic_hierarchy_roles(self, fk_count, end_control_role=None):
         """Manual controls have some dynamic control creation. This function sets up the
         control relationship for the dynamic control hierarchy."""
 
         # Calculate the amount of fk's based on the division amount
-        fk_count = self.metadata.settings['division']
         for i in range(fk_count):
             parent_role = f"fk{i}"
             child_index = i+1
@@ -369,9 +368,6 @@ class ManualComponent(Component):
         # Parent control hierarchy using roles
         for parent_role in self.hierarchy_schematic_roles.keys():
             child_roles = self.hierarchy_schematic_roles[parent_role]
-
-            print(f"{parent_role} >> {child_roles}")
-
 
             parent_ctrl = self.control_by_role[parent_role]
 
