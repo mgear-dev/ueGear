@@ -13,7 +13,7 @@ class CR_Control:
         self.ctrl_type = unreal.RigElementType.CONTROL
         self.rig_key = unreal.RigElementKey(type=self.ctrl_type, name=self.name)
 
-        self.hierarchy_ctrlr = None
+        self.hierarchy_ctrlr: unreal.RigHierarchyController = None
         """Stores the Hierarchy controller that is used to modify the skeleton hierarchy"""
 
         self.colour = [1, 0, 0]
@@ -22,13 +22,17 @@ class CR_Control:
 
         self.settings = unreal.RigControlSettings()
 
+    def set_control_type(self, cr_type:unreal.RigElementType):
+        self.ctrl_type = cr_type
+        self.rig_key = unreal.RigElementKey(type=self.ctrl_type, name=self.name)
+
     def build(self, hierarchy_controller):
         self.hierarchy_ctrlr = hierarchy_controller
 
         rig_hierarchy = self.hierarchy_ctrlr.get_hierarchy()
 
         # If control exists then store the rig key and return early
-        control_key = unreal.RigElementKey(unreal.RigElementType.CONTROL, self.name)
+        control_key = unreal.RigElementKey(self.ctrl_type, self.name)
         control_exists = rig_hierarchy.find_control(control_key)
 
         if control_exists.index > -1:
@@ -38,18 +42,25 @@ class CR_Control:
 
         self._setup_default_control_configuration()
 
-        self.rig_key = self.hierarchy_ctrlr.add_control(
-            self.name,
-            self.parent,
-            self.settings,
-            unreal.RigHierarchy.make_control_value_from_euler_transform(
-                unreal.EulerTransform(
-                    location=[0.000000, 0.000000, 0.000000],
-                    rotation=[0.000000, -0.000000, 0.000000],
-                    scale=[1.000000, 1.000000, 1.000000]
+        if self.ctrl_type == unreal.RigElementType.NULL:
+            self.rig_key = self.hierarchy_ctrlr.add_null(
+                self.name,
+                self.parent,
+                unreal.Transform()
+            )
+        else:
+            self.rig_key = self.hierarchy_ctrlr.add_control(
+                self.name,
+                self.parent,
+                self.settings,
+                unreal.RigHierarchy.make_control_value_from_euler_transform(
+                    unreal.EulerTransform(
+                        location=[0.000000, 0.000000, 0.000000],
+                        rotation=[0.000000, -0.000000, 0.000000],
+                        scale=[1.000000, 1.000000, 1.000000]
+                    )
                 )
             )
-        )
 
         # The control name generated might be different from the one you input due
         # to collisions with an existing control name
@@ -235,13 +246,15 @@ class CR_Control:
                 affect_children=False
             )
 
-
-    def set_parent(self, parent_name=None, parent_type: unreal.RigElementType = None,
-                   parent_rekey: unreal.RigElementKey = None):
+    def set_parent(self,
+                   parent_name=None,
+                   parent_type: unreal.RigElementType = None,
+                   parent_rekey: unreal.RigElementKey = None
+                   ):
         rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
 
         # Child Rig Element Key
-        child_rekey = unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=self.name)
+        child_rekey = unreal.RigElementKey(type=self.ctrl_type, name=self.name)
 
         # Creates a parent rig element key if one metadata passed in.
         if parent_name and parent_type:
