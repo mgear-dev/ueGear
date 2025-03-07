@@ -512,6 +512,11 @@ class ManualComponent(Component):
             # Generate the Control
             new_control.build(hierarchy_controller)
 
+            # Remove's the Scale and Rotation on the leg ik control
+            if role == "ik":
+                control_transform.set_editor_property("rotation", unreal.Quat.IDENTITY)
+                control_transform.set_editor_property("scale3D", unreal.Vector(1,1,1))
+
             # Sets the controls position, and offset translation and scale of the shape
             new_control.set_transform(quat_transform=control_transform)
             # - Modified for epic arm
