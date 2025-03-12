@@ -354,6 +354,67 @@ class UEGearManager:
                     unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=parent_control_name),
                     True)
 
+        self.update_all_manual_control_transforms()
+
+    def update_all_manual_control_transforms(self):
+        """
+        Manually generated controls rely on parent controls to exist to calculate the local offset.
+        As the parent only exists after all the components have been generated and parented we run this .
+        """
+        hrc_controller = self._active_blueprint.get_hierarchy_controller()
+        rig_hrc = hrc_controller.get_hierarchy()
+
+        # Positions all controls in the correct World Position, and remove all the offset transform data
+        for component in self.uegear_components:
+            for role in component.control_by_role.keys():
+                m_control = component.control_by_role[role]
+
+                if (m_control.ctrl_type == unreal.RigElementType.NULL):
+                    continue
+
+                transform = component.metadata.control_transforms[m_control.name]
+
+                # Reset the offset values
+                rig_hrc.set_control_offset_transform(
+                    m_control.rig_key,
+                    unreal.Transform(),
+                    initial=True,
+                    affect_children=False
+                )
+
+                rig_hrc.set_global_transform(
+                    m_control.rig_key,
+                    transform,
+                    initial=True,
+                    affect_children=False)
+
+        # Reads the local position of the control and applies it as the offset then
+        # removes the initial transform values.
+        for component in self.uegear_components:
+            for role in component.control_by_role.keys():
+                m_control = component.control_by_role[role]
+
+                if (m_control.ctrl_type == unreal.RigElementType.NULL):
+                    continue
+
+                initial_local_trans = rig_hrc.get_local_transform(
+                    m_control.rig_key,
+                    True)
+
+                rig_hrc.set_control_offset_transform(
+                    m_control.rig_key,
+                    initial_local_trans,
+                    initial=True,
+                    affect_children=True
+                )
+
+                rig_hrc.set_local_transform(
+                    m_control.rig_key,
+                    unreal.Transform(),
+                    initial=True,
+                    affect_children=True)
+
+
     def connect_execution(self):
         """Connects the individual functions Execution port, in order of parent hierarchy"""
 
