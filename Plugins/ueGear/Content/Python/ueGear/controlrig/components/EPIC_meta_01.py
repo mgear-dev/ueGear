@@ -368,9 +368,9 @@ class ManualComponent(Component):
             # Stores the control by role, for loopup purposes later
             self.control_by_role[role] = new_control
 
-        self.initialize_hierarchy(hierarchy_controller)
+        self.initialize_internal_hierarchy(hierarchy_controller)
 
-    def initialize_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
+    def initialize_internal_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
         """Performs the hierarchical restructuring of the internal components controls"""
         # Parent control hierarchy using roles
         for parent_role in self.hierarchy_schematic_roles.keys():
