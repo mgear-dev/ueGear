@@ -354,8 +354,8 @@ class UEGearManager:
                     unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=parent_control_name),
                     True)
 
-        self.update_all_manual_control_transforms()
-
+    # NOTE: This was removed as the order of applying transforms and there offsets was figured out and this post process
+    # is no longer required
     def update_all_manual_control_transforms(self):
         """
         Manually generated controls rely on parent controls to exist to calculate the local offset.

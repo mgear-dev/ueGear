@@ -235,21 +235,20 @@ class CR_Control:
             if (self.ctrl_type == unreal.RigElementType.NULL):
                 return
 
-            # todo: Add a finalise_build method to manual builds and loop over all controls and set there offsets.
-            # initial_local_trans = rig_hrc.get_local_transform(self.rig_key, True)
-            #
-            # rig_hrc.set_local_transform(
-            #     self.rig_key,
-            #     unreal.Transform(),
-            #     initial=True,
-            #     affect_children=False)
-            #
-            # rig_hrc.set_control_offset_transform(
-            #     self.rig_key,
-            #     initial_local_trans,
-            #     initial=True,
-            #     affect_children=False
-            # )
+            initial_local_trans = rig_hrc.get_local_transform(self.rig_key, True)
+
+            rig_hrc.set_control_offset_transform(
+                self.rig_key,
+                initial_local_trans,
+                initial=True,
+                affect_children=True
+            )
+
+            rig_hrc.set_local_transform(
+                self.rig_key,
+                unreal.Transform(),
+                initial=True,
+                affect_children=True)
 
     def set_parent(self,
                    parent_name=None,
