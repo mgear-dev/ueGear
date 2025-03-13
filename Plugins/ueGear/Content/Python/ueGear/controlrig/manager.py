@@ -140,7 +140,7 @@ class UEGearManager:
             placeholder_component = mgear.mgComponent()
             placeholder_component.controls = [name]
             placeholder_component.joints = None
-            placeholder_component.comp_type = "world_ctrl"
+            placeholder_component.comp_type = "world_ctl"
             # populating the boundin box
             placeholder_component.controls_aabb = dict()
             placeholder_component.controls_aabb[name] = [[0, 0, 0], [120.0, 120.0, 120.0]]
@@ -173,6 +173,9 @@ class UEGearManager:
 
             placeholder_component.controls_role = dict()
             placeholder_component.controls_role["world_ctl"] = "root"
+
+            placeholder_component.control_relatives = dict()
+            placeholder_component.control_relatives["root"] = "world_ctl"
 
             ueg_comp = EPIC_control_01.ManualComponent()
             ueg_comp.metadata = placeholder_component
@@ -326,7 +329,7 @@ class UEGearManager:
 
         for comp in self.uegear_components:
             # Ignore world control
-            if comp.metadata.comp_type == "world_ctrl":
+            if comp.metadata.comp_type == "world_ctl":
                 continue
             # Ignore root component
             if world_component == comp:
@@ -365,15 +368,18 @@ class UEGearManager:
             if not component.is_manual:
                 continue
 
-            # Skip world control if found.
-            if component.metadata.comp_type == "world_ctrl":
+            # Skip world control if found, as world control does not parent to anything.
+            if component.metadata.comp_type == "world_ctl":
                 continue
 
-            # If the component has no parent, then we continue.
+            # If the component has no parent, then we assume it is needing the world control to be parented.
             if component.parent_node is None:
                 continue
-                # world_component = self.get_uegear_world_component()
-                # parent_control_relatives['root'] = world_component.metadata.controls[0]
+
+            # If the parent is the world control, then we force the parent_localname to be root
+            if component.parent_node.name == "world_ctl":
+                # Force the component that has no parent to be a child of the world_ctl
+                component.metadata.parent_localname = "root"
 
             parent_control_relatives = component.parent_node.metadata.control_relatives
             if parent_control_relatives is None:
@@ -816,7 +822,7 @@ class UEGearManager:
 
     def get_uegear_world_component(self) -> components.base_component.UEComponent:
         for comp in self.uegear_components:
-            if comp.metadata.comp_type == "world_ctrl":
+            if comp.metadata.comp_type == "world_ctl":
                 return comp
 
     def get_uegear_component(self, name) -> components.base_component.UEComponent:
