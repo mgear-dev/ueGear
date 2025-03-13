@@ -247,7 +247,9 @@ class ManualComponent(Component):
             control_colour = self.metadata.controls_colour[control_name]
             control_aabb = self.metadata.controls_aabb[control_name]
             control_offset = control_aabb[0]
-            control_scale = control_aabb[1]
+            control_scale = [control_aabb[1][0] / 4.0,
+                             control_aabb[1][1] / 4.0,
+                             control_aabb[1][2] / 4.0]
 
             # Set the colour, required before build
             new_control.colour = control_colour
