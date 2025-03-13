@@ -133,27 +133,55 @@ class UEGearManager:
         # Creates the Forward,Backwards and Construction event
         self.create_solves()
 
-        # As the world control is not a specific component in mGear, we create a psudo
-        # component for it.
-        placeholder_component = mgear.mgComponent()
-        placeholder_component.controls = [name]
-        placeholder_component.joints = None
-        placeholder_component.comp_type = "world_ctrl"
-        # populating the boundin box
-        placeholder_component.controls_aabb = dict()
-        placeholder_component.controls_aabb[name] = [[0, 0, 0], [120.0, 120.0, 120.0]]
+        # Create Automatic built world control
+        if self._buildConstructionControlFunctions:
+            # As the world control is not a specific component in mGear, we create a psudo
+            # component for it.
+            placeholder_component = mgear.mgComponent()
+            placeholder_component.controls = [name]
+            placeholder_component.joints = None
+            placeholder_component.comp_type = "world_ctrl"
+            # populating the boundin box
+            placeholder_component.controls_aabb = dict()
+            placeholder_component.controls_aabb[name] = [[0, 0, 0], [120.0, 120.0, 120.0]]
 
-        ueg_comp = EPIC_control_01.Component()
-        ueg_comp.metadata = placeholder_component
-        ueg_comp.name = name
+            ueg_comp = EPIC_control_01.Component()
+            ueg_comp.metadata = placeholder_component
+            ueg_comp.name = name
 
-        self.uegear_components.append(ueg_comp)
+            self.uegear_components.append(ueg_comp)
 
-        ueg_comp.create_functions(controller)
+            ueg_comp.create_functions(controller)
 
-        # Orients the control shape
-        ueg_comp.populate_control_shape_orientation(controller)
-        ueg_comp.populate_control_scale(controller)
+            # Orients the control shape
+            ueg_comp.populate_control_shape_orientation(controller)
+            ueg_comp.populate_control_scale(controller)
+        else:
+            placeholder_component = mgear.mgComponent()
+            placeholder_component.controls = [name]
+            placeholder_component.joints = None
+            placeholder_component.comp_type = "world_ctl"
+            # populating the boundin box
+            placeholder_component.controls_aabb = dict()
+            placeholder_component.controls_aabb[name] = [[0, 0, 0], [120.0, 120.0, 120.0]]
+
+            placeholder_component.control_transforms = dict()
+            placeholder_component.control_transforms["world_ctl"] = unreal.Transform()
+
+            placeholder_component.controls_colour = dict()
+            placeholder_component.controls_colour["world_ctl"] = [1,0,0]
+
+            placeholder_component.controls_role = dict()
+            placeholder_component.controls_role["world_ctl"] = "root"
+
+            ueg_comp = EPIC_control_01.ManualComponent()
+            ueg_comp.metadata = placeholder_component
+            ueg_comp.name = name
+
+            self.uegear_components.append(ueg_comp)
+
+            ueg_comp.create_functions(controller)
+            ueg_comp.generate_manual_controls(self._active_blueprint.get_hierarchy_controller())
 
     def build_component(self, name, manual_component=False):
         """Create an individual component from the mgear scene desciptor file.
