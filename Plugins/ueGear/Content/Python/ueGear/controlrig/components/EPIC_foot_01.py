@@ -361,7 +361,7 @@ class ManualComponent(Component):
         super().__init__()
 
         self.functions = {'construction_functions': ['manual_construct_IK_foot'],
-                          'forward_functions': ['forward_IK_foot'],
+                          'forward_functions': ['manual_forward_IK_foot'],
                           'backwards_functions': ['backwards_IK_foot'],
                           }
 
