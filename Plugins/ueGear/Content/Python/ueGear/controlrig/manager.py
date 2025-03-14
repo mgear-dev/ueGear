@@ -1204,6 +1204,7 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
 
     gear_manager = UEGearManager()
     gear_manager.load_rig(mgear_rig)
+    gear_manager._buildConstructionControlFunctions = constructionControls
 
     # Creates an asset path
     cr_path = TEST_CONTROLRIG_PATH + "/" + TEST_CONTROLRIG_NAME
