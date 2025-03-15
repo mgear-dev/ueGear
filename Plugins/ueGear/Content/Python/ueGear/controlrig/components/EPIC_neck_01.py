@@ -341,6 +341,9 @@ class ManualComponent(Component):
             "head": "Box_Thick"
         }
 
+        # ignores building the controls with the specific role
+        self.skip_roles = ["ik"]
+
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
         self.setup_dynamic_hierarchy_roles(self.metadata.settings['division'], end_control_role="head")
@@ -384,6 +387,10 @@ class ManualComponent(Component):
             print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
+
+            # Skip a control that contains a role that has any of the keywords to skip
+            if any([skip in role for skip in self.skip_roles]):
+                continue
 
             # stored metadata values
             control_transform = self.metadata.control_transforms[control_name]
