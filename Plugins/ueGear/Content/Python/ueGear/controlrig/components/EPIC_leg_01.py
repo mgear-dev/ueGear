@@ -432,12 +432,14 @@ class ManualComponent(Component):
         self.is_manual = True
 
         # These are the roles that will be parented directly under the parent component.
-        self.root_control_children = ["fk0", "ik", "upv"]
+        self.root_control_children = ["fk0", "null_offset", "upv"]
 
         self.hierarchy_schematic_roles = {"fk0": ["fk1"],
                                           "fk1": ["fk2"],
+                                          "null_offset": ["ik"],
                                           # "ikcns": ["ik"],
-                                          "root": ["ik", "fk0"]}
+                                          # "root": ["ik", "fk0"]
+                                          }
 
         # Default to fall back onto
         self.default_shape = "Circle_Thick"
@@ -529,7 +531,42 @@ class ManualComponent(Component):
             # Stores the control by role, for loopup purposes later
             self.control_by_role[role] = new_control
 
+        self.generate_manual_null(hierarchy_controller)
+
         self.initialize_hierarchy(hierarchy_controller)
+
+    def generate_manual_null(self, hierarchy_controller: unreal.RigHierarchyController):
+
+        null_names = ["leg_{side}0_ik_cns"]
+        control_trans_to_use = ["leg_{side}0_ik_ctl"]
+        # As this null does not exist, we create a new "fake" name and add it to the control_by_role. This is done
+        # so the parent hierarchy can detect it.
+        injected_role_name = ["null_offset"]
+
+        print("Generate_manual_null")
+        print(null_names)
+
+        for i, null_meta_name in enumerate(null_names):
+
+            print("LEG MANUAL NULL CREATION")
+
+            trans_meta_name = control_trans_to_use[i]
+            null_role = injected_role_name[i]
+
+            null_name = null_meta_name.format(**{"side": self.metadata.side})
+            trans_name = trans_meta_name.format(**{"side": self.metadata.side})
+            control_transform = self.metadata.control_transforms[trans_name]
+
+            # Generate the Null
+            new_null = controls.CR_Control(name=null_name)
+            new_null.set_control_type(unreal.RigElementType.NULL)
+            new_null.build(hierarchy_controller)
+
+            new_null.set_transform(quat_transform=control_transform)
+
+            # rig_hrc = hierarchy_controller.get_hierarchy()
+
+            self.control_by_role[null_role] = new_null
 
     def initialize_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
         """Performs the hierarchical restructuring of the internal components controls"""
@@ -593,3 +630,25 @@ class ManualComponent(Component):
 
         update_input_plug("fk_controls", fk_controls)
         update_input_plug("ik_controls", ik_controls)
+
+    def forward_solve_connect(self, controller: unreal.RigVMController):
+        """
+        Performs any custom connections between forward solve components
+        """
+
+        print("Forward Solve - Parent Node")
+
+        _parent_node = self.parent_node
+        while _parent_node.metadata.name != "root" and _parent_node != None:
+
+            if _parent_node.metadata.name != "root":
+                _parent_node = _parent_node.parent_node
+
+        if _parent_node is None:
+            return
+
+        root_forward_node_name = _parent_node.nodes["forward_functions"][0].get_name()
+        forward_node_name = self.nodes["forward_functions"][0].get_name()
+
+        controller.add_link(f'{root_forward_node_name}.control',
+                            f'{forward_node_name}.root_ctrl')

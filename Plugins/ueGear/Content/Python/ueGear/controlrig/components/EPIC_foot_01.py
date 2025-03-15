@@ -541,5 +541,5 @@ class ManualComponent(Component):
         parent_forward_node_name = self.parent_node.nodes["forward_functions"][0].get_name()
         forward_node_name = self.nodes["forward_functions"][0].get_name()
 
-        # controller.add_link(f'{parent_forward_node_name}.ik_active_out',
-        #                     f'{forward_node_name}.ik_active')
+        controller.add_link(f'{parent_forward_node_name}.ik_active_out',
+                            f'{forward_node_name}.ik_active')
