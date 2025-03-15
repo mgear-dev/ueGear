@@ -261,7 +261,9 @@ class ManualComponent(Component):
 
             # Sets the controls position, and offset translation and scale of the shape
             new_control.set_transform(quat_transform=control_transform)
-            new_control.shape_transform_global(pos=control_offset, scale=control_scale)
+            new_control.shape_transform_global(pos=control_offset,
+                                               scale=control_scale,
+                                               rotation=[90, 0, 0])
 
             # Stores the control by role, for loopup purposes later
             self.control_by_role[role] = new_control

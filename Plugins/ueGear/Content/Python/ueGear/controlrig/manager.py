@@ -186,6 +186,9 @@ class UEGearManager:
             ueg_comp.create_functions(controller)
             ueg_comp.generate_manual_controls(self._active_blueprint.get_hierarchy_controller())
 
+            # Sets the world control's shape rotation to 0
+            ueg_comp.control_by_role["root"].shape_transform_global(rotation=[0, 0, 0])
+
     def build_component(self, name, manual_component=False):
         """Create an individual component from the mgear scene desciptor file.
 
