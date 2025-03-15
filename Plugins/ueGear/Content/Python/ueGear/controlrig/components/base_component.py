@@ -209,6 +209,14 @@ class UEComponent(object):
         """
         pass
 
+    def forward_solve_connect(self, controller: unreal.RigVMController):
+        """OVERLOAD THIS METHOD
+
+        This is the location you would add any custom node to node connection logic, for forward
+        solved nodes/functions.
+        """
+        pass
+
     def add_misc_function(self, node):
         """
         Adds a miscilanois function(node) to this component so it can be more easily accessed

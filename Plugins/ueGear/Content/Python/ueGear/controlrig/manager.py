@@ -765,6 +765,13 @@ class UEGearManager:
             else:
                 unreal.log_error(f"Invalid relationship data found: {comp.name}")
 
+    def connect_forward_functions(self):
+        """Triggers the forward function connections if the component
+        contains the specific method."""
+
+        for comp in self.uegear_components:
+            comp.forward_solve_connect(self.get_active_controller())
+
     def connect_components(self):
         """Connects all the built components"""
 
@@ -775,6 +782,7 @@ class UEGearManager:
         print("---------------------------------")
 
         self.connect_construction_functions()
+        self.connect_forward_functions()
 
         return
 

@@ -534,8 +534,12 @@ class ManualComponent(Component):
         update_input_plug("nulls", nulls)
 
 
-    # Was thinking of performing a post translation update, but we would need to have the hierarchy and this would need to run after all the hierarchy parenting has occured.
+    def forward_solve_connect(self, controller: unreal.RigVMController):
+        """
+        Performs any custom connections between forward solve components
+        """
+        parent_forward_node_name = self.parent_node.nodes["forward_functions"][0].get_name()
+        forward_node_name = self.nodes["forward_functions"][0].get_name()
 
-    # def init_input_data(self, controller: unreal.RigVMController):
-    #     for k in self.control_by_role.keys():
-    #         control = self.control_by_role[k]
+        # controller.add_link(f'{parent_forward_node_name}.ik_active_out',
+        #                     f'{forward_node_name}.ik_active')
