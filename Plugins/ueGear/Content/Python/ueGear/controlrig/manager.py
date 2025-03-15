@@ -389,6 +389,11 @@ class UEGearManager:
             parent_control_name = parent_control_relatives[component.metadata.parent_localname]
 
             for child_ctrl_role in component.root_control_children:
+
+                if child_ctrl_role not in component.control_by_role.keys():
+                    print(f"Parenting Manual Component [{component.name.upper()}] - Skipping role {child_ctrl_role}")
+                    continue
+
                 # gets the control from the role name, using the lookup table
                 child_ctrl = component.control_by_role[child_ctrl_role]
 
