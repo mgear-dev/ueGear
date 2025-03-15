@@ -1251,7 +1251,7 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
 
     # Deactivate Autocompile, to speed up builds
     compile_status = gear_manager.get_compile_mode()
-    gear_manager.set_compile_mode(False)
+    # gear_manager.set_compile_mode(False)
 
     # todo: commented out as the folder should only be deleted if it is empty.
     # if cr_bp is None:
@@ -1270,4 +1270,4 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.group_components()
 
     # Sets the auto-compiler back to how it was before building
-    gear_manager.set_compile_mode(compile_status)
+    # gear_manager.set_compile_mode(compile_status)
