@@ -241,6 +241,7 @@ class ManualComponent(Component):
         for control_name in self.metadata.controls:
             print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
+            role = self.metadata.controls_role[control_name]
 
             # stored metadata values
             control_transform = self.metadata.control_transforms[control_name]
@@ -263,9 +264,35 @@ class ManualComponent(Component):
             new_control.shape_transform_global(pos=control_offset, scale=control_scale)
 
             # Stores the control by role, for loopup purposes later
-            role = self.metadata.controls_role[control_name]
             self.control_by_role[role] = new_control
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
-        # todo: populates the generated controls transform data
-        pass
+
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        controls = []
+
+        for role_key in self.control_by_role.keys():
+            control = self.control_by_role[role_key]
+            controls.append(control)
+
+        def update_input_plug(plug_name, control_list):
+            """
+            Simple helper function making the plug population reusable for ik and fk
+            """
+            for entry in control_list:
+                if entry.rig_key.type == unreal.RigElementType.CONTROL:
+                    t = "Control"
+                if entry.rig_key.type == unreal.RigElementType.NULL:
+                    t = "Null"
+                n = entry.rig_key.name
+                entry = f'(Type={t}, Name="{n}")'
+
+                controller.set_pin_default_value(
+                    f'{construction_func_name}.{plug_name}',
+                    f"{entry}",
+                    True,
+                    setup_undo_redo=True,
+                    merge_undo_action=True)
+
+        update_input_plug("control", controls)
