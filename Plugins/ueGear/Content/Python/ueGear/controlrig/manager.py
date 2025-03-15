@@ -397,6 +397,8 @@ class UEGearManager:
                     unreal.RigElementKey(type=unreal.RigElementType.CONTROL, name=parent_control_name),
                     True)
 
+        self.update_all_manual_control_transforms()
+
     # NOTE: This was removed as the order of applying transforms and there offsets was figured out and this post process
     # is no longer required
     def update_all_manual_control_transforms(self):
@@ -415,7 +417,27 @@ class UEGearManager:
                 if (m_control.ctrl_type == unreal.RigElementType.NULL):
                     continue
 
-                transform = component.metadata.control_transforms[m_control.name]
+                # Skip World Control as that is always at origin
+                if m_control.name == "world_ctl":
+                    continue
+
+                manual_control_name = m_control.name
+                control_transform_names = component.metadata.control_transforms.keys()
+
+                transform = None
+
+                for name in control_transform_names:
+                    if name == manual_control_name:
+                        transform = component.metadata.control_transforms[name]
+
+                if transform is None:
+                    continue
+
+                # if m_control.name not in component.metadata.control_transforms.keys():
+                #     unreal.log_error(f"Manual Control Position Update: Cannot find {m_control.name}")
+                #     continue
+
+                # transform = component.metadata.control_transforms[m_control.name]
 
                 # Reset the offset values
                 rig_hrc.set_control_offset_transform(

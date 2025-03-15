@@ -37,6 +37,16 @@ class CR_Control:
 
         if control_exists.index > -1:
             self.rig_key = control_exists.key
+
+            # resets the control position and offset
+            rig_hierarchy.set_global_transform(
+                self.rig_key,
+                unreal.Transform(),
+                initial=True,
+                affect_children=True)
+
+            self.offset()
+
             print("   - Control already exists.")
             return
 
@@ -235,20 +245,20 @@ class CR_Control:
             if (self.ctrl_type == unreal.RigElementType.NULL):
                 return
 
-            initial_local_trans = rig_hrc.get_local_transform(self.rig_key, True)
+            # initial_local_trans = rig_hrc.get_local_transform(self.rig_key, True)
 
             rig_hrc.set_control_offset_transform(
                 self.rig_key,
-                initial_local_trans,
+                unreal.Transform(),
                 initial=True,
-                affect_children=True
+                affect_children=False
             )
 
             rig_hrc.set_local_transform(
                 self.rig_key,
                 unreal.Transform(),
                 initial=True,
-                affect_children=True)
+                affect_children=False)
 
     def set_parent(self,
                    parent_name=None,
