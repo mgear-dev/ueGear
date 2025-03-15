@@ -12,7 +12,8 @@ class mgRig():
     """Dictionary of all the components with the key being the component name"""
 
     def __init__(self) -> None:
-        pass
+        self.components = dict()
+        self.settings = None
 
     def add_component(self, name: str = None, new_component: mgComponent = None):
         """
