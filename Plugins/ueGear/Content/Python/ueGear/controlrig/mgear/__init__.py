@@ -255,6 +255,12 @@ def _calculate_bb(min, max):
         bb_offset.append(offset)
         bb_center.append(center)
 
+    # Checks no axis is 0 as unreal 5.3 has an issue that is a shape
+    # has an axis of 0 then shape updating does not work.
+    for idx, value in enumerate(bb_offset):
+        if value < 0.001:
+            bb_offset[idx] = 0.01
+
     return bb_center, bb_offset
 
 
