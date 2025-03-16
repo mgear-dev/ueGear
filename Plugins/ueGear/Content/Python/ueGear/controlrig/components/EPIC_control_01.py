@@ -135,9 +135,9 @@ class Component(base_component.UEComponent):
 
             ue_cr_node = controller.get_graph().find_node_by_name(construction_node)
 
-            # controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
-            #                                  '90.000000',
-            #                                  False)
+            controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
+                                             '90.000000',
+                                             False)
 
     def populate_control_scale(self, controller: unreal.RigVMController):
         """Calculates the size of the control from the Bounding Box"""

@@ -156,6 +156,13 @@ class UEGearManager:
             # Orients the control shape
             ueg_comp.populate_control_shape_orientation(controller)
             ueg_comp.populate_control_scale(controller)
+
+            cr_func = ueg_comp.functions["construction_functions"][0]
+            construction_node = f"{ueg_comp.name}_{cr_func}"
+            controller.set_pin_default_value(f'{construction_node}.control_orientation.X',
+                                             '0.0',
+                                             False)
+
         else:
             placeholder_component = mgear.mgComponent()
             placeholder_component.controls = [name]
