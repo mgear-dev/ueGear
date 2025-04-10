@@ -95,7 +95,7 @@ bool GearMayaTrackEditor::ImportAnimatedProperty(const FString& InPropertyName, 
 					FMovieSceneFloatChannel* FloatChannel = &TakeSection->GetChannel();
 					FloatChannel->Set(KeyTimes, KeyFloatValues);
 					FloatChannel->SetKeysOnly(KeyTimes, KeyFloatValues);
-					// TakeSection->Modify();
+					TakeSection->Modify();
 					
 					// Resize the Clip to fit the animated curve data
 					TOptional<TRange<FFrameNumber>> AutoSizeRange = TakeSection->GetAutoSizeRange();
