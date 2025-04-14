@@ -1,7 +1,8 @@
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
-from ueGear.controlrig.components import base_component
+from ueGear.controlrig.components import base_component, EPIC_control_01
+from ueGear.controlrig.helpers import controls
 
 
 class Component(base_component.UEComponent):
@@ -123,7 +124,7 @@ class Component(base_component.UEComponent):
                     'DISPATCH_RigVMDispatch_ArrayGetAtIndex(in Array,in Index,out Element)',
                     unreal.Vector2D(3500, 800),
                     individual_index_node
-                    )
+                )
                 self.add_misc_function(node)
 
                 controller.add_link(f'{array_node_name}.Items',
@@ -192,7 +193,6 @@ class Component(base_component.UEComponent):
                                          True,
                                          setup_undo_redo=True,
                                          merge_undo_action=True)
-
 
     def init_input_data(self, controller: unreal.RigVMController):
 
@@ -304,7 +304,6 @@ class Component(base_component.UEComponent):
             setup_undo_redo=True,
             merge_undo_action=True)
 
-
         self.populate_control_scale(
             fk_control_names,
             ik_upv_name,
@@ -312,14 +311,14 @@ class Component(base_component.UEComponent):
             controller)
 
         self.populate_control_shape_offset(fk_control_names,
-            ik_upv_name,
-            ik_eff_name,
-            controller)
+                                           ik_upv_name,
+                                           ik_eff_name,
+                                           controller)
 
         self.populate_control_colour(fk_control_names,
-            ik_upv_name,
-            ik_eff_name,
-            controller)
+                                     ik_upv_name,
+                                     ik_eff_name,
+                                     controller)
 
     def populate_control_scale(self, fk_names: list[str], ik_upv: str, ik_eff: str, controller: unreal.RigVMController):
         """
@@ -361,7 +360,8 @@ class Component(base_component.UEComponent):
             setup_undo_redo=True,
             merge_undo_action=True)
 
-    def populate_control_shape_offset(self, fk_names: list[str], ik_upv: str, ik_eff: str, controller: unreal.RigVMController):
+    def populate_control_shape_offset(self, fk_names: list[str], ik_upv: str, ik_eff: str,
+                                      controller: unreal.RigVMController):
         """
         As some controls have there pivot at the same position as the transform, but the control is actually moved
         away from that pivot point. We use the bounding box position as an offset for the control shape.
@@ -388,7 +388,7 @@ class Component(base_component.UEComponent):
             merge_undo_action=True)
 
     def populate_control_colour(self, fk_names: list[str], ik_upv: str, ik_eff: str,
-                                              controller: unreal.RigVMController):
+                                controller: unreal.RigVMController):
 
         cr_func = self.functions["construction_functions"][0]
         construction_node = f"{self.name}_{cr_func}"
@@ -409,3 +409,171 @@ class Component(base_component.UEComponent):
             True,
             setup_undo_redo=True,
             merge_undo_action=True)
+
+
+class ManualComponent(Component):
+    name = "EPIC_arm_02"
+
+    def __init__(self):
+        super().__init__()
+
+        self.functions = {'construction_functions': ['manual_construct_IK_arm'],
+                          'forward_functions': ['forward_IK_arm'],
+                          'backwards_functions': ['backwards_IK_arm'],
+                          }
+
+        self.is_manual = True
+
+        # These are the roles that will be parented directly under the parent component.
+        self.root_control_children = ["fk0", "ik", "upv"]
+
+        self.hierarchy_schematic_roles = {"fk0": ["fk1"],
+                                          "fk1": ["fk2"]}
+
+        # Default to fall back onto
+        self.default_shape = "Circle_Thick"
+        self.control_shape = {
+            "ik": "Box_Thick",
+            "upv": "Diamond_Thick"
+        }
+
+        # todo: implement noodle
+        # Roles that will not be generated
+        # This is more of a developmental ignore, as we have not implemented this part of the component yet.
+        self.skip_roles = ["cns", "roll", "mid", "tweak", "Bendy", "Rot"]
+
+    def create_functions(self, controller: unreal.RigVMController):
+        EPIC_control_01.ManualComponent.create_functions(self, controller)
+
+        # todo: handle noodle arm creation. This also needs to be setup in the Unreal Control Rig Function/Node
+        # self.setup_dynamic_hierarchy_roles(end_control_role="head")
+
+    def setup_dynamic_hierarchy_roles(self, end_control_role=None):
+        """Manual controls have some dynamic control creation. This function sets up the
+        control relationship for the dynamic control hierarchy."""
+
+        # Calculate the amount of fk's based on the division amount
+        fk_count = self.metadata.settings['division']
+        for i in range(fk_count):
+            parent_role = f"fk{i}"
+            child_index = i + 1
+            child_role = f"fk{child_index}"
+
+            # end of the fk chain, parent the end control if one specified
+            if child_index >= fk_count:
+                if end_control_role:
+                    self.hierarchy_schematic_roles[parent_role] = [end_control_role]
+                    continue
+
+            self.hierarchy_schematic_roles[parent_role] = [child_role]
+
+    def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Creates all the manual controls for the Spine"""
+        # Stores the controls by Name
+        control_table = dict()
+
+        for control_name in self.metadata.controls:
+            print(f"Initializing Manual Control - {control_name}")
+            new_control = controls.CR_Control(name=control_name)
+            role = self.metadata.controls_role[control_name]
+
+            # Skip a control that contains a role that has any of the keywords to skip
+            if any([skip in role for skip in self.skip_roles]):
+                continue
+
+            # stored metadata values
+            control_transform = self.metadata.control_transforms[control_name]
+            control_colour = self.metadata.controls_colour[control_name]
+            control_aabb = self.metadata.controls_aabb[control_name]
+            control_offset = control_aabb[0]
+            # - modified for epic arm
+            control_scale = [control_aabb[1][2] / 4.0,
+                             control_aabb[1][2] / 4.0,
+                             control_aabb[1][2] / 4.0]
+
+            # Set the colour, required before build
+            new_control.colour = control_colour
+            if role not in self.control_shape.keys():
+                new_control.shape_name = self.default_shape
+            else:
+                new_control.shape_name = self.control_shape[role]
+
+            # Generate the Control
+            new_control.build(hierarchy_controller)
+
+            # Sets the controls position, and offset translation and scale of the shape
+            new_control.set_transform(quat_transform=control_transform)
+            # - Modified for epic arm
+            new_control.shape_transform_global(pos=control_offset,
+                                               scale=control_scale,
+                                               rotation=[90, 0, 90])
+
+            control_table[control_name] = new_control
+
+            # Stores the control by role, for loopup purposes later
+            self.control_by_role[role] = new_control
+
+        self.initialize_hierarchy(hierarchy_controller)
+
+    def initialize_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Performs the hierarchical restructuring of the internal components controls"""
+        # Parent control hierarchy using roles
+        for parent_role in self.hierarchy_schematic_roles.keys():
+            child_roles = self.hierarchy_schematic_roles[parent_role]
+
+            parent_ctrl = self.control_by_role[parent_role]
+
+            for child_role in child_roles:
+                child_ctrl = self.control_by_role[child_role]
+                hierarchy_controller.set_parent(child_ctrl.rig_key, parent_ctrl.rig_key)
+
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        fk_controls = []
+        ik_controls = []
+
+        # Groups all the controls into ik and fk lists
+
+        for role_key in self.control_by_role.keys():
+            # Generates the list of fk controls
+            if 'fk' in role_key:
+                control = self.control_by_role[role_key]
+                fk_controls.append(control)
+            elif "ik" == role_key or "upv" in role_key:
+                control = self.control_by_role[role_key]
+
+                if "ik" == role_key:
+                    ik_controls.insert(0, control)
+                elif "upv" in role_key:
+                    ik_controls.insert(1, control)
+            else:
+                #     todo: Implement noodle
+                continue
+
+        # Converts RigElementKey into one long string of key data.
+        def update_input_plug(plug_name, control_list):
+            """
+            Simple helper function making the plug population reusable for ik and fk
+            """
+            control_metadata = []
+            for entry in control_list:
+                if entry.rig_key.type == unreal.RigElementType.CONTROL:
+                    t = "Control"
+                if entry.rig_key.type == unreal.RigElementType.NULL:
+                    t = "Null"
+                n = entry.rig_key.name
+                entry = f'(Type={t}, Name="{n}")'
+                control_metadata.append(entry)
+
+            concatinated_controls = ",".join(control_metadata)
+
+            controller.set_pin_default_value(
+                f'{construction_func_name}.{plug_name}',
+                f"({concatinated_controls})",
+                True,
+                setup_undo_redo=True,
+                merge_undo_action=True)
+
+        update_input_plug("fk_controls", fk_controls)
+        update_input_plug("ik_controls", ik_controls)

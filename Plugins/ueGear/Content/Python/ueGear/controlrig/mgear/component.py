@@ -54,6 +54,15 @@ class mgComponent:
     """Some components contain guide transforms, these transforms are used to place
     underlying articulation positions."""
 
+    control_relatives: dict = None
+    """Lookup table that stores the relationship between the name and the control"""
+
+    alias_relatives: dict = None
+    """mGear keys in the relative dictionary can have multiple alias"""
+
+    settings: dict = None
+    """mGear component settings"""
+
     def __init__(self) -> None:
         pass
 

@@ -1,8 +1,8 @@
 import unreal
 
 from ueGear.controlrig.paths import CONTROL_RIG_FUNCTION_PATH
-from ueGear.controlrig.components import base_component
-
+from ueGear.controlrig.components import base_component, EPIC_control_01
+from ueGear.controlrig.helpers import controls
 
 class Component(base_component.UEComponent):
     name = "foot_component"
@@ -353,3 +353,193 @@ class Component(base_component.UEComponent):
             True,
             setup_undo_redo=True,
             merge_undo_action=True)
+
+class ManualComponent(Component):
+    name = "EPIC_foot_01"
+
+    def __init__(self):
+        super().__init__()
+
+        self.functions = {'construction_functions': ['manual_construct_IK_foot'],
+                          'forward_functions': ['manual_forward_IK_foot'],
+                          'backwards_functions': ['backwards_IK_foot'],
+                          }
+
+        self.is_manual = True
+
+        # These are the roles that will be parented directly under the parent component.
+        self.root_control_children = ["roll", "heel"]
+
+        self.hierarchy_schematic_roles = {
+            "heel": ["tip"],
+            "tip": ["bk0"],
+            "bk0": ["bk1"],
+            "bk1": ["null_fk0"],
+            "null_fk0": ["fk0"]
+            }
+
+        # Default to fall back onto
+        self.default_shape = "Circle_Thick"
+        self.control_shape = {
+            "fk0": "Box_Thick",
+            "roll": "Box_Thick",
+            "heel": "Sphere_Solid",
+            "bk1": "Sphere_Solid",
+            "bk0": "Sphere_Solid"
+        }
+
+        # Roles that will not be generated
+        # This is more of a developmental ignore, as we have not implemented this part of the component yet.
+        self.skip_roles = []
+
+        # todo: HANDLE OUTPIVOT AND INNERPIVOT => They are not Controls
+
+    def create_functions(self, controller: unreal.RigVMController):
+        EPIC_control_01.ManualComponent.create_functions(self, controller)
+
+        func_name = self.name + "_" + self.functions['construction_functions'][0]
+        controller.set_pin_default_value(f'{func_name}.side', self.metadata.side, False)
+
+
+
+    # todo: Create Null controls and add them to the hierarhcy_schematic
+    def generate_manual_null(self, hierarchy_controller: unreal.RigHierarchyController):
+
+        null_names = ["foot_{side}0_fk0_inverse"]
+        control_trans_to_use = ["foot_{side}0_bk1_ctl"]
+        # As this null does not exist, we create a new "fake" name and add it to the control_by_role. This is done
+        # so the parent hierarchy can detect it.
+        injected_role_name = ["null_fk0"]
+
+        for i, null_meta_name in enumerate(null_names):
+            trans_meta_name = control_trans_to_use[i]
+            null_role = injected_role_name[i]
+
+            null_name = null_meta_name.format(**{"side": self.metadata.side})
+            trans_name = trans_meta_name.format(**{"side": self.metadata.side})
+            control_transform = self.metadata.control_transforms[trans_name]
+
+            # Generate the Null
+            new_null = controls.CR_Control(name=null_name)
+            new_null.set_control_type(unreal.RigElementType.NULL)
+            new_null.build(hierarchy_controller)
+
+            new_null.set_transform(quat_transform=control_transform)
+
+            # rig_hrc = hierarchy_controller.get_hierarchy()
+
+            self.control_by_role[null_role] = new_null
+
+    def generate_manual_controls(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Creates all the manual controls for the Spine"""
+        # Stores the controls by Name
+        control_table = dict()
+
+        for control_name in self.metadata.controls:
+            print(f"Initializing Manual Control - {control_name}")
+            new_control = controls.CR_Control(name=control_name)
+            role = self.metadata.controls_role[control_name]
+
+            # Skip a control that contains a role that has any of the keywords to skip
+            if any([skip in role for skip in self.skip_roles]):
+                continue
+
+            # stored metadata values
+            control_transform = self.metadata.control_transforms[control_name]
+            control_colour = self.metadata.controls_colour[control_name]
+            control_aabb = self.metadata.controls_aabb[control_name]
+            control_offset = control_aabb[0]
+            # - modified for epic arm
+            control_scale = [control_aabb[1][2] / 4.0,
+                             control_aabb[1][2] / 4.0,
+                             control_aabb[1][2] / 4.0]
+
+            # Set the colour, required before build
+            new_control.colour = control_colour
+            if role not in self.control_shape.keys():
+                new_control.shape_name = self.default_shape
+            else:
+                new_control.shape_name = self.control_shape[role]
+
+            # Generate the Control
+            new_control.build(hierarchy_controller)
+
+            # Sets the controls position, and offset translation and scale of the shape
+            new_control.set_transform(quat_transform=control_transform)
+            # - Modified for epic arm
+            new_control.shape_transform_global(pos=control_offset,
+                                               scale=control_scale,
+                                               rotation=[90, 0, 90])
+
+            control_table[control_name] = new_control
+
+            # Stores the control by role, for loopup purposes later
+            self.control_by_role[role] = new_control
+
+        self.generate_manual_null(hierarchy_controller)
+
+        self.initialize_hierarchy(hierarchy_controller)
+
+    def initialize_hierarchy(self, hierarchy_controller: unreal.RigHierarchyController):
+        """Performs the hierarchical restructuring of the internal components controls"""
+        # Parent control hierarchy using roles
+        for parent_role in self.hierarchy_schematic_roles.keys():
+            child_roles = self.hierarchy_schematic_roles[parent_role]
+
+            parent_ctrl = self.control_by_role[parent_role]
+
+            for child_role in child_roles:
+                child_ctrl = self.control_by_role[child_role]
+                hierarchy_controller.set_parent(child_ctrl.rig_key, parent_ctrl.rig_key)
+
+    def populate_control_transforms(self, controller: unreal.RigVMController = None):
+        construction_func_name = self.nodes["construction_functions"][0].get_name()
+
+        controls = []
+        nulls = []
+
+        for role_key in ["heel", "tip", "roll", "bk0", "bk1", "fk0"]:
+            control = self.control_by_role[role_key]
+            controls.append(control)
+
+        for role_key in ["null_fk0"]:
+            control = self.control_by_role[role_key]
+            nulls.append(control)
+
+        # Converts RigElementKey into a string of key data.
+        def update_input_plug(plug_name, control_list):
+            """
+            Simple helper function making the plug population reusable for ik and fk
+            """
+            control_metadata = []
+            for entry in control_list:
+                if entry.rig_key.type == unreal.RigElementType.CONTROL:
+                    t = "Control"
+                if entry.rig_key.type == unreal.RigElementType.NULL:
+                    t = "Null"
+                n = entry.rig_key.name
+                entry = f'(Type={t}, Name="{n}")'
+                control_metadata.append(entry)
+
+            concatinated_controls = ",".join(control_metadata)
+
+            controller.set_pin_default_value(
+                f'{construction_func_name}.{plug_name}',
+                f"({concatinated_controls})",
+                True,
+                setup_undo_redo=True,
+                merge_undo_action=True)
+
+        update_input_plug("controls", controls)
+        update_input_plug("nulls", nulls)
+
+
+    def forward_solve_connect(self, controller: unreal.RigVMController):
+        """
+        Performs any custom connections between forward solve components
+        """
+        parent_forward_node_name = self.parent_node.nodes["forward_functions"][0].get_name()
+        forward_node_name = self.nodes["forward_functions"][0].get_name()
+
+        controller.add_link(f'{parent_forward_node_name}.ik_active_out',
+                            f'{forward_node_name}.ik_active')

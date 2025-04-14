@@ -52,6 +52,9 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
         mgear_component.parent_localname = data_component['parent_localName']
         mgear_component.data_contracts = {}
         mgear_component.joint_relatives = data_component['jointRelatives']
+        mgear_component.control_relatives = data_component['controlRelatives']
+        mgear_component.alias_relatives = data_component['aliasRelatives']
+        mgear_component.settings = data_component['Settings']
 
         # checks if guide transforms exists, as not all components have this attribute.
         if guide_transforms:
@@ -110,11 +113,14 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
             euler = unreal.Vector(x=world_euler['x'],
                                   y=world_euler['y'],
                                   z=world_euler['z'])
-            ue_quaternion.set_from_euler(euler)
+            # ue_quaternion.set_from_euler(euler)
 
             ue_trans = unreal.Transform()
             ue_trans.set_editor_property("translation", world_pos)
             ue_trans.set_editor_property("rotation", ue_quaternion)
+
+            # Converts from Maya space into Unreal Space
+            ue_trans = _convert_maya_matrix(ue_trans.to_matrix())
 
             if mgear_component.control_transforms is None:
                 mgear_component.control_transforms = {}
@@ -137,7 +143,7 @@ def convert_json_to_mg_rig(build_json_path: str) -> mgRig:
     return rig
 
 
-def _calculate_bounding_box(control_data: dict) -> list[int]:
+def _calculate_bounding_box(control_data: dict) -> tuple[list, list]:
     """
     Calculates a bounding box around the control, by evaluating the control points.
 
@@ -218,7 +224,8 @@ def _calculate_min_max_points(control_data: dict):
                 # correctly to the object in Unreal
                 point_mtx = unreal.Matrix.IDENTITY
                 point_mtx.w_plane = point + [1.0]
-                ue_space_trans = _convert_maya_matrix(point_mtx)
+                # ue_space_trans = _convert_maya_matrix(point_mtx)
+                ue_space_trans = _convert_maya_shape_matrix(point_mtx)
                 trans = ue_space_trans.translation
                 pos = [round(trans.x, 4), round(trans.y, 4), round(trans.z, 4)]
 
@@ -248,10 +255,55 @@ def _calculate_bb(min, max):
         bb_offset.append(offset)
         bb_center.append(center)
 
+    # Checks no axis is 0 as unreal 5.3 has an issue that is a shape
+    # has an axis of 0 then shape updating does not work.
+    for idx, value in enumerate(bb_offset):
+        if value < 0.001:
+            bb_offset[idx] = 0.01
+
     return bb_center, bb_offset
 
 
 def _convert_maya_matrix(maya_mtx: unreal.Matrix) -> unreal.Transform:
+    # Reorient Matrix
+    # This matrix is used to turn left hand rule into right hand rule
+    plane_x = unreal.Plane(x=1, y=0, z=0, w=0)
+    plane_y = unreal.Plane(x=0, y=0, z=-1, w=0)
+    plane_z = unreal.Plane(x=0, y=1, z=0, w=0)
+    plane_w = unreal.Plane(x=0, y=0, z=0, w=1)
+    reordered_mtx = unreal.Matrix(plane_x, plane_y, plane_z, plane_w)
+
+    t = unreal.Transform()
+    t_qaut = unreal.Quat()
+    t_qaut.set_from_euler(unreal.Vector(0, 0, 0))
+    t.rotation = t_qaut
+    rot_mtx = t.to_matrix()
+
+    plane_x2 = unreal.Plane(x=1, y=0, z=0, w=0)
+    plane_y2 = unreal.Plane(x=0, y=1, z=0, w=0)
+    plane_z2 = unreal.Plane(x=0, y=0, z=-1, w=0)
+    plane_w2 = unreal.Plane(x=0, y=0, z=0, w=1)
+    scale_mtx = unreal.Matrix(plane_x2, plane_y2, plane_z2, plane_w2)
+
+
+    # Calculates the new space by multiplying the reorder matrix and
+    # Rotating the new Y rotation by 180
+    corrected_space_mtx = maya_mtx * reordered_mtx * rot_mtx * scale_mtx
+
+
+    corrected_space_trans = corrected_space_mtx.transform()
+
+
+    # quat_rotation = corrected_space_mtx.to_quat()
+    # euler_rotation = quat_rotation.euler()
+    # euler_rotation.y = euler_rotation.z + 180
+    # quat_rotation.set_from_euler(euler_rotation)
+    # corrected_space_trans.rotation = quat_rotation
+
+
+    return corrected_space_trans
+
+def _convert_maya_shape_matrix(maya_mtx: unreal.Matrix) -> unreal.Transform:
     # Reorient Matrix
     # This matrix is used to turn left hand rule into right hand rule
     plane_x = unreal.Plane(x=1, y=0, z=0, w=0)
