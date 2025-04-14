@@ -26,7 +26,7 @@ def get_current_level_sequence():
     )
 
 
-def get_subsequence_tracks(sequence:unreal.LevelSequence=None):
+def get_subsequence_tracks(sequence: unreal.LevelSequence = None):
     """
     Gets all tracks that are sub-sequence tracks.
     :return: List of MovieSceneSubTrack, that exist in the sequence
@@ -38,7 +38,7 @@ def get_subsequence_tracks(sequence:unreal.LevelSequence=None):
     return sequence.find_tracks_by_exact_type(unreal.MovieSceneSubTrack)
 
 
-def get_subsequences(track:unreal.MovieSceneSubTrack):
+def get_subsequences(track: unreal.MovieSceneSubTrack):
     """
     Gets all sequences that exist in the Sub sequence track.
     :return: List of MovieSceneSequences, that were part of the track.
@@ -52,7 +52,7 @@ def get_subsequences(track:unreal.MovieSceneSubTrack):
     return sequences
 
 
-def get_framerate(sequence:unreal.MovieSceneSequence=None):
+def get_framerate(sequence: unreal.MovieSceneSequence = None):
     """
     Gets the sequencer's frame rate.
     :return: Frame rate for the specified sequencer. Frames per second.
@@ -66,6 +66,7 @@ def get_framerate(sequence:unreal.MovieSceneSequence=None):
         return None
 
     return sequence.get_display_rate().numerator
+
 
 def track_section_to_dict(section):
     """
@@ -147,7 +148,7 @@ def sequence_to_dict(sequence):
     sequence_data = dict()
 
     for master_trak in sequence.find_master_tracks_by_type(
-        unreal.MovieSceneTrack
+            unreal.MovieSceneTrack
     ):
         sequence_data["master_tracks"].append(track_to_dict(master_trak))
 
@@ -177,7 +178,7 @@ def sequence_to_json(sequence):
     return json.dumps(sequence_to_dict(sequence))
 
 
-def get_bound_objects(sequence:unreal.LevelSequence):
+def get_bound_objects(sequence: unreal.LevelSequence):
     """
     Returns objects in the current map that are bound to the given sequence.
 
@@ -191,20 +192,20 @@ def get_bound_objects(sequence:unreal.LevelSequence):
     ).get_editor_world()
     sequence_range = sequence.get_playback_range()
     seq_bound_objs = unreal.SequencerTools.get_bound_objects(
-        world, 
-        sequence, 
-        sequence.get_bindings(), 
+        world,
+        sequence,
+        sequence.get_bindings(),
         sequence_range
     )
 
     bound_objs = []
     for entry in seq_bound_objs:
         bound_objs.extend(entry.bound_objects)
-    
+
     return bound_objs
 
 
-def get_bound_object(track:unreal.MovieSceneBindingProxy, sequence:unreal.LevelSequence=None):
+def get_bound_object(track: unreal.MovieSceneBindingProxy, sequence: unreal.LevelSequence = None):
     """
     Queries the active Level Sequencer for the Objects that are bound to 
     the input Track ( MovieSceneBindingProxy ).
@@ -214,16 +215,16 @@ def get_bound_object(track:unreal.MovieSceneBindingProxy, sequence:unreal.LevelS
     """
     seq_tools = unreal.SequencerTools()
     editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-    
+
     if sequence is None:
         sequence = get_current_level_sequence()
 
     world = editor_system.get_editor_world()
     range = sequence.get_playback_range()
-    seq_bound_objs = seq_tools.get_bound_objects(world, 
-                                                sequence, 
-                                                [track],
-                                                range)
+    seq_bound_objs = seq_tools.get_bound_objects(world,
+                                                 sequence,
+                                                 [track],
+                                                 range)
 
     bound_objs = []
     for entry in seq_bound_objs:
@@ -260,7 +261,7 @@ def get_selected_cameras():
     return cameras
 
 
-def import_fbx_camera(name:str, sequence:unreal.LevelSequence, fbx_path:str):
+def import_fbx_camera(name: str, sequence: unreal.LevelSequence, fbx_path: str):
     """
     Imports the Camera FBX into the specified level sequencer. It overrides the camera that
     exists in the sequence and has a matching name.
@@ -279,7 +280,7 @@ def import_fbx_camera(name:str, sequence:unreal.LevelSequence, fbx_path:str):
         tracks = sequence.get_spawnables()
         for track in tracks:
             if track.get_display_name() == name and \
-                ueGear.sequencer.bindings.is_instanced_camera(track):
+                    ueGear.sequencer.bindings.is_instanced_camera(track):
                 camera_track = track
                 break
 
@@ -291,23 +292,23 @@ def import_fbx_camera(name:str, sequence:unreal.LevelSequence, fbx_path:str):
     fbx_config = unreal.MovieSceneUserImportFBXSettings()
     seq_tools = unreal.SequencerTools()
 
-    fbx_config.set_editor_property("match_by_name_only", True )
+    fbx_config.set_editor_property("match_by_name_only", True)
     fbx_config.set_editor_property("replace_transform_track", True)
     fbx_config.set_editor_property("create_cameras", False)
 
     seq_tools.import_level_sequence_fbx(world,
-                                        sequence, 
-                                        [camera_track], 
+                                        sequence,
+                                        [camera_track],
                                         fbx_config,
                                         fbx_path)
 
 
 def export_fbx_sequence(
-    sequence,
-    directory,
-    root_sequence=None,
-    fbx_filename="",
-    export_options=None,
+        sequence,
+        directory,
+        root_sequence=None,
+        fbx_filename="",
+        export_options=None,
 ):
     """
     Exports a FBX from Unreal sequence.
@@ -357,9 +358,9 @@ def export_fbx_sequence(
     return fbx_path if result else ""
 
 
-def export_fbx_binding(binding:unreal.MovieSceneBindingProxy, 
-                       path:str, 
-                       sequence:unreal.LevelSequence=None):
+def export_fbx_binding(binding: unreal.MovieSceneBindingProxy,
+                       path: str,
+                       sequence: unreal.LevelSequence = None):
     """
     Exports the object that relates to the track, to the path specified, as an fbx.
     Example: Camera track, would export the camera object to the specified location.
@@ -383,14 +384,14 @@ def export_fbx_binding(binding:unreal.MovieSceneBindingProxy,
 
     export_path = path + str(binding.get_display_name())
 
-    seq_fbx_params = unreal.SequencerExportFBXParams(world=world, 
-                                                     sequence=sequence, 
+    seq_fbx_params = unreal.SequencerExportFBXParams(world=world,
+                                                     sequence=sequence,
                                                      bindings=[binding],
-                                                     override_options = fbx_config,
-                                                     fbx_file_name = export_path
-    )
+                                                     override_options=fbx_config,
+                                                     fbx_file_name=export_path
+                                                     )
 
-    complete =  seq_tools.export_level_sequence_fbx(seq_fbx_params)
+    complete = seq_tools.export_level_sequence_fbx(seq_fbx_params)
 
     if complete:
         return export_path + ".fbx"
@@ -398,7 +399,7 @@ def export_fbx_binding(binding:unreal.MovieSceneBindingProxy,
     return None
 
 
-def export_fbx_bindings(bindings:list, path:str, sequence:unreal.LevelSequence=None):
+def export_fbx_bindings(bindings: list, path: str, sequence: unreal.LevelSequence = None):
     """
     Exports the MovieSceneBindingProxy as an fbx, to the path specified.
 
@@ -417,9 +418,9 @@ def export_fbx_bindings(bindings:list, path:str, sequence:unreal.LevelSequence=N
 
     for proxy_bind in bindings:
         fbx_path = export_fbx_binding(
-            binding=proxy_bind, 
+            binding=proxy_bind,
             path=path)
-        
+
         export_paths.append(fbx_path)
 
     return export_paths
@@ -462,6 +463,7 @@ def remove_sequence_camera(level_sequence_name="", camera_name=""):
 
     return True
 
+
 # TODO: This needs to return unreal.MovieSceneSequence and not unreal.SubSections
 def get_subsequences(level_sequence_name):
     """
@@ -488,7 +490,7 @@ def get_subsequences(level_sequence_name):
     )
 
 
-def get_sequencer_playback_range(sequence:unreal.MovieSceneSequence=None):
+def get_sequencer_playback_range(sequence: unreal.MovieSceneSequence = None):
     """
     Gets the Start and End frame of the sequence provided, else defaults to 
     active sequence.
@@ -508,13 +510,13 @@ def get_sequencer_playback_range(sequence:unreal.MovieSceneSequence=None):
 
     if playback_data.has_start():
         start_frame = playback_data.get_start_frame()
-    if playback_data.has_end():    
+    if playback_data.has_end():
         end_frame = playback_data.get_end_frame()
 
     return start_frame, end_frame
 
 
-def get_sequencer_view_range(sequence:unreal.MovieSceneSequence=None):
+def get_sequencer_view_range(sequence: unreal.MovieSceneSequence = None):
     """
     Gets the sequences view range.
     If no sequence is specified, then defaults to current active level sequencer.
@@ -536,7 +538,7 @@ def get_sequencer_view_range(sequence:unreal.MovieSceneSequence=None):
     return start_frame, end_frame
 
 
-def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
+def get_sequencer_work_range(sequence: unreal.MovieSceneSequence = None):
     """
     Gets the sequences work range.
     If no sequence is specified, then defaults to current active level sequencer.
@@ -558,7 +560,7 @@ def get_sequencer_work_range(sequence:unreal.MovieSceneSequence=None):
     return start_frame, end_frame
 
 
-def open_sequencer(level_sequence_path:str):
+def open_sequencer(level_sequence_path: str):
     """
     Opens the Sequencer UI in Unreal with the sequencer file.
     level_sequencer_path: Needs to be a PackageName (Start with /Game )
