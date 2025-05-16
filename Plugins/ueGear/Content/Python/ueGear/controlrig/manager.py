@@ -294,7 +294,7 @@ class UEGearManager:
                 nodes = ue_comp.nodes[flow_name]
 
                 for n in nodes:
-                    # Calculates the size of the node, via extimation method
+                    # Calculates the size of the node, via examination method
                     # todo: utilise calculation
                     (w, h) = calculate_node_size(n)
                     controller.set_node_position(n, pos + unreal.Vector2D(40, node_count * 300))

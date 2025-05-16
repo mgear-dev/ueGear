@@ -116,6 +116,7 @@ class CR_Control:
         self.settings.primary_axis = unreal.RigControlAxis.X
 
     def shape_transform_global(self, pos=None, rotation=None, scale=None):
+        """Sets one or all of the shape tranforms attributes."""
         rig_hrc = self.hierarchy_ctrlr.get_hierarchy()
         shape_trans = rig_hrc.get_global_control_shape_transform(self.rig_key)
 

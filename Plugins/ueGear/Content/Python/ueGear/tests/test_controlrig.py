@@ -15,15 +15,17 @@ from ueGear.controlrig.components import *
 
 from ueGear.controlrig.components import EPIC_control_01 as epic_comp
 from ueGear.controlrig.components import EPIC_leg_3jnt_01 as epic_comp_2
+from ueGear.controlrig.components import EPIC_foot_01 as epic_comp_3
 
 from ueGear.controlrig.helpers import controls
 
-importlib.reload(epic_comp)
-importlib.reload(epic_comp_2)
-importlib.reload(mgear)
-importlib.reload(ueM)
 importlib.reload(manager)
 importlib.reload(controls)
+importlib.reload(epic_comp)
+importlib.reload(epic_comp_2)
+importlib.reload(epic_comp_3)
+importlib.reload(mgear)
+importlib.reload(ueM)
 
 # ---
 
@@ -466,14 +468,14 @@ def test_manual_build__leg_3joint():
         gear_manager.build_world_control()
 
         # Builds component by name
-        # gear_manager.build_component('global_C0', manual_component=True)
-        # gear_manager.build_component('local_C0', manual_component=True)
-        # gear_manager.build_component('root_C0', manual_component=True)
-        # gear_manager.build_component('COG_C0', manual_component=True)
+        gear_manager.build_component('global_C0', manual_component=True)
+        gear_manager.build_component('local_C0', manual_component=True)
+        gear_manager.build_component('root_C0', manual_component=True)
+        gear_manager.build_component('COG_C0', manual_component=True)
         gear_manager.build_component('body_C0', manual_component=True)
         gear_manager.build_component('leg_L0', manual_component=True)
         # gear_manager.build_component('leg_R0', manual_component=True)
-        # gear_manager.build_component('foot_L0', manual_component=True)
+        gear_manager.build_component('foot_L0', manual_component=True)
         # gear_manager.build_component('foot_R0', manual_component=True)
 
         gear_manager.populate_parents()

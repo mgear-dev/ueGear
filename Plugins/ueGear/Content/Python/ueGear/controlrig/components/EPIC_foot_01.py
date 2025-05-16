@@ -85,7 +85,11 @@ class Component(base_component.UEComponent):
         """
         Populates the ball joint data on the foot nodes/functions.
         """
-        if bones is None or len(bones) != 1:
+
+        print(f"[POPULATE BONES] {self.name}")
+        print(f"    bones: {bones}")
+
+        if bones is None or len(bones) < 1:
             unreal.log_error("[Bone Populate] Failed - No Bones found")
             return
         if controller is None:

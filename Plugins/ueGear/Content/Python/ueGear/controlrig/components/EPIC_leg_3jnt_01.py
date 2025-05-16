@@ -83,8 +83,8 @@ class Component(base_component.UEComponent):
         """
         Generates the Bone array node that will be utilised by control rig to drive the component
         """
-        if bones is None or len(bones) < 3:
-            unreal.log_error("[Bone Populate] Failed - Less then 3 Bones found")
+        if bones is None or len(bones) < 4:
+            unreal.log_error("[Bone Populate] Failed - Less then 4 Bones found")
             return
         if controller is None:
             unreal.log_error("[Bone Populate] Failed no Controller found")
@@ -105,6 +105,7 @@ class Component(base_component.UEComponent):
         upper_bone_node_name = f"{self.metadata.fullname}_upper_RigUnit_ItemArray"
         mid_bone_node_name = f"{self.metadata.fullname}_mid_RigUnit_ItemArray"
         lower_bone_node_name = f"{self.metadata.fullname}_forward_lower_RigUnit_ItemArray"
+        foot_bone_node_name = f"{self.metadata.fullname}_forward_foot_RigUnit_ItemArray"
 
         # We have to create another At function for the construction node, as nodes cannot be connected on both
         # construction and forward streams
@@ -113,6 +114,7 @@ class Component(base_component.UEComponent):
         individual_bone_node_names = [upper_bone_node_name,
                                       mid_bone_node_name,
                                       lower_bone_node_name,
+                                      foot_bone_node_name,
                                       con_lower_bone_node_name]
 
         # node doesn't exists, create the joint node
@@ -131,8 +133,10 @@ class Component(base_component.UEComponent):
                 controller.add_link(f'{array_node_name}.Items',
                                     f'{individual_index_node}.Array'
                                     )
-                # assigns the last bone in the list to both lower_bone variables
-                if idx > 2:
+                # fixme: This entry could be seperated into a construction list and a forward list.
+                # The last element in the individual_bone_node_name, is the lower bone, which needs to
+                # point to bone index 2
+                if idx > 3:
                     idx = 2
 
                 controller.set_pin_default_value(
@@ -152,13 +156,16 @@ class Component(base_component.UEComponent):
         # Connects the joint node to the Forward function
         for function_node in self.nodes["forward_functions"]:
             controller.add_link(f'{upper_bone_node_name}.Element',
-                                f'{function_node.get_name()}.top_bone')
+                                f'{function_node.get_name()}.femur_bone')
 
             controller.add_link(f'{mid_bone_node_name}.Element',
-                                f'{function_node.get_name()}.mid_bone')
+                                f'{function_node.get_name()}.tibia_bone')
 
             controller.add_link(f'{lower_bone_node_name}.Element',
-                                f'{function_node.get_name()}.end_bone')
+                                f'{function_node.get_name()}.cannon_bone')
+
+            controller.add_link(f'{foot_bone_node_name}.Element',
+                                f'{function_node.get_name()}.foot_bone')
 
         # Connects the joint node to the Construction function
         for function_node in self.nodes["backwards_functions"]:
@@ -432,25 +439,36 @@ class ManualComponent(Component):
         self.is_manual = True
 
         # These are the roles that will be parented directly under the parent component.
-        self.root_control_children = []#"fk0", "null_offset", "upv"]
+        self.root_control_children = ["root", "upv", "null_offset"]  # ,"knee", "ankle"]
 
-        self.hierarchy_schematic_roles = {}#{"fk0": ["fk1"],
-                                         # "fk1": ["fk2"],
-                                         # "null_offset": ["ik"],
-                                         # }
+        self.hierarchy_schematic_roles = {
+            "root": ["fk0"],
+            "fk0": ["fk1"],
+            "fk1": ["fk2"],
+            "fk2": ["fk3"],
+            "ik": ["null_inv"],
+            "null_offset": ["ik"],
+            "null_inv": ["roll"]
+        }
+        """The control hierarchy. keys are parent, values are children"""
 
         # Default to fall back onto
-        self.default_shape = "Circle_Thick"
+        self.default_shape = "Box_Thick" #"Circle_Thick"
         self.control_shape = {
             "ik": "Box_Thick",
-            "upv": "Diamond_Thick"
+            "upv": "Diamond_Thick",
+            "knee": "Sphere_Thin",
+            "ankle": "Sphere_Thin",
+            "roll": "Circle_Thick"
         }
 
-        # todo: implement noodle
         # Roles that will not be generated
         # This is more of a developmental ignore, as we have not implemented this part of the component yet.
-        self.skip_roles = ["tweak"]#, "ikcns"]
+        self.skip_roles = ["tweak", "ikcns", "knee", "ankle"]
         """List of keywords that if found in a control name will be skipped."""
+
+        self.control_shape_rotation = {}
+        """Custom shape rotations applied to specific roles"""
 
     def create_functions(self, controller: unreal.RigVMController):
         EPIC_control_01.ManualComponent.create_functions(self, controller)
@@ -498,6 +516,12 @@ class ManualComponent(Component):
             control_colour = self.metadata.controls_colour[control_name]
             control_aabb = self.metadata.controls_aabb[control_name]
             control_offset = control_aabb[0]
+            shape_rotation = [90, 0, 90]
+
+            # Applies custom shape rotation to the control being generated, if role exists in the table.
+            if role in self.control_shape_rotation.keys():
+                shape_rotation = self.control_shape_rotation[role]
+
             # - modified for epic arm
             control_scale = [control_aabb[1][2] / 4.0,
                              control_aabb[1][2] / 4.0,
@@ -520,10 +544,9 @@ class ManualComponent(Component):
 
             # Sets the controls position, and offset translation and scale of the shape
             new_control.set_transform(quat_transform=control_transform)
-            # - Modified for epic arm
             new_control.shape_transform_global(pos=control_offset,
                                                scale=control_scale,
-                                               rotation=[90, 0, 90])
+                                               rotation=shape_rotation)
 
             control_table[control_name] = new_control
 
@@ -536,14 +559,13 @@ class ManualComponent(Component):
 
     def generate_manual_null(self, hierarchy_controller: unreal.RigHierarchyController):
 
-        null_names = ["leg_{side}0_ik_cns"]
-        control_trans_to_use = ["leg_{side}0_ik_ctl"]
+        null_names = ["leg_{side}0_ik_cns", "leg_{side}0_roll_inv"]
+        control_trans_to_use = ["leg_{side}0_ik_ctl", "leg_{side}0_roll_ctl"]
         # As this null does not exist, we create a new "fake" name and add it to the control_by_role. This is done
         # so the parent hierarchy can detect it.
-        injected_role_name = ["null_offset"]
+        injected_role_name = ["null_offset", "null_inv"]
 
-        print("Generate_manual_null")
-        print(null_names)
+        print(f"[generate_manual_null] {null_names}")
 
         for i, null_meta_name in enumerate(null_names):
 
@@ -592,12 +614,14 @@ class ManualComponent(Component):
             if 'fk' in role_key:
                 control = self.control_by_role[role_key]
                 fk_controls.append(control)
-            elif "ik" == role_key or "upv" in role_key:
+            elif "ik" == role_key or "upv" in role_key or "roll" in role_key:
                 control = self.control_by_role[role_key]
 
                 if "ik" == role_key:
                     ik_controls.insert(0, control)
                 elif "upv" in role_key:
+                    ik_controls.insert(1, control)
+                elif "roll" in role_key:
                     ik_controls.insert(1, control)
             else:
                 #     todo: Implement noodle
@@ -635,19 +659,25 @@ class ManualComponent(Component):
         Performs any custom connections between forward solve components
         """
 
-        print("Forward Solve - Parent Node")
-
-        _parent_node = self.parent_node
-        while _parent_node.metadata.name != "root" and _parent_node != None:
-
-            if _parent_node.metadata.name != "root":
-                _parent_node = _parent_node.parent_node
-
-        if _parent_node is None:
-            return
-
-        root_forward_node_name = _parent_node.nodes["forward_functions"][0].get_name()
-        forward_node_name = self.nodes["forward_functions"][0].get_name()
-
-        controller.add_link(f'{root_forward_node_name}.control',
-                            f'{forward_node_name}.root_ctrl')
+        # print("Forward Solve - Parent Node")
+        # print(f"   parent:{self.parent_node}")
+        # print(f"   parent metadata:{self.parent_node.metadata}")
+        # print(f"   parent metadata.name:{self.parent_node.metadata.name}")
+        # f_nodes = self.parent_node.nodes["forward_functions"]
+        # print(f"   parent nodes: {f_nodes}")
+        #
+        # _parent_node = self.parent_node
+        # while _parent_node.metadata.name != "root" and _parent_node != None:
+        #
+        #     if _parent_node.metadata.name != "root":
+        #         _parent_node = _parent_node.parent_node
+        #
+        # if _parent_node is None:
+        #     return
+        #
+        # root_forward_node_name = _parent_node.nodes["forward_functions"][0].get_name()
+        # forward_node_name = self.nodes["forward_functions"][0].get_name()
+        #
+        # controller.add_link(f'{root_forward_node_name}.control',
+        #                     f'{forward_node_name}.root_ctrl')
+        return
