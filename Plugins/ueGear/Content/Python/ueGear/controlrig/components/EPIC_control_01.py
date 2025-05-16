@@ -93,16 +93,25 @@ class Component(base_component.UEComponent):
         Generates the Bone array node that will be utilised by control rig to drive the component
         """
         if bones is None or len(bones) > 1:
+            unreal.log_error(f"[populate_bones] {self.name}: No bone provided")
             return
         if controller is None:
+            unreal.log_error(f"{self.name}: No controller provided")
             return
+
         bone_name = bones[0].key.name
+
+        if bone_name == "":
+            unreal.log_error(f"[populate_bones] Bone name cannot be empty:{bones}")
+            return
 
         # Populates the joint pin
         for evaluation_path in self.nodes.keys():
             for function_node in self.nodes[evaluation_path]:
-                controller.set_pin_default_value(f'{function_node.get_name()}.joint',
+                success = controller.set_pin_default_value(f'{function_node.get_name()}.joint',
                                                  f'(Type=Bone,Name="{bone_name}")', True)
+                if not success:
+                    unreal.log_error(f"[populate_bones] Setting Pin failed:{function_node.get_name()}.joint << {bone_name}")
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json
