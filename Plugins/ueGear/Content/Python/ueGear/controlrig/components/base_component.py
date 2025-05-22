@@ -2,6 +2,7 @@ __all__ = ['UEComponent']
 
 import unreal
 
+from ueGear.controlrig.helpers.controls import CR_Control
 from ueGear.controlrig.mgear import mgComponent
 
 
@@ -51,6 +52,24 @@ class UEComponent(object):
     comment_node: unreal.RigVMCommentNode = None
     """Stores a reference to the comment node that will be used to group functions together"""
 
+    #------------ MANUAL Attributes ---------------
+
+    is_manual: bool = False
+    """If this component is manual then this will be set to true"""
+
+    # root_control_name = None
+    # """Stores the root control for the component. This is used to reparent the generated node with the parent node"""
+
+    root_control_children: list[str] = None
+    """List of Control Roles will be used to look up controls that will be parented to the Parent Component."""
+
+    control_by_role: dict[str, CR_Control]
+    """Stores the controls by there role name, so they can easily be looked up"""
+
+
+
+    #==============================================
+
     def __init__(self):
         self.functions = {'construction_functions': [],
                           'forward_functions': [],
@@ -70,6 +89,10 @@ class UEComponent(object):
         self.inputs = []
         self.outputs = []
 
+        # -- Manual Attributes --
+        self.is_manual = False
+        self.root_control_children = []
+        self.control_by_role = {}
 
     @property
     def pos(self):
@@ -89,7 +112,7 @@ class UEComponent(object):
 
         return self.comment_node.get_size()
 
-    def component_size(self, size:unreal.Vector2D, controller:unreal.RigVMController):
+    def component_size(self, size: unreal.Vector2D, controller: unreal.RigVMController):
         """Sets the size of the comment block"""
         if self.comment_node is None:
             return
@@ -157,7 +180,6 @@ class UEComponent(object):
 
         self._init_comment(controller)
 
-
     def populate_bones(self):
         """OVERLOAD THIS METHOD
 
@@ -187,6 +209,14 @@ class UEComponent(object):
         """
         pass
 
+    def forward_solve_connect(self, controller: unreal.RigVMController):
+        """OVERLOAD THIS METHOD
+
+        This is the location you would add any custom node to node connection logic, for forward
+        solved nodes/functions.
+        """
+        pass
+
     def add_misc_function(self, node):
         """
         Adds a miscilanois function(node) to this component so it can be more easily accessed
@@ -197,7 +227,7 @@ class UEComponent(object):
         self.nodes["misc_functions"].append(node)
 
     def get_misc_functions(self):
-        """Gets all miscilanois functions relating to this component"""
+        """Gets all miscellaneous functions relating to this component"""
         return self.nodes["misc_functions"]
 
     def set_side_colour(self, controller: unreal.RigVMController):
@@ -237,30 +267,29 @@ class UEComponent(object):
 
         TODO: This could be made more generic and reusable
         """
-        print(" - Init Master Joints")
 
         # Creates an Item Array Node to the control rig
-        controller.add_unit_node_from_struct_path(
+        node = controller.add_unit_node_from_struct_path(
             '/Script/ControlRig.RigUnit_ItemArray',
             'Execute',
             unreal.Vector2D(-54.908936, 204.649109),
             node_name)
 
-        pin_index = 0  # stores the current pin index that is being updated
-
-        for bone in bones:
+        default_values = ""
+        for i, bone in enumerate(bones):
             bone_name = str(bone.key.name)
-            print(f"  {self.name} > {bone_name}")
+            default_values += f'(Type=Bone,Name="{bone_name}"),'
 
-            # Populates the Item Array Node
-            controller.insert_array_pin(f'{node_name}.Items', -1, '')
-            controller.set_pin_default_value(f'{node_name}.Items.{str(pin_index)}',
-                                             f'(Type=Bone,Name="{bone_name}")',
-                                             True)
-            controller.set_pin_expansion(f'{node_name}.Items.{str(pin_index)}', True)
-            controller.set_pin_expansion(f'{node_name}.Items', True)
+        # trims off the extr ','
+        default_values = default_values[:-1]
+        # Populates and resizes the pin in one go
+        controller.set_pin_default_value(f'{node_name}.Items',
+                                         f'({default_values})',
+                                         True,
+                                         setup_undo_redo=True,
+                                         merge_undo_action=True)
 
-            pin_index += 1
+        return node
 
     # DEVELOPMENT!!!!!!!
 
@@ -320,8 +349,8 @@ class UEComponent(object):
                     pos = node.get_position()
 
                 if pre_size:
-                    controller.set_node_position(node, unreal.Vector2D(pos.x, pos.y + pre_size + (y_spacing * node_count) ))
-
+                    controller.set_node_position(node,
+                                                 unreal.Vector2D(pos.x, pos.y + pre_size + (y_spacing * node_count)))
 
                 # Get top left most position
                 current_pos = node.get_position()
@@ -331,7 +360,7 @@ class UEComponent(object):
                 if current_pos.y < pos.y:
                     pos.y = current_pos.y
 
-                #stores the previous size
+                # stores the previous size
                 pre_size = node.get_size().y + pos.y
 
                 node_count += 1
@@ -339,13 +368,13 @@ class UEComponent(object):
         for flow_name in ['construction_functions', 'forward_functions', 'backwards_functions']:
             nodes = self.nodes[flow_name]
             for node in nodes:
-
                 current_pos = node.get_position()
                 size = node.get_size()
 
                 height = height + size.y + 10
 
                 controller.set_node_position(node, unreal.Vector2D(pos.x, pos.y + height))
+
 
 def get_construction_node(comp: UEComponent, name) -> unreal.RigVMNode:
     """Tries to return the construction node with the specified name"""

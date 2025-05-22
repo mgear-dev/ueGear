@@ -32,6 +32,9 @@ class mgComponent:
     controls_aabb: dict = None
     """Axis Aligned Bounding Box for the controls"""
 
+    controls_colour: dict = None
+    """Colour to be assigned to the controls"""
+
     # NOTE: it would be great to have input/output plugs stipulated. That way we know exactly what object in another component drives the object in this component
 
     parent_fullname: str = None
@@ -50,6 +53,15 @@ class mgComponent:
     guide_transforms: dict = None
     """Some components contain guide transforms, these transforms are used to place
     underlying articulation positions."""
+
+    control_relatives: dict = None
+    """Lookup table that stores the relationship between the name and the control"""
+
+    alias_relatives: dict = None
+    """mGear keys in the relative dictionary can have multiple alias"""
+
+    settings: dict = None
+    """mGear component settings"""
 
     def __init__(self) -> None:
         pass
