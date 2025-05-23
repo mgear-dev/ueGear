@@ -136,17 +136,3 @@ Can only read data fom a dataset in constructino event > read user data
 # How to set limits
 
 Limits are not available to be set via a construction node in `5.3`, they only appear in `5.4+`
-
-# FUN
-- Create a C++ method that is exposed to python that allows for bulk attributes to be updated
-  - Test it by using the colour update task.
-  - Test it by calling multiple individual pins being updated.
-- Find Name use in blueprint
-- Find selected pin uses
-- Find node that created control
-- Find node that drives control
-- Find node that drives joint
-- Copy Pin > Paste Connect (for nodes that are far away from each other)
-- Get Selected Node
-- Select and focus viewport on Node
-- Details Panel, add a right click copy data, right click paste data. If data types match then paste succeeds. Usecase: Copying transforms data
