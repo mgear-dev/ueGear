@@ -130,7 +130,7 @@ class UEGearManager:
         if not create_ctrl:
             return
 
-        # Creates the Forward,Backwards and Construction event
+        # Creates the Forward, Backwards and Construction event
         self.create_solves()
 
         # Create Automatic built world control
