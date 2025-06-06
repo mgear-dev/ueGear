@@ -518,7 +518,7 @@ def get_selected_folders(relative=False):
     """
     paths = []
 
-    folder_paths =  unreal.EditorUtilityLibrary.get_selected_folder_paths()
+    folder_paths = unreal.EditorUtilityLibrary.get_selected_folder_paths()
 
     if relative:
         return folder_paths

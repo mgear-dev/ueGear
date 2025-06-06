@@ -450,28 +450,29 @@ def convert_transform_maya_to_unreal(maya_transform, world_up):
     :return: Maya transformation now in Unreal transform space.
     :rtype: unreal.Transform()
     """
-    convertion_mtx = unreal.Matrix(x_plane=[1, 0, 0, 0],
-                             y_plane=[0, 0, -1, 0],
-                             z_plane=[0, 1, 0, 0],
-                             w_plane=[0, 0, 0, 1]
-                            )
+    convertion_mtx = unreal.Matrix(
+        x_plane=[1, 0, 0, 0],
+        y_plane=[0, 0, -1, 0],
+        z_plane=[0, 1, 0, 0],
+        w_plane=[0, 0, 0, 1]
+    )
 
     if world_up == 'y':
-        corrected_mtx =  convertion_mtx * maya_transform.to_matrix() * convertion_mtx.get_inverse()
-        # update Rotation
-        euler = maya_transform.rotation.euler()
-        quat = unreal.Quat()
-        quat.set_from_euler(unreal.Vector(euler.x + 90, euler.y, euler.z))
-        trans = corrected_mtx.transform()
-        trans.rotation = quat
 
-        # Update Position
-        pos = trans.translation
-        pos_y =  pos.y
-        pos_z =  pos.z
-        pos.y =  pos_z
-        pos.z =  -pos_y
-        trans.translation = pos
+        original_euler = maya_transform.rotation.euler()
+        original_quat = maya_transform.rotation
+
+        # Calculates the correct converted position in world space
+        quat = unreal.Quat()
+        quat.set_from_euler(unreal.Vector(0, 0, 0))
+        maya_transform.rotation = quat
+        corrected_mtx = convertion_mtx * maya_transform.to_matrix()
+        trans = corrected_mtx.transform()
+
+        # update Rotation
+        quat = unreal.Quat()
+        quat.set_from_euler(unreal.Vector(original_euler.x + 90, original_euler.y, -original_euler.z))
+        trans.rotation = quat
 
     elif world_up == 'z':
         corrected_mtx = maya_transform.to_matrix() * convertion_mtx
