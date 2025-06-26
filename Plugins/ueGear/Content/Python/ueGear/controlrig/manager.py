@@ -240,6 +240,7 @@ class UEGearManager:
 
         # Instantiates the component
         if manual_component:
+            # self.set_compile_mode(True)
             # If manual component is enabled then it will try and instanciate the
             # second class in the component file, which should be the manual component
             ueg_comp_class = ue_comp_classes[1]
@@ -247,6 +248,8 @@ class UEGearManager:
         ueg_comp = ueg_comp_class()
         ueg_comp.metadata = guide_component  # Could be moved into the init of the ueGear component class
         ueg_comp.name = guide_component.fullname
+
+        # self.set_compile_mode(False)
 
         self.uegear_components.append(ueg_comp)
 
@@ -1283,6 +1286,9 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
 
     gear_manager.set_active_blueprint(cr_bp)
 
+    import time
+    start = time.perf_counter()
+
     # Deactivate Autocompile, to speed up builds
     compile_status = gear_manager.get_compile_mode()
     # gear_manager.set_compile_mode(False)
@@ -1304,4 +1310,7 @@ def create_control_rig(rig_name: str, skeleton_package: str, output_path: str, g
     gear_manager.group_components()
 
     # Sets the auto-compiler back to how it was before building
-    # gear_manager.set_compile_mode(compile_status)
+    gear_manager.set_compile_mode(compile_status)
+
+    duration = time.perf_counter() - start
+    print(f"Duration: {duration} s") # Duration: ue5.3 > 23.94130949999999 s  ||  5.6 > 23.80096570000751 s
