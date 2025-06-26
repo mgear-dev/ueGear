@@ -538,13 +538,20 @@ class ManualComponent(Component):
     def generate_manual_null(self, hierarchy_controller: unreal.RigHierarchyController):
 
         null_names = ["leg_{side}0_ik_cns"]
-        control_trans_to_use = ["leg_{side}0_ik_ctl"]
+        control_trans_to_use = []
+
+        # Finds the controls name that has the role ik. it will be used to get the
+        # transformation data
+        for control_name in self.metadata.controls:
+            role = self.metadata.controls_role[control_name]
+            if role == "ik":
+                control_trans_to_use.append(control_name)
+
         # As this null does not exist, we create a new "fake" name and add it to the control_by_role. This is done
         # so the parent hierarchy can detect it.
         injected_role_name = ["null_offset"]
 
-        print("Generate_manual_null")
-        print(null_names)
+        print(f"[generate_manual_null] {null_names}")
 
         for i, null_meta_name in enumerate(null_names):
 
