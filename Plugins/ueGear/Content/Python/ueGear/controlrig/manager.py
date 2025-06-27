@@ -138,6 +138,7 @@ class UEGearManager:
             # As the world control is not a specific component in mGear, we create a psudo
             # component for it.
             placeholder_component = mgear.mgComponent()
+            placeholder_component.name = "world"
             placeholder_component.controls = [name]
             placeholder_component.joints = None
             placeholder_component.comp_type = "world_ctl"
@@ -165,6 +166,7 @@ class UEGearManager:
 
         else:
             placeholder_component = mgear.mgComponent()
+            placeholder_component.name = "world"
             placeholder_component.controls = [name]
             placeholder_component.joints = None
             placeholder_component.comp_type = "world_ctl"
@@ -1134,11 +1136,8 @@ def get_driven_joints(manager: UEGearManager, ueg_component: components.base_com
         rek.type = unreal.RigElementType.BONE
         bone = rig_hierarchy.find_bone(rek)
 
-        if bone.index == -1:
-            unreal.log_error(f"[get_driven_joints] Bone '{name}' could not be found using the following key {rek}")
-
 # ======================== PATCH ====================================
-#        Solution in unreal 5.4, 5.5. Not required in 5.3
+#        Solution in unreal 5.4+ Not required in 5.3
         engine_version = unreal.SystemLibrary.get_engine_version()
         if int(engine_version.split(".")[1]) > 3:
             bone = unreal.RigBoneElement(rek)
@@ -1146,6 +1145,8 @@ def get_driven_joints(manager: UEGearManager, ueg_component: components.base_com
 
         if bone:
             found_bones.append(bone)
+        else:
+            unreal.log_error(f"[manager.get_driven_joints] Bone '{name}' could not be found using the following key {rek}")
 
     ueg_component.bones = found_bones
 
