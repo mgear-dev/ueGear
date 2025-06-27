@@ -138,6 +138,7 @@ class UEGearManager:
             # As the world control is not a specific component in mGear, we create a psudo
             # component for it.
             placeholder_component = mgear.mgComponent()
+            placeholder_component.name = "world"
             placeholder_component.controls = [name]
             placeholder_component.joints = None
             placeholder_component.comp_type = "world_ctl"
@@ -165,6 +166,7 @@ class UEGearManager:
 
         else:
             placeholder_component = mgear.mgComponent()
+            placeholder_component.name = "world"
             placeholder_component.controls = [name]
             placeholder_component.joints = None
             placeholder_component.comp_type = "world_ctl"

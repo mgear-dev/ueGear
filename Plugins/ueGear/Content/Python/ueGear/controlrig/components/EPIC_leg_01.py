@@ -643,19 +643,29 @@ class ManualComponent(Component):
         Performs any custom connections between forward solve components
         """
 
-        print("Forward Solve - Parent Node")
+        print("[EPIC_leg_01] Forward Solve - Parent Node")
 
         _parent_node = self.parent_node
-        while _parent_node.metadata.name != "root" and _parent_node != None:
 
-            if _parent_node.metadata.name != "root":
+        # walks up the hierarchy to find the top most parent
+        while _parent_node.metadata.name != "root" and _parent_node.metadata.name != "global" and _parent_node != None:
+
+            if _parent_node.metadata.name != "root" and _parent_node.metadata.name != "global":
                 _parent_node = _parent_node.parent_node
 
-        if _parent_node is None:
-            return
+        try:
+            # Tries to connect the root control to the output of the root forward function
+            root_forward_node_name = _parent_node.nodes["forward_functions"][0].get_name()
+            forward_node_name = self.nodes["forward_functions"][0].get_name()
 
-        root_forward_node_name = _parent_node.nodes["forward_functions"][0].get_name()
-        forward_node_name = self.nodes["forward_functions"][0].get_name()
-
-        controller.add_link(f'{root_forward_node_name}.control',
+            controller.add_link(f'{root_forward_node_name}.control',
                             f'{forward_node_name}.root_ctrl')
+        except:
+            # If that failed then we try and connect populate the root_ctrl attribute with the name of the control
+            ctrl_name = _parent_node.control_by_role['ctl'].rig_key.name
+            forward_node_name = self.nodes["forward_functions"][0].get_name()
+
+            controller.set_pin_default_value(
+                f'{forward_node_name}.root_ctrl.Type', 'Control', True)
+            controller.set_pin_default_value(
+                f'{forward_node_name}.root_ctrl.Name', ctrl_name, True)
