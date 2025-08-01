@@ -254,8 +254,6 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :param str sequencer_package: The package path to the sequencer file.
         :param str fbx_path: Location of the fbx camera.
         """
-
-        print("[ueGear] Command Triggered - Update Sequencer Cameras")
         levelsequencer = sequencer.open_sequencer(sequencer_package)
         sequencer.import_fbx_camera(name=camera_name, sequence=levelsequencer, fbx_path=fbx_path)
 

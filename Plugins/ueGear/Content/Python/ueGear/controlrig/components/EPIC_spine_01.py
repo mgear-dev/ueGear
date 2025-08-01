@@ -409,7 +409,6 @@ class ManualComponent(Component):
         control_table = dict()
 
         for control_name in self.metadata.controls:
-            print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
 
             # stored metadata values

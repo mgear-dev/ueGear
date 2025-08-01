@@ -486,7 +486,6 @@ class ManualComponent(Component):
         control_table = dict()
 
         for control_name in self.metadata.controls:
-            print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
 
@@ -551,12 +550,7 @@ class ManualComponent(Component):
         # so the parent hierarchy can detect it.
         injected_role_name = ["null_offset"]
 
-        print(f"[generate_manual_null] {null_names}")
-
         for i, null_meta_name in enumerate(null_names):
-
-            print("LEG MANUAL NULL CREATION")
-
             trans_meta_name = control_trans_to_use[i]
             null_role = injected_role_name[i]
 
@@ -642,9 +636,6 @@ class ManualComponent(Component):
         """
         Performs any custom connections between forward solve components
         """
-
-        print("[EPIC_leg_01] Forward Solve - Parent Node")
-
         _parent_node = self.parent_node
 
         # walks up the hierarchy to find the top most parent
