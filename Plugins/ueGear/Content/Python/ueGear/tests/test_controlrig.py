@@ -1,5 +1,4 @@
 import os
-import time
 
 import unreal
 
@@ -350,20 +349,16 @@ def test_manual_create_spine_shoulders_control():
     gear_manager.group_components()
 
 
-# Unreal Cmd > py "C:\SIMON_WORK\mGear\repos\ueGear\Plugins\ueGear\Content\Python\ueGear\tests\test_controlrig.py"
 def test_manual_build__butcher_boy_mg5():
     """
     Test will check to see if a control is generated and added to the correct Construction, Forward and Backwards Solve.
 
     - No active control rig is set, so it should generate a new control rig
     """
-
-
-
-    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\test_assets\butcher_boy_003\mGear5_data_v4.gnx"
+    TEST_BUILD_JSON = r"C:\SIMON_WORK\mGear\test_assets\butcher_boy_mGear_5\mGear5_data_v2.gnx"
     TEST_CONTROLRIG_PATH = "/Game/TEST"
-    TEST_CONTROLRIG_NAME = "BBOY_003"
-    TEST_CONTROLRIG_SKM = "/Game/Characters/ButcherBoy_003/BBOY_body"
+    TEST_CONTROLRIG_NAME = "manual_ButcherBoy_mg5"
+    TEST_CONTROLRIG_SKM = "/Game/Characters/BBoy_mg5/SK_bboy_NEW"
 
     # Converts teh json data into a class based structure, filters out non-required metadata.
     mgear_rig = mgear.convert_json_to_mg_rig(TEST_BUILD_JSON)
@@ -385,11 +380,6 @@ def test_manual_build__butcher_boy_mg5():
         unreal.log_error("Test: test_create_fk_control - Failed : Could not create control rig blue print")
         unreal.EditorAssetLibrary.delete_directory("/Game/TEST/")
         return None
-
-    import time
-    start = time.perf_counter()
-    compile_status = gear_manager.get_compile_mode()
-    gear_manager.set_compile_mode(False)
 
     # At this point we now have The Manager, with an empty Control Rig BP
 
@@ -435,12 +425,6 @@ def test_manual_build__butcher_boy_mg5():
 
     gear_manager.group_components()
 
-    # Sets the auto-compiler back to how it was before building
-    gear_manager.set_compile_mode(compile_status)
-
-    duration = time.perf_counter() - start
-    print(f"Duration: {duration} s")
-    # off =  4.593971600000032 s
 
 def test_manual_build__leg_3joint():
         """
@@ -516,5 +500,5 @@ def test_manual_build__leg_3joint():
 
 # test_create_spine_shoulders_control()
 # test_manual_create_spine_shoulders_control()
-test_manual_build__butcher_boy_mg5()
-# test_manual_build__leg_3joint()
+# test_manual_build__butcher_boy_mg5()
+test_manual_build__leg_3joint()
