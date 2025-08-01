@@ -102,7 +102,7 @@ class Component(base_component.UEComponent):
         Generates the Bone array node that will be utilised by control rig to drive the component
         """
         if bones is None or len(bones) > 1:
-            unreal.log_error(f"[populate_bones] {self.name}: No bone provided")
+            unreal.log_warning(f"[populate_bones] {self.name}: No bone provided")
             return
         if controller is None:
             unreal.log_error(f"{self.name}: No controller provided")
