@@ -46,8 +46,6 @@ class CR_Control:
                 affect_children=True)
 
             self.offset()
-
-            print("   - Control already exists.")
             return
 
         self._setup_default_control_configuration()
@@ -75,9 +73,6 @@ class CR_Control:
         # The control name generated might be different from the one you input due
         # to collisions with an existing control name
         self.name = self.rig_key.name
-
-        print(self.rig_key)
-        print(f"Building: {self.name}")
 
     def _setup_default_control_configuration(self):
         self.settings.animation_type = unreal.RigControlAnimationType.ANIMATION_CONTROL
@@ -220,7 +215,7 @@ class CR_Control:
         or a Quaternion (standard Unreal Transform)
         """
         if quat_transform is None and euler_transform is None:
-            print("Cannot Set transform, no Transform or Quaternion Transform object passed in")
+            unreal.log_warning("Cannot Set transform, no Transform or Quaternion Transform object passed in")
             return
 
         rig_hrc = self.hierarchy_ctrlr.get_hierarchy()

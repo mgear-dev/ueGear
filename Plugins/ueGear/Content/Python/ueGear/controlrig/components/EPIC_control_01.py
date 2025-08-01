@@ -228,12 +228,8 @@ class ManualComponent(Component):
                 continue
 
             if evaluation_path == 'backwards_functions' and self.metadata.joints is None:
-
                 if self.metadata.settings is None:
                     continue
-
-                print(self.metadata)
-                print(self.metadata.settings)
 
                 # Checks to see if the Epic control has a backwards reference joint, as this will be used to populate
                 # the backwards solve so the control follows a specific bone. This bone is not a bone that was generated
@@ -271,7 +267,6 @@ class ManualComponent(Component):
         """Creates all the manual controls in the designated structure"""
 
         for control_name in self.metadata.controls:
-            print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
 
@@ -351,9 +346,6 @@ class ManualComponent(Component):
                 return
 
             control_name = self.control_by_role["ctl"].rig_key.name
-
-            print(f'{backwards_node_name}.joint >> {ref_joint}')
-            print(f'{backwards_node_name}.joint >> {control_name}')
 
             controller.set_pin_default_value(
                 f'{backwards_node_name}.joint',

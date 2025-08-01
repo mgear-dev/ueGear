@@ -86,9 +86,6 @@ class Component(base_component.UEComponent):
         Populates the ball joint data on the foot nodes/functions.
         """
 
-        print(f"[POPULATE BONES] {self.name}")
-        print(f"    bones: {bones}")
-
         if bones is None or len(bones) < 1:
             unreal.log_error("[Bone Populate] Failed - No Bones found")
             return
@@ -450,7 +447,6 @@ class ManualComponent(Component):
         control_table = dict()
 
         for control_name in self.metadata.controls:
-            print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
 
