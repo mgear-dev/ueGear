@@ -20,6 +20,19 @@ from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 # TODO: to strings in the client side and we parse them here.
 # TODO: Update this once fix is done in Remote Control plugin.
 
+@unreal.uclass()
+class PyUeGearUICommands(unreal.UeGearCommands):
+    @unreal.ufunction(override=True, meta=dict(Catergory="ueGear Commands"))
+    def generate_uegear_ui(self):
+        """
+        """
+        widget_name = 'ueGear_ui'
+        asset_path = f'/ueGear/Python/ueGear/ui/{widget_name}'
+        asset_widget = unreal.EditorAssetLibrary.load_asset(asset_path)
+
+        edit_utils = unreal.get_editor_subsystem(unreal.EditorUtilitySubsystem)
+        edit_utils.spawn_and_register_tab(asset_widget)
+
 
 @unreal.uclass()
 class PyUeGearCommands(unreal.BlueprintFunctionLibrary):
@@ -52,18 +65,6 @@ class PyUeGearCommands(unreal.BlueprintFunctionLibrary):
         """
 
         mayaio.export_layout_file()
-
-    @unreal.ufunction(meta=dict(Catergory="ueGear Commands"))
-    def generate_uegear_ui(self):
-        """
-        """
-        widget_name = 'ueGear_ui'
-        asset_path = f'/ueGear/Python/ueGear/ui/{widget_name}'
-        asset_widget = unreal.EditorAssetLibrary.load_asset(asset_path)
-
-        edit_utils = unreal.get_editor_subsystem(unreal.EditorUtilitySubsystem)
-        edit_utils.spawn_and_register_tab(asset_widget)
-
 
     # ==================================================================================================================
     # PATHS

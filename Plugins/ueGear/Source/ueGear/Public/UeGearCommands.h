@@ -14,4 +14,7 @@ class UEGEAR_API UUeGearCommands : public UObject
 public:
 	UFUNCTION(BlueprintCallable, Category=ueGear)
 	static UUeGearCommands* Get();
+
+	UFUNCTION(BlueprintImplementableEvent, Category=ueGear)
+	void GenerateUegearUi();
 };
