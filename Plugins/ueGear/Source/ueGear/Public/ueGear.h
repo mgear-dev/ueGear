@@ -19,8 +19,5 @@ private:
 	void AddMenuEntry(FMenuBarBuilder& MenuBarBuilder);
 	void FillMenu(FMenuBuilder& MenuBuilder);
 	
-	void ImportMayaDataCallback();
-	void ImportMayaLayoutCallback();
-	void ExportUnrealLayoutCallback();
 	void GenerateUegearUiCallback();
 };
