@@ -15,16 +15,6 @@ import unreal
 
 from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 
-# TODO: Remove the imports once we release into production
-# importlib.reload(helpers)
-# importlib.reload(structs)
-# importlib.reload(tag)
-# importlib.reload(assets)
-# importlib.reload(actors)
-# importlib.reload(textures)
-# importlib.reload(mayaio)
-
-
 # TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
 # TODO: with the correct number of elements within the list. As a temporal workaround, we convert them
 # TODO: to strings in the client side and we parse them here.
@@ -32,12 +22,13 @@ from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 
 
 @unreal.uclass()
-class PyUeGearCommands(unreal.UeGearCommands):
-    # ==================================================================================================================
-    # OVERRIDES
-    # ==================================================================================================================
+class PyUeGearCommands(unreal.BlueprintFunctionLibrary):
 
-    @unreal.ufunction(override=True, meta=dict(Category="ueGear Commands"))
+    @unreal.ufunction(ret=str, static=True, meta=dict(Category="ueGear Commands"))
+    def get_unreal_version():
+        return unreal.SystemLibrary.get_engine_version()
+
+    @unreal.ufunction(meta=dict(Category="ueGear Commands"))
     def import_maya_data(self):
         """
         Opens a file window that allow users to choose a JSON file that contains all the info needed to import asset or
@@ -46,7 +37,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         mayaio.import_data()
 
-    @unreal.ufunction(override=True, meta=dict(Category="ueGear Commands"))
+    @unreal.ufunction(meta=dict(Category="ueGear Commands"))
     def import_maya_layout(self):
         """
         Opens a file window that allow users to choose a JSON file that contains layout data to load.
@@ -54,7 +45,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         mayaio.import_layout_from_file()
 
-    @unreal.ufunction(override=True, meta=dict(Category="ueGear Commands"))
+    @unreal.ufunction(meta=dict(Category="ueGear Commands"))
     def export_unreal_layout(self):
         """
         Exports a layout JSON file based on the objects on the current Unreal level.
@@ -62,7 +53,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
 
         mayaio.export_layout_file()
 
-    @unreal.ufunction(override=True, meta=dict(Catergory="ueGear Commands"))
+    @unreal.ufunction(meta=dict(Catergory="ueGear Commands"))
     def generate_uegear_ui(self):
         """
         """
@@ -78,9 +69,7 @@ class PyUeGearCommands(unreal.UeGearCommands):
     # PATHS
     # ==================================================================================================================
 
-    @unreal.ufunction(
-        ret=str, static=True, meta=dict(Category="ueGear Commands")
-    )
+    @unreal.ufunction(ret=str, static=True, meta=dict(Category="ueGear Commands"))
     def project_content_directory():
         """
         Returns the content directory of the current game.

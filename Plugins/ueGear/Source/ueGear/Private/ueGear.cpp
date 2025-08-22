@@ -39,27 +39,6 @@ void FueGearModule::AddMenuEntry(FMenuBarBuilder& MenuBarBuilder)
 
 void FueGearModule::FillMenu(FMenuBuilder& MenuBuilder)
 {
-//	MenuBuilder.AddMenuEntry(
-//		FText::FromString("Import Maya Data"),
-//		FText::FromString("Import Maya Data from ueGear Maya Data"),
-//		FSlateIcon(),
-//		FUIAction(FExecuteAction::CreateRaw(this, &FueGearModule::ImportMayaDataCallback))
-//	);
-//
-//	MenuBuilder.AddMenuEntry(
-//	FText::FromString("Import Maya Layout"),
-//	FText::FromString("Import Unreal Layout Data"),
-//	FSlateIcon(),
-//	FUIAction(FExecuteAction::CreateRaw(this, &FueGearModule::ImportMayaLayoutCallback))
-//	);
-//
-//	MenuBuilder.AddMenuEntry(
-//	FText::FromString("Export Unreal Layout"),
-//	FText::FromString("Export Unreal Layout Data"),
-//	FSlateIcon(),
-//	FUIAction(FExecuteAction::CreateRaw(this, &FueGearModule::ExportUnrealLayoutCallback))
-//	);
-
 	MenuBuilder.AddMenuEntry(
 		FText::FromString("Generate ueGear Rig"),
 		FText::FromString("Generates a ueGear Control Rig from an mGear context."),
@@ -67,24 +46,6 @@ void FueGearModule::FillMenu(FMenuBuilder& MenuBuilder)
 		FUIAction(FExecuteAction::CreateRaw(this, &FueGearModule::GenerateUegearUiCallback))
 	);
 }
-
-//void FueGearModule::ImportMayaDataCallback()
-//{
-//	UUeGearCommands* ueGearCommands = UUeGearCommands::Get();
-//	ueGearCommands->ImportMayaData();
-//}
-//
-//void FueGearModule::ImportMayaLayoutCallback()
-//{
-//	UUeGearCommands* ueGearCommands = UUeGearCommands::Get();
-//	ueGearCommands->ImportMayaLayout();
-//}
-//
-//void FueGearModule::ExportUnrealLayoutCallback()
-//{
-//	UUeGearCommands* ueGearCommands = UUeGearCommands::Get();
-//	ueGearCommands->ExportUnrealLayout();
-//}
 
 void FueGearModule::GenerateUegearUiCallback()
 {
