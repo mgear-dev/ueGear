@@ -85,7 +85,8 @@ class Component(base_component.UEComponent):
         """
         Populates the ball joint data on the foot nodes/functions.
         """
-        if bones is None or len(bones) != 1:
+
+        if bones is None or len(bones) < 1:
             unreal.log_error("[Bone Populate] Failed - No Bones found")
             return
         if controller is None:
@@ -406,7 +407,17 @@ class ManualComponent(Component):
     def generate_manual_null(self, hierarchy_controller: unreal.RigHierarchyController):
 
         null_names = ["foot_{side}0_fk0_inverse"]
-        control_trans_to_use = ["foot_{side}0_bk1_ctl"]
+        rolls_for_trans = ["bk1"]
+        control_trans_to_use = []
+
+        # Finds the controls name that has the role ik. it will be used to get the
+        # transformation data
+        for search_roll in rolls_for_trans:
+            for control_name in self.metadata.controls:
+                role = self.metadata.controls_role[control_name]
+                if role == search_roll:
+                    control_trans_to_use.append(control_name)
+
         # As this null does not exist, we create a new "fake" name and add it to the control_by_role. This is done
         # so the parent hierarchy can detect it.
         injected_role_name = ["null_fk0"]
@@ -436,7 +447,6 @@ class ManualComponent(Component):
         control_table = dict()
 
         for control_name in self.metadata.controls:
-            print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
 

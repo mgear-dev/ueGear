@@ -292,7 +292,7 @@ def import_fbx_camera(name: str, sequence: unreal.LevelSequence, fbx_path: str):
     fbx_config = unreal.MovieSceneUserImportFBXSettings()
     seq_tools = unreal.SequencerTools()
 
-    fbx_config.set_editor_property("match_by_name_only", True)
+    fbx_config.set_editor_property("match_by_name_only", False)
     fbx_config.set_editor_property("replace_transform_track", True)
     fbx_config.set_editor_property("create_cameras", False)
 

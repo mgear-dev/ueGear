@@ -53,7 +53,16 @@ class Component(base_component.UEComponent):
 
             # Skip the backwards function creation if no joints are needed to be driven
             if evaluation_path == 'backwards_functions' and self.metadata.joints is None:
-                continue
+
+                # Checks to see if the Epic control has a backwards reference joint, as this will be used to populate
+                # the backwards solve so the control follows a specific bone. This bone is not a bone that was generated
+                # by the creation of the control, which is why it is a reference.
+                if "backwards_ref_jnt" in self.metadata.settings.keys():
+                    if (self.metadata.settings["backwards_ref_jnt"] == "" or
+                            self.metadata.settings["backwards_ref_jnt"] is None):
+                        continue
+                else:
+                    continue
 
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
@@ -93,16 +102,25 @@ class Component(base_component.UEComponent):
         Generates the Bone array node that will be utilised by control rig to drive the component
         """
         if bones is None or len(bones) > 1:
+            unreal.log_warning(f"[populate_bones] {self.name}: No bone provided")
             return
         if controller is None:
+            unreal.log_error(f"{self.name}: No controller provided")
             return
+
         bone_name = bones[0].key.name
+
+        if bone_name == "":
+            unreal.log_error(f"[populate_bones] Bone name cannot be empty:{bones}")
+            return
 
         # Populates the joint pin
         for evaluation_path in self.nodes.keys():
             for function_node in self.nodes[evaluation_path]:
-                controller.set_pin_default_value(f'{function_node.get_name()}.joint',
+                success = controller.set_pin_default_value(f'{function_node.get_name()}.joint',
                                                  f'(Type=Bone,Name="{bone_name}")', True)
+                if not success:
+                    unreal.log_error(f"[populate_bones] Setting Pin failed:{function_node.get_name()}.joint << {bone_name}")
 
     def populate_control_transforms(self, controller: unreal.RigVMController = None):
         """Updates the transform data for the controls generated, with the data from the mgear json
@@ -209,9 +227,19 @@ class ManualComponent(Component):
             if evaluation_path == 'forward_functions' and self.metadata.joints is None:
                 continue
 
-            # Skip the backwards function creation if no joints are needed to be driven
             if evaluation_path == 'backwards_functions' and self.metadata.joints is None:
-                continue
+                if self.metadata.settings is None:
+                    continue
+
+                # Checks to see if the Epic control has a backwards reference joint, as this will be used to populate
+                # the backwards solve so the control follows a specific bone. This bone is not a bone that was generated
+                # by the creation of the control, which is why it is a reference.
+                if "backwards_ref_jnt" in self.metadata.settings.keys():
+                    if (self.metadata.settings["backwards_ref_jnt"] == "" or
+                            self.metadata.settings["backwards_ref_jnt"] is None):
+                        continue
+                else:
+                    continue
 
             for cr_func in self.functions[evaluation_path]:
                 new_node_name = f"{self.name}_{cr_func}"
@@ -239,7 +267,6 @@ class ManualComponent(Component):
         """Creates all the manual controls in the designated structure"""
 
         for control_name in self.metadata.controls:
-            print(f"Initializing Manual Control - {control_name}")
             new_control = controls.CR_Control(name=control_name)
             role = self.metadata.controls_role[control_name]
 
@@ -298,3 +325,39 @@ class ManualComponent(Component):
                     merge_undo_action=True)
 
         update_input_plug("control", controls)
+
+
+    def init_input_data(self, controller: unreal.RigVMController):
+        """Overloading the input of nodes, as a post process. This can be a handy function when needing to perform
+        a minor adjustment."""
+
+        # Looks to see if the Epic_Control requires a backwards reference joint, if one has been populated and no
+        # current joint exists for the component, then we populate the joint and the control.
+
+        backwards_nodes = self.nodes['backwards_functions']
+
+        if backwards_nodes and "backwards_ref_jnt" in self.metadata.settings.keys():
+
+            backwards_node_name = backwards_nodes[0].get_name()
+
+            ref_joint = self.metadata.settings["backwards_ref_jnt"]
+
+            if ref_joint is None or ref_joint == "":
+                return
+
+            control_name = self.control_by_role["ctl"].rig_key.name
+
+            controller.set_pin_default_value(
+                f'{backwards_node_name}.joint',
+                f'(Type=Bone,Name="{ref_joint}")',
+                True,
+                setup_undo_redo=True,
+                merge_undo_action=True)
+
+            controller.set_pin_default_value(
+                f'{backwards_node_name}.control',
+                f'(Type=Control,Name="{control_name}")',
+                True,
+                setup_undo_redo=True,
+                merge_undo_action=True)
+

@@ -15,53 +15,13 @@ import unreal
 
 from . import helpers, mayaio, structs, tag, assets, actors, textures, sequencer
 
-# TODO: Remove the imports once we release into production
-# importlib.reload(helpers)
-# importlib.reload(structs)
-# importlib.reload(tag)
-# importlib.reload(assets)
-# importlib.reload(actors)
-# importlib.reload(textures)
-# importlib.reload(mayaio)
-
-
 # TODO: For some reason, unreal.Array(float) parameters defined within ufunction params argument are not
 # TODO: with the correct number of elements within the list. As a temporal workaround, we convert them
 # TODO: to strings in the client side and we parse them here.
 # TODO: Update this once fix is done in Remote Control plugin.
 
-
 @unreal.uclass()
-class PyUeGearCommands(unreal.UeGearCommands):
-    # ==================================================================================================================
-    # OVERRIDES
-    # ==================================================================================================================
-
-    @unreal.ufunction(override=True, meta=dict(Category="ueGear Commands"))
-    def import_maya_data(self):
-        """
-        Opens a file window that allow users to choose a JSON file that contains all the info needed to import asset or
-        layout data.
-        """
-
-        mayaio.import_data()
-
-    @unreal.ufunction(override=True, meta=dict(Category="ueGear Commands"))
-    def import_maya_layout(self):
-        """
-        Opens a file window that allow users to choose a JSON file that contains layout data to load.
-        """
-
-        mayaio.import_layout_from_file()
-
-    @unreal.ufunction(override=True, meta=dict(Category="ueGear Commands"))
-    def export_unreal_layout(self):
-        """
-        Exports a layout JSON file based on the objects on the current Unreal level.
-        """
-
-        mayaio.export_layout_file()
-
+class PyUeGearUICommands(unreal.UeGearCommands):
     @unreal.ufunction(override=True, meta=dict(Catergory="ueGear Commands"))
     def generate_uegear_ui(self):
         """
@@ -74,13 +34,43 @@ class PyUeGearCommands(unreal.UeGearCommands):
         edit_utils.spawn_and_register_tab(asset_widget)
 
 
+@unreal.uclass()
+class PyUeGearCommands(unreal.BlueprintFunctionLibrary):
+
+    @unreal.ufunction(ret=str, static=True, meta=dict(Category="ueGear Commands"))
+    def get_unreal_version():
+        return unreal.SystemLibrary.get_engine_version()
+
+    @unreal.ufunction(meta=dict(Category="ueGear Commands"))
+    def import_maya_data(self):
+        """
+        Opens a file window that allow users to choose a JSON file that contains all the info needed to import asset or
+        layout data.
+        """
+
+        mayaio.import_data()
+
+    @unreal.ufunction(meta=dict(Category="ueGear Commands"))
+    def import_maya_layout(self):
+        """
+        Opens a file window that allow users to choose a JSON file that contains layout data to load.
+        """
+
+        mayaio.import_layout_from_file()
+
+    @unreal.ufunction(meta=dict(Category="ueGear Commands"))
+    def export_unreal_layout(self):
+        """
+        Exports a layout JSON file based on the objects on the current Unreal level.
+        """
+
+        mayaio.export_layout_file()
+
     # ==================================================================================================================
     # PATHS
     # ==================================================================================================================
 
-    @unreal.ufunction(
-        ret=str, static=True, meta=dict(Category="ueGear Commands")
-    )
+    @unreal.ufunction(ret=str, static=True, meta=dict(Category="ueGear Commands"))
     def project_content_directory():
         """
         Returns the content directory of the current game.
@@ -254,8 +244,6 @@ class PyUeGearCommands(unreal.UeGearCommands):
         :param str sequencer_package: The package path to the sequencer file.
         :param str fbx_path: Location of the fbx camera.
         """
-
-        print("[ueGear] Command Triggered - Update Sequencer Cameras")
         levelsequencer = sequencer.open_sequencer(sequencer_package)
         sequencer.import_fbx_camera(name=camera_name, sequence=levelsequencer, fbx_path=fbx_path)
 
