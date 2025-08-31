@@ -10,7 +10,7 @@
 	"DocsURL": "",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/",
 	"SupportURL": "",
-	"EnabledByDefault" : false,
+	"EnabledByDefault": false,
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
@@ -20,19 +20,35 @@
 			"Name": "ueGear",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
-			"PlatformAllowList": [ "Win64", "Mac" ],
-			"WhitelistPlatforms": [ "Win64", "Mac" ]
+			"PlatformAllowList": [
+				"Win64",
+				"Mac"
+			],
+			"WhitelistPlatforms": [
+				"Win64",
+				"Mac"
+			]
 		},
 		{
 			"Name": "ueGearMayaCamera",
 			"Type": "Editor",
 			"LoadingPhase": "Default",
-			"PlatformAllowList": [ "Win64", "Mac" ],
-			"WhitelistPlatforms": [ "Win64", "Mac" ]
+			"PlatformAllowList": [
+				"Win64",
+				"Mac"
+			],
+			"WhitelistPlatforms": [
+				"Win64",
+				"Mac"
+			]
+		},
+		{
+			"Name": "SkinIO",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	],
-	"Plugins":
-	[
+	"Plugins": [
 		{
 			"Name": "PythonScriptPlugin",
 			"Enabled": true
