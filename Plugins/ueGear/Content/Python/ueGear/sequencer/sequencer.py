@@ -4,7 +4,7 @@ import json
 import unreal
 
 from ueGear import helpers, assets
-import ueGear.sequencer.bindings
+import ueGear.sequencer.bindings as seq_bindings
 
 # Dictionary containing default FBX export options
 DEFAULT_SEQUENCE_FBX_EXPORT_OPTIONS = {
@@ -250,11 +250,11 @@ def get_selected_cameras():
 
     for binding in bindings:
 
-        if ueGear.sequencer.bindings.is_instanced_camera(binding):
+        if seq_bindings.is_instanced_camera(binding):
             # Instanced Camera
             cameras.append(binding)
 
-        elif ueGear.sequencer.bindings.is_camera(binding):
+        elif seq_bindings.is_camera(binding):
             # Camera
             cameras.append(binding)
 
@@ -271,7 +271,7 @@ def import_fbx_camera(name: str, sequence: unreal.LevelSequence, fbx_path: str):
     # Looks over the Possessables for the correct name
     tracks = sequence.get_possessables()
     for track in tracks:
-        if track.get_display_name() == name and ueGear.sequencer.bindings.is_camera(track):
+        if track.get_display_name() == name and seq_bindings.is_camera(track):
             camera_track = track
             break
 
@@ -280,11 +280,12 @@ def import_fbx_camera(name: str, sequence: unreal.LevelSequence, fbx_path: str):
         tracks = sequence.get_spawnables()
         for track in tracks:
             if track.get_display_name() == name and \
-                    ueGear.sequencer.bindings.is_instanced_camera(track):
+                    seq_bindings.is_instanced_camera(track):
                 camera_track = track
                 break
 
     if camera_track is None:
+        unreal.log_error(f"Camera Track `{name}` was not found")
         return
 
     editor_system = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)

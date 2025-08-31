@@ -18,10 +18,10 @@ def is_instanced_camera(binding:unreal.MovieSceneBindingProxy):
     :rtype: Bool
     """
     possesable_is_camera = False
-    no_possesible_objs = binding.get_possessed_object_class() == None
     possessable_children = len(binding.get_child_possessables()) > 0
 
-    if no_possesible_objs and possessable_children:
+    if is_camera(binding) and possessable_children:
+
         child = binding.get_child_possessables()[0]
         possesable_is_camera = child.get_name() == "CameraComponent"
 
