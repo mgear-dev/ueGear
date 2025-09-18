@@ -53,6 +53,16 @@ bool USkeletalMeshWeightTools::ExportSkinWeights(USkeletalMesh* SkeletalMesh, co
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
     FJsonSerializer::Serialize(Root, Writer);
 
+/* note: In the mGear Skin files. Each file represents 1 piece of Mesh.
+ *  {"weights"} : {bone_name} : {vertex index : weight influence }
+ *  - weight influence is between 0.0 > 1.0
+ *
+ *  note: Imported Geometry in Unreal can have its topoloogy changed by the importer
+ *      - Vertex counts may not match
+ *      - submeshes may be different
+ */
+    
+    
     return FFileHelper::SaveStringToFile(OutputString, *SavePath);
 }
 
@@ -129,4 +139,162 @@ bool USkeletalMeshWeightTools::ImportSkinWeights(USkeletalMesh* SkeletalMesh, co
     return true;
 }
 
+// note: Not properly implemented -- most likely will be removed
+bool USkeletalMeshWeightTools::GetSubMeshNames(USkeletalMesh* SkeletalMesh)
+{
+    if (!SkeletalMesh) return false;
+
+    FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
+    FSkeletalMeshLODModel& LODModel = ImportedModel->LODModels[0];
+
+    UE_LOG(LogTemp, Log, TEXT("LOD 0 has %d sections"), LODModel.Sections.Num());
+
+    for (int32 SectionIndex = 0; SectionIndex <  LODModel.Sections.Num(); ++SectionIndex)
+    {
+        const FSkelMeshSection& Section = LODModel.Sections[SectionIndex];
+
+        UE_LOG(LogTemp, Log, TEXT("  Section %d: MaterialIndex=%d, Vertices=%d, Bones=%d"),
+            SectionIndex,
+            Section.MaterialIndex,
+            Section.NumVertices,
+            Section.BoneMap.Num());
+        
+        UE_LOG(LogTemp, Log,TEXT("   Bone Influences %d"), Section.GetMaxBoneInfluences());
+
+        // Print out the Bone's Name
+        for (auto BoneIndex : Section.BoneMap)
+        {
+            FName BoneName = SkeletalMesh->GetRefSkeleton().GetRawRefBoneNames()[BoneIndex];
+            UE_LOG(LogTemp, Log,TEXT("        Bone Names [%d] %s"), BoneIndex, *BoneName.ToString());
+        }
+    }
+    
+    auto InfluenceWeights = GenerateWeightDictionary(SkeletalMesh);
+    for (auto InfluenceWeight : InfluenceWeights)
+    {
+        UE_LOG(LogTemp, Log,TEXT("Bone Name: %s"), *InfluenceWeight.Key);
+        for (auto VertInfluence : InfluenceWeight.Value)
+        {
+            UE_LOG(LogTemp, Log,TEXT("    %d: %f"), VertInfluence.Key, VertInfluence.Value);
+        }
+    }
+
+    TArray<FVector3f> VertexPositions = GetVertices(SkeletalMesh);
+    for (int32 VertexIndex = 0; VertexIndex < VertexPositions.Num(); ++VertexIndex)
+    {
+        FVector3f Vertex = VertexPositions[VertexIndex];
+        UE_LOG(LogTemp, Log, TEXT("    Vertex Position[%d]: %f, %f, %f"), VertexIndex, Vertex.X, Vertex.Y, Vertex.Z);
+    }
+    
+    return true;
+}
+
+// todo: [x] Get Submeshes
+// todo:    [x] Get Vertices positions
+// todo:    [x] Get Vertices weights
+// todo: [-] Compare Vertices           (ignored due to internat assets may be modified by import process)
+// todo:    [-] compare size/count
+// todo:    [-] compare order
+// todo:    [-] compare positions
+// todo: [-] Create a vertex checker, to see if vert count match and then if so assume its an unreal export.
+// todo: [ ] Create 3D search structure [BVH] to quickly search positions and points close by.
+// todo: [ ] Calculate Barycentric weight from closest points
+
+/**
+ * Generates the mGear wieght dictionary, structured to match the standard used in mGear.
+ *
+ * Layout:
+ *      {Bone Name: { Vertex Index: Vertex Influence } }
+ * - Vertex Index is stored as a string
+ * - Vertex Influence is stored as a value between 0 and 1. if the value is 0 then the Vertex Index is ommitted. 
+ */
+TMap<FString, TMap<int32, float >> USkeletalMeshWeightTools::GenerateWeightDictionary(USkeletalMesh* SkeletalMesh)
+{
+    TMap<FString, TMap<int32, float>> JointWeights = TMap<FString, TMap<int32, float>>();
+
+    if (!SkeletalMesh) return JointWeights;
+    
+    // Populate the Map with a list of all the joint names
+    
+    int32 NumberOfBones = SkeletalMesh->GetRefSkeleton().GetNum();
+    for (int32 BoneIndex = 0; BoneIndex < NumberOfBones; ++BoneIndex)
+    {
+        auto BoneName = SkeletalMesh->GetRefSkeleton().GetBoneName(BoneIndex);
+        JointWeights.Add(BoneName.ToString());
+    }
+
+    // Populate the Map's Value with vert and weight data
+    
+    FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
+    FSkeletalMeshLODModel& LODModel = ImportedModel->LODModels[0];
+    
+    for (int32 SectionIndex = 0; SectionIndex <  LODModel.Sections.Num(); ++SectionIndex)
+    {
+        const FSkelMeshSection& Section = LODModel.Sections[SectionIndex];
+        {
+            for (int VertIndex = 0; VertIndex < Section.SoftVertices.Num(); VertIndex++)
+            {
+                const FSoftSkinVertex& Vertex = Section.SoftVertices[VertIndex];
+                TSharedPtr<FJsonObject> VtxObj = MakeShared<FJsonObject>();
+                TArray<TSharedPtr<FJsonValue>> Influences;
+                
+                for (int i = 0; i < MAX_TOTAL_INFLUENCES; i++)
+                {
+                    if (Vertex.InfluenceWeights[i] > 0)
+                    {
+                        TSharedPtr<FJsonObject> InfObj = MakeShared<FJsonObject>();
+                        // Converts the influence index for the vertex to the actual bone influnce index.
+                        FBoneIndexType BoneIndex = Section.BoneMap[Vertex.InfluenceBones[i]];
+                        float BoneInfluence =  Vertex.InfluenceWeights[i] / 255.f / 257.f;
+                        auto BoneName = SkeletalMesh->GetRefSkeleton().GetRawRefBoneNames()[BoneIndex];
+                        
+                        JointWeights[BoneName.ToString()].Add(VertIndex, BoneInfluence);
+                    }
+                }
+            }
+        }
+    }
+
+    return JointWeights;
+}
+
+/**
+ * Gets all the vertices in the order they appear in the LOD 0.
+ * 
+ * @param SkeletalMesh that will have all its LOD0 Vertices queried.
+ * @return 
+ */
+TArray<FVector3f> USkeletalMeshWeightTools::GetVertices(USkeletalMesh* SkeletalMesh)
+{
+    TArray<FVector3f> Vertices;
+
+    FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
+    FSkeletalMeshLODModel& LODModel = ImportedModel->LODModels[0];
+    
+    for (int32 SectionIndex = 0; SectionIndex <  LODModel.Sections.Num(); ++SectionIndex)
+    {
+        const FSkelMeshSection& Section = LODModel.Sections[SectionIndex];
+        {
+            for (int VertIndex = 0; VertIndex < Section.SoftVertices.Num(); VertIndex++)
+            {
+                const FSoftSkinVertex& Vertex = Section.SoftVertices[VertIndex];
+
+                // UE_LOG(LogTemp, Log, TEXT("    Vertex Position[%d]: %f, %f, %f"),VertIndex, Vertex.Position.X, Vertex.Position.Y, Vertex.Position.Z);
+                Vertices.Add(Vertex.Position);
+            }
+        }
+    }
+    return Vertices;
+}
+
 #undef LOCTEXT_NAMESPACE
+
+// ------------------------------
+//      Share the same index position.
+// ------------------------------
+// List of Vertex Position
+// List of a1 object
+//
+// Index 
+//
+// a1 : {Bone Name : Bone Weight}

@@ -23,7 +23,6 @@ public class SkinIO : ModuleRules
                 "Serialization",
                 "Kismet",
                 "Json"
-                
             }
         );
     }

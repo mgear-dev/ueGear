@@ -18,4 +18,13 @@ public:
 	/** Import vertex skin weights from JSON file into SkeletalMesh */
 	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
 	static bool ImportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& LoadPath);
+
+	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
+	static bool GetSubMeshNames(USkeletalMesh* SkeletalMesh);
+
+private:
+		
+	static TMap<FString, TMap<int32, float >> GenerateWeightDictionary(USkeletalMesh* SkeletalMesh);
+
+	static TArray<FVector3f> GetVertices(USkeletalMesh* SkeletalMesh);
 };
