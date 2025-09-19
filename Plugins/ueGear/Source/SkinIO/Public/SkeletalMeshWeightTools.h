@@ -4,6 +4,17 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SkeletalMeshWeightTools.generated.h"
 
+USTRUCT()
+struct FSkinIOJsonData
+{
+	GENERATED_BODY()
+	
+	TArray<FVector3f> Vertices;
+    
+	TMap<FString, TMap<int32, float >> Weights;
+};
+
+
 UCLASS()
 class SKINIO_API USkeletalMeshWeightTools : public UBlueprintFunctionLibrary
 {
@@ -15,10 +26,13 @@ public:
 	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
 	static bool ExportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& SavePath);
 
-	/** Import vertex skin weights from JSON file into SkeletalMesh */
+	/** Import vertex skin weights from JSON, and applies it onto SkeletalMesh */
 	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
 	static bool ImportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& LoadPath);
 
+	/** Import vertex skin weights from JSON */
+	static TSharedPtr<FSkinIOJsonData> ImportSkinWeights( const FString& LoadPath);
+	
 	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
 	static bool GetSubMeshNames(USkeletalMesh* SkeletalMesh);
 

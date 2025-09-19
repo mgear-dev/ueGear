@@ -10,6 +10,17 @@
 
 #define LOCTEXT_NAMESPACE "SkeletalMeshWeightTools"
 
+/**
+ * Exports the Skeletal Meshes weights and vertex position data into a json file.
+ * 
+ * @note In the mGear Skin files. Each file represents 1 piece of Mesh.
+ *  {"weights"} : {bone_name} : {vertex index : weight influence }
+ *  - weight influence is between 0.0 > 1.0
+ *
+ * @note Imported Geometry in Unreal can have its topoloogy changed by the importer
+ *      - Vertex counts may not match
+ *      - submeshes may be different
+ */
 bool USkeletalMeshWeightTools::ExportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& SavePath)
 {
     if (!SkeletalMesh || !SkeletalMesh->GetImportedModel())
@@ -63,20 +74,23 @@ bool USkeletalMeshWeightTools::ExportSkinWeights(USkeletalMesh* SkeletalMesh, co
     FString OutputString;
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
     FJsonSerializer::Serialize(Root, Writer);
-
-/* note: In the mGear Skin files. Each file represents 1 piece of Mesh.
- *  {"weights"} : {bone_name} : {vertex index : weight influence }
- *  - weight influence is between 0.0 > 1.0
- *
- *  note: Imported Geometry in Unreal can have its topoloogy changed by the importer
- *      - Vertex counts may not match
- *      - submeshes may be different
- */
+    
     return FFileHelper::SaveStringToFile(OutputString, *SavePath);
 }
 
 bool USkeletalMeshWeightTools::ImportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& LoadPath)
 {
+    TSharedPtr<FSkinIOJsonData> WeightData = ImportSkinWeights(LoadPath);
+
+    int32 count = 0;
+    for (auto Weight : WeightData.Get()->Vertices)
+    {
+        UE_LOG(LogTemp, Display, TEXT("[%d] %f, %f, %f"), count, Weight.X, Weight.Y, Weight.Z);
+        count+=1;
+    }
+    
+    return false;
+    
     if (!SkeletalMesh || !SkeletalMesh->GetImportedModel())
     {
         UE_LOG(LogTemp, Warning, TEXT("Invalid SkeletalMesh"));
@@ -294,6 +308,99 @@ TArray<FVector3f> USkeletalMeshWeightTools::GetVertices(USkeletalMesh* SkeletalM
         }
     }
     return Vertices;
+}
+
+TSharedPtr<FSkinIOJsonData> USkeletalMeshWeightTools::ImportSkinWeights( const FString& LoadPath)
+{
+    TSharedPtr<FSkinIOJsonData> SkinWeights = MakeShared<FSkinIOJsonData>();
+    
+    FString FileContents;
+    if (!FFileHelper::LoadFileToString(FileContents, *LoadPath))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Could not load file %s"), *LoadPath);
+        return nullptr;
+    }
+
+    TSharedPtr<FJsonObject> Root;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(FileContents);
+
+    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to parse JSON"));
+        return nullptr;
+    }
+
+    const TArray<TSharedPtr<FJsonValue>>* ObjDDic;
+    if (!Root->TryGetArrayField(TEXT("ObjDDic"), ObjDDic))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No ObjDDic field in JSON"));
+        return nullptr;
+    }
+
+    for (int32 ObjIndex = 0; ObjIndex < ObjDDic->Num(); ++ObjIndex)
+    {
+        const TSharedPtr<FJsonObject>& ObjData = (*ObjDDic)[ObjIndex]->AsObject();
+
+        // Weights
+        
+        const TSharedPtr<FJsonObject>* WeightDataCollection;
+        if (ObjData->TryGetObjectField(TEXT("weights"), WeightDataCollection))
+        {
+            TArray<FString> BoneNames; 
+            auto WeightsObject = WeightDataCollection->Get()->Values;
+            WeightsObject.GetKeys(BoneNames);
+
+            for (int32 Index = 0; Index < BoneNames.Num(); ++Index)
+            {
+                FString& BoneName = BoneNames[Index];
+                SkinWeights.Get()->Weights.FindOrAdd(BoneName);
+
+                UE_LOG(LogTemp, Display, TEXT("%s"), *BoneName);
+
+                const TSharedPtr<FJsonObject>* BoneJsonObject;
+                if (WeightDataCollection->Get()->TryGetObjectField(BoneName, BoneJsonObject))
+                {
+                    auto VertJsonData =  BoneJsonObject->Get()->Values;
+                    TArray<FString> VerIndices;
+                    VertJsonData.GetKeys(VerIndices);
+
+                    for (FString VertIndex : VerIndices)
+                    {
+                        int VertexI;
+                        float VertexWeight;
+                        BoneJsonObject->Get()->TryGetNumberField(VertIndex, VertexWeight);
+
+                        UE_LOG(LogTemp, Display, TEXT("[%s] %s : %f"), *BoneName, *VertIndex, VertexWeight);
+
+                        LexFromString(VertexI, *VertIndex); // convert FString to Int
+                        
+                        (*SkinWeights).Weights[BoneName].FindOrAdd(VertexI);
+                        (*SkinWeights).Weights[BoneName][VertexI] = VertexWeight;
+                    }
+                }
+            }
+        }
+
+        // Vertices
+        
+        const TArray<TSharedPtr<FJsonValue>>* JsonVerts;
+        if (ObjData->TryGetArrayField(TEXT("vertices"), JsonVerts))
+        {
+            for (const TSharedPtr<FJsonValue>& VertexPositionObj : *JsonVerts)
+            {
+                const TSharedPtr<FJsonObject> VertObj = VertexPositionObj->AsObject();
+                FVector3f VertexPosition = FVector3f( 
+                    VertObj->GetNumberField(TEXT("X")),
+                    VertObj->GetNumberField(TEXT("Y")),
+                    VertObj->GetNumberField(TEXT("Z"))
+                    );
+
+                SkinWeights.Get()->Vertices.Add(VertexPosition);
+            }
+        }
+    }
+    
+    return SkinWeights;
 }
 
 #undef LOCTEXT_NAMESPACE
