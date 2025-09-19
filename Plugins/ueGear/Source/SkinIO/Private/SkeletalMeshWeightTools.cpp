@@ -18,36 +18,47 @@ bool USkeletalMeshWeightTools::ExportSkinWeights(USkeletalMesh* SkeletalMesh, co
         return false;
     }
 
-    FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
-    FSkeletalMeshLODModel& LODModel = ImportedModel->LODModels[0]; // LOD0
-
+    auto Weights = GenerateWeightDictionary(SkeletalMesh);
+    auto Vertices = GetVertices(SkeletalMesh);
+    
     TSharedRef<FJsonObject> Root = MakeShared<FJsonObject>();
+    TArray<TSharedPtr<FJsonValue>> ObjDDic;
+    TSharedRef<FJsonObject> ObjData = MakeShared<FJsonObject>();
     TArray<TSharedPtr<FJsonValue>> VerticesArray;
+    TSharedRef<FJsonObject> WeightDataCollection = MakeShared<FJsonObject>();
 
-    for (const FSkelMeshSection& Section : LODModel.Sections)
+    // Weights
+
+    for (auto Weight : Weights)
     {
-        for (const FSoftSkinVertex& Vertex : Section.SoftVertices)
+        TSharedRef<FJsonObject> WeightMeta = MakeShared<FJsonObject>();
+
+        for (auto info : Weight.Value)
         {
-            TSharedPtr<FJsonObject> VtxObj = MakeShared<FJsonObject>();
-            TArray<TSharedPtr<FJsonValue>> Influences;
-
-            for (int i = 0; i < MAX_TOTAL_INFLUENCES; i++)
-            {
-                if (Vertex.InfluenceWeights[i] > 0)
-                {
-                    TSharedPtr<FJsonObject> InfObj = MakeShared<FJsonObject>();
-                    InfObj->SetNumberField(TEXT("BoneIndex"), Vertex.InfluenceBones[i]);
-                    InfObj->SetNumberField(TEXT("Weight"), Vertex.InfluenceWeights[i] / 255.f);
-                    Influences.Add(MakeShared<FJsonValueObject>(InfObj));
-                }
-            }
-
-            VtxObj->SetArrayField(TEXT("Influences"), Influences);
-            VerticesArray.Add(MakeShared<FJsonValueObject>(VtxObj));
+            TSharedRef<FJsonObject> VertWeight = MakeShared<FJsonObject>();
+            WeightMeta->SetNumberField( FString::FromInt(info.Key), info.Value);
         }
+        
+        WeightDataCollection->SetObjectField(Weight.Key, WeightMeta);
     }
-
-    Root->SetArrayField(TEXT("Vertices"), VerticesArray);
+    
+    // Vertex
+    
+    for (int VertIdx = 0; VertIdx < Vertices.Num(); ++VertIdx)
+    {
+        TSharedPtr<FJsonObject> InfObj = MakeShared<FJsonObject>();
+        InfObj->SetNumberField(TEXT("X"), Vertices[VertIdx].X);
+        InfObj->SetNumberField(TEXT("Y"), Vertices[VertIdx].Y);
+        InfObj->SetNumberField(TEXT("Z"), Vertices[VertIdx].Z);
+        VerticesArray.Add(MakeShared<FJsonValueObject>(InfObj));
+    }
+    
+    ObjData->SetNumberField(TEXT("vertexCount"), Vertices.Num());
+    ObjData->SetObjectField("weights", WeightDataCollection);
+    ObjData->SetArrayField(TEXT("vertices"), VerticesArray);
+    ObjDDic.Add(MakeShared<FJsonValueObject>(ObjData));
+    
+    Root->SetArrayField(TEXT("objDDic"), ObjDDic);
 
     FString OutputString;
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
@@ -61,8 +72,6 @@ bool USkeletalMeshWeightTools::ExportSkinWeights(USkeletalMesh* SkeletalMesh, co
  *      - Vertex counts may not match
  *      - submeshes may be different
  */
-    
-    
     return FFileHelper::SaveStringToFile(OutputString, *SavePath);
 }
 
