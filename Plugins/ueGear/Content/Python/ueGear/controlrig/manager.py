@@ -235,7 +235,7 @@ class UEGearManager:
 
         # If component not found, report error and exit early
         if ue_comp_classes is None or not ue_comp_classes:
-            unreal.log_warning(f"Component not found : {guide_type}")
+            unreal.log_warning(f"Component [{guide_name}] not found : {guide_type}")
             return
 
         ueg_comp_class = ue_comp_classes[0]
@@ -622,7 +622,7 @@ class UEGearManager:
             parent_pin_name = comp.metadata.parent_localname
 
             if comp.parent_node is None:
-                unreal.log_warning(f"  Parent Node does not exist in graph: {parent_comp_name}")
+                unreal.log_warning(f"  Parent Node[{parent_comp_name}] does not exist in graph: {comp.metadata.name}")
                 continue
 
             # component is an 'locator' port, which is made up of an array.

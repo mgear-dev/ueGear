@@ -83,7 +83,7 @@ class Component(base_component.UEComponent):
         populates the bone shoulder joint node
         """
 
-        if bones is None or len(bones) < 3:
+        if bones is None or len(bones) < 1:
             unreal.log_error(f"[Bone Populate] Failed no Bones found: Found {len(bones)} bones")
             return
         if controller is None:
