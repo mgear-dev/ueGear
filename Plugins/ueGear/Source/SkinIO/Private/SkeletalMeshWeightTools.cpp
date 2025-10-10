@@ -1,12 +1,19 @@
 #include "SkeletalMeshWeightTools.h"
+
+#include "RenderCore.h"
+#include "SkinWeightModifier.h"
 #include "Engine/SkeletalMesh.h"
 #include "Rendering/SkeletalMeshModel.h"
 #include "Rendering/SkeletalMeshLODModel.h"
 #include "Dom/JsonObject.h"
+#include "DynamicMesh/DynamicMesh3.h"
+#include "GeometryScript/MeshBoneWeightFunctions.h"
 #include "Serialization/JsonWriter.h"
 #include "Serialization/JsonSerializer.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Operations/TransferBoneWeights.h"
+#include "Rendering/SkeletalMeshRenderData.h"
 
 #define LOCTEXT_NAMESPACE "SkeletalMeshWeightTools"
 
@@ -78,87 +85,193 @@ bool USkeletalMeshWeightTools::ExportSkinWeights(USkeletalMesh* SkeletalMesh, co
     return FFileHelper::SaveStringToFile(OutputString, *SavePath);
 }
 
+
+void SetAllWeightsToRoot(USkeletalMesh* SkeletalMesh)
+{
+    if (!SkeletalMesh)
+    {
+        UE_LOG(LogTemp, Error, TEXT("SkeletalMesh is null."));
+        return;
+    }
+ 
+    const FReferenceSkeleton& RefSkeleton = SkeletalMesh->GetRefSkeleton();
+    if (RefSkeleton.GetNum() == 0)
+    {
+        UE_LOG(LogTemp, Error, TEXT("SkeletalMesh has no bones."));
+        return;
+    }
+ 
+    USkinWeightModifier* Modifier = NewObject<USkinWeightModifier>();
+    Modifier->SetSkeletalMesh(SkeletalMesh);
+ 
+    FName FirstBoneName = RefSkeleton.GetBoneName(0);
+    TMap<FName, float> Weights = {{ FirstBoneName, 1.0f }};
+ 
+    int32 NumVertices = Modifier->GetNumVertices();
+    for (int32 Index = 0; Index < NumVertices; ++Index)
+    {
+        Modifier->SetVertexWeights(Index, Weights, true);
+    }
+ 
+    if (Modifier->CommitWeightsToSkeletalMesh())
+    {
+        SkeletalMesh->MarkPackageDirty();
+        SkeletalMesh->PostEditChange();
+        UE_LOG(LogTemp, Log, TEXT("Weights updated to first bone successfully."));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to commit skin weight changes."));
+    }
+}
+
+
+void EditorTransferSkinWeightsBarycentric(USkeletalMesh* SourceSkeletalMesh, int32 SourceLODIndex, USkeletalMesh* TargetSkeletalMesh, int32 TargetLODIndex)
+{
+
+}
+
 bool USkeletalMeshWeightTools::ImportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& LoadPath)
 {
-    TSharedPtr<FSkinIOJsonData> WeightData = ImportSkinWeights(LoadPath);
+    SetAllWeightsToRoot(SkeletalMesh);
+//     TSharedPtr<FSkinIOJsonData> WeightData = ImportSkinWeights(LoadPath);
+//
+//     if (!WeightData)
+//     {
+//         UE_LOG(LogTemp, Error, TEXT("[USkeletalMeshWeightTools::ImportSkinWeights] Failed to load Json file"));   
+//         return false;
+//     }
+//
+//     // Developer Debugging - Remove later
+//     int32 count = 0;
+//     for (auto VertexPos : WeightData.Get()->Vertices)
+//     {
+// //        UE_LOG(LogTemp, Display, TEXT("[%d] %f, %f, %f"), count, VertexPos.X, VertexPos.Y, VertexPos.Z);
+//         count+=1;
+//     }
+//
+//     for (auto InflunceEntry : WeightData->Weights)
+//     {
+// //        UE_LOG(LogTemp, Display, TEXT("[%s]"), *InflunceEntry.Key);
+//         for (auto InfluencedVertex : InflunceEntry.Value)
+//         {
+//             auto VertexPos = WeightData->Vertices[InfluencedVertex.Key];
+// //            UE_LOG(LogTemp, Display, TEXT("  [%d][%f, %f, %f] : %f"), InfluencedVertex.Key, VertexPos.X, VertexPos.Y, VertexPos.Z, InfluencedVertex.Value);
+//         }
+//     }
+//     
+//     
+//     if (!SkeletalMesh || !SkeletalMesh->GetImportedModel())
+//     {
+//         UE_LOG(LogTemp, Warning, TEXT("Invalid SkeletalMesh"));
+//         return false;
+//     }
+//     
+//     FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
+//     FSkeletalMeshLODModel& LODModel = ImportedModel->LODModels[0];
+//
+//     TArray<FName> OriginalBoneNamesInOrder = SkeletalMesh->GetRefSkeleton().GetRawRefBoneNames();
+//     
+//     int32 VtxIndex = 0;
+//     for (FSkelMeshSection& Section : LODModel.Sections)
+//     {
+//         // VertexIndex = Index that will be updated
+//         for (int VertexIndex = 0; VertexIndex < Section.SoftVertices.Num(); VertexIndex++)
+//         {
+//             FSoftSkinVertex& Vertex = Section.SoftVertices[VertexIndex];
+//         
+//             
+//             float InfluenceWeight = 0.0f;       // The weight to be applied
+//             FString BoneName = "";              // The name of the bone that the weight refers to
+//
+//             auto OriginalBoneIndex = OriginalBoneNamesInOrder.IndexOfByKey(BoneName); // Bone name to Reference Bone Index
+//                        
+//             FBoneIndexType InfluenceBoneIndex = 0;
+//
+//             // Clear all influences
+//             FMemory::Memset(Vertex.InfluenceBones, 0, sizeof(Vertex.InfluenceBones));
+//             FMemory::Memset(Vertex.InfluenceWeights, 0, sizeof(Vertex.InfluenceWeights));
+//             
+//             // loop over possible influence entries.
+//             for (int InfluenceIndex = 0; InfluenceIndex < MAX_TOTAL_INFLUENCES; InfluenceIndex++)
+//             {
+//                 // Vertex.InfluenceWeights[InfluenceIndex] = 0;
+//                 // Vertex.InfluenceBones[InfluenceIndex] = 0;
+//                 // Section.BoneMap[Vertex.InfluenceBones[InfluenceIndex]];                
+//
+//                 if (InfluenceIndex == 0)
+//                 {
+//                     Vertex.InfluenceWeights[InfluenceIndex] = 255;
+//                     Vertex.InfluenceBones[InfluenceIndex] = 0;
+//                 }
+//             }
+//             
+//             
+//             // if (VtxIndex >= VerticesArray->Num()) break; // commented out as we do not care if there is a difference as we will be sampling
+//     
+//     
+//             // FMemory::Memset(Vertex.InfluenceBones, 0, sizeof(Vertex.InfluenceBones));
+//             // FMemory::Memset(Vertex.InfluenceWeights, 0, sizeof(Vertex.InfluenceWeights));
+//             //
+//             // int InfIdx = 0;
+//             // for (const TSharedPtr<FJsonValue>& InfVal : *InfluencesArray)
+//             // {
+//             //     if (InfIdx >= MAX_TOTAL_INFLUENCES) break;
+//             //
+//             //     const TSharedPtr<FJsonObject> InfObj = InfVal->AsObject();
+//             //     int32 BoneIdx = InfObj->GetIntegerField(TEXT("BoneIndex"));
+//             //     float Weight = InfObj->GetNumberField(TEXT("Weight"));
+//             //
+//             //     Vertex.InfluenceBones[InfIdx] = (uint8)BoneIdx;
+//             //     Vertex.InfluenceWeights[InfIdx] = (uint8)(Weight * 255.f);
+//             //     InfIdx++;
+//             // }
+//         }
+//     }
+//     
+//     // // Mark mesh dirty so UE saves & recompiles
+//     SkeletalMesh->InvalidateDeriveDataCacheGUID();
+//     SkeletalMesh->Build();
+//     SkeletalMesh->MarkPackageDirty();
+//     SkeletalMesh->PostEditChange();
+//
+//     
+//
+// // -----------------------
+//     int LODIndex = 0;
+//     
+//     // testing updating the SkeletalMeshRenderData
+//     FSkeletalMeshRenderData* SkelMeshRenderData = SkeletalMesh->GetResourceForRendering();
+//
+//     FSkeletalMeshLODRenderData& LODData = SkelMeshRenderData->LODRenderData[LODIndex];
+//     const int32 ExpectedNumVerts = LODData.GetNumVertices();
+//     uint32 NumBoneInfluences = LODData.GetVertexBufferMaxBoneInfluences();
+//     bool bUse16BitBoneIndex = LODData.DoesVertexBufferUse16BitBoneIndex();
+//
+//     UE_LOG(LogTemp, Display, TEXT("%d, %d, %d"), ExpectedNumVerts, NumBoneInfluences, bUse16BitBoneIndex);
+//     
+//     
+//     if (SkeletalMesh->GetSkinWeightProfiles().Num() > 0)
+//     {
+//         const int32 TotalVertexCount = SkeletalMesh->GetImportedModel()->LODModels[0].NumVertices;
+//         const FSkinWeightProfileInfo& SkinWeightProfile = SkeletalMesh->GetSkinWeightProfiles()[0];
+//         const FImportedSkinWeightProfileData& SkinWeightData = SkeletalMesh->GetImportedModel()->LODModels[0].SkinWeightProfiles.FindChecked(SkinWeightProfile.Name);
+//         // bFoundProfile = SkinWeightData.SkinWeights.Num() == TotalVertexCount;
+//         int32 TotalVertexIndex = 0;
+//         for (const FSkelMeshSection& Section : SkeletalMesh->GetImportedModel()->LODModels[0].Sections)
+//         {
+//             const int32 SectionVertexCount = Section.SoftVertices.Num();
+//             //Find the number of vertex skin by this bone
+//             for (int32 SectionVertexIndex = 0; SectionVertexIndex < SectionVertexCount; ++SectionVertexIndex, ++TotalVertexIndex)
+//             {
+//                 const FRawSkinWeight& SkinWeight = SkinWeightData.SkinWeights[TotalVertexIndex];
+//                 // IncrementInfluence(Section, SkinWeight.InfluenceBones, SkinWeight.InfluenceWeights);
+//                 UE_LOG(LogTemp, Display, TEXT("%p, %p"), SkinWeight.InfluenceBones, SkinWeight.InfluenceWeights);
+//             }
+//         }
+//     }
 
-    int32 count = 0;
-    for (auto Weight : WeightData.Get()->Vertices)
-    {
-        UE_LOG(LogTemp, Display, TEXT("[%d] %f, %f, %f"), count, Weight.X, Weight.Y, Weight.Z);
-        count+=1;
-    }
     
-    return false;
-    
-    if (!SkeletalMesh || !SkeletalMesh->GetImportedModel())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Invalid SkeletalMesh"));
-        return false;
-    }
-
-    FString FileContents;
-    if (!FFileHelper::LoadFileToString(FileContents, *LoadPath))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Could not load file %s"), *LoadPath);
-        return false;
-    }
-
-    TSharedPtr<FJsonObject> Root;
-    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(FileContents);
-
-    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to parse JSON"));
-        return false;
-    }
-
-    const TArray<TSharedPtr<FJsonValue>>* VerticesArray;
-    if (!Root->TryGetArrayField(TEXT("Vertices"), VerticesArray))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("No Vertices field in JSON"));
-        return false;
-    }
-
-    FSkeletalMeshModel* ImportedModel = SkeletalMesh->GetImportedModel();
-    FSkeletalMeshLODModel& LODModel = ImportedModel->LODModels[0];
-
-    int32 VtxIndex = 0;
-    for (FSkelMeshSection& Section : LODModel.Sections)
-    {
-        for (FSoftSkinVertex& Vertex : Section.SoftVertices)
-        {
-            if (VtxIndex >= VerticesArray->Num()) break;
-
-            const TSharedPtr<FJsonObject>& VtxObj = (*VerticesArray)[VtxIndex++]->AsObject();
-            const TArray<TSharedPtr<FJsonValue>>* InfluencesArray;
-
-            if (VtxObj->TryGetArrayField(TEXT("Influences"), InfluencesArray))
-            {
-                FMemory::Memset(Vertex.InfluenceBones, 0, sizeof(Vertex.InfluenceBones));
-                FMemory::Memset(Vertex.InfluenceWeights, 0, sizeof(Vertex.InfluenceWeights));
-
-                int InfIdx = 0;
-                for (const TSharedPtr<FJsonValue>& InfVal : *InfluencesArray)
-                {
-                    if (InfIdx >= MAX_TOTAL_INFLUENCES) break;
-
-                    const TSharedPtr<FJsonObject> InfObj = InfVal->AsObject();
-                    int32 BoneIdx = InfObj->GetIntegerField(TEXT("BoneIndex"));
-                    float Weight = InfObj->GetNumberField(TEXT("Weight"));
-
-                    Vertex.InfluenceBones[InfIdx] = (uint8)BoneIdx;
-                    Vertex.InfluenceWeights[InfIdx] = (uint8)(Weight * 255.f);
-                    InfIdx++;
-                }
-            }
-        }
-    }
-
-    // Mark mesh dirty so UE saves & recompiles
-    SkeletalMesh->MarkPackageDirty();
-    SkeletalMesh->PostEditChange();
-
     return true;
 }
 
@@ -355,7 +468,7 @@ TSharedPtr<FSkinIOJsonData> USkeletalMeshWeightTools::ImportSkinWeights( const F
                 FString& BoneName = BoneNames[Index];
                 SkinWeights.Get()->Weights.FindOrAdd(BoneName);
 
-                UE_LOG(LogTemp, Display, TEXT("%s"), *BoneName);
+//                UE_LOG(LogTemp, Display, TEXT("%s"), *BoneName);
 
                 const TSharedPtr<FJsonObject>* BoneJsonObject;
                 if (WeightDataCollection->Get()->TryGetObjectField(BoneName, BoneJsonObject))
@@ -370,7 +483,7 @@ TSharedPtr<FSkinIOJsonData> USkeletalMeshWeightTools::ImportSkinWeights( const F
                         float VertexWeight;
                         BoneJsonObject->Get()->TryGetNumberField(VertIndex, VertexWeight);
 
-                        UE_LOG(LogTemp, Display, TEXT("[%s] %s : %f"), *BoneName, *VertIndex, VertexWeight);
+//                        UE_LOG(LogTemp, Display, TEXT("     [%s] %s : %f"), *BoneName, *VertIndex, VertexWeight);
 
                         LexFromString(VertexI, *VertIndex); // convert FString to Int
                         

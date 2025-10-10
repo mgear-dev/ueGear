@@ -22,7 +22,9 @@ public class SkinIO : ModuleRules
                 "SlateCore",
                 "Serialization",
                 "Kismet",
-                "Json"
+                "Json", 
+                "SkeletalMeshModifiers", 
+                "GeometryScriptingCore"
             }
         );
     }
