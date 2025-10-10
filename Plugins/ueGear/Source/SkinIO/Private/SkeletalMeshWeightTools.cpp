@@ -1,5 +1,6 @@
 #include "SkeletalMeshWeightTools.h"
 
+#include "MeshDescriptionToDynamicMesh.h"
 #include "RenderCore.h"
 #include "SkinWeightModifier.h"
 #include "Engine/SkeletalMesh.h"
@@ -14,6 +15,8 @@
 #include "Misc/Paths.h"
 #include "Operations/TransferBoneWeights.h"
 #include "Rendering/SkeletalMeshRenderData.h"
+#include "DynamicMesh/DynamicMesh3.h"
+#include "DynamicMesh/DynamicMeshAttributeSet.h"
 
 #define LOCTEXT_NAMESPACE "SkeletalMeshWeightTools"
 
@@ -125,15 +128,86 @@ void SetAllWeightsToRoot(USkeletalMesh* SkeletalMesh)
     }
 }
 
-
-void EditorTransferSkinWeightsBarycentric(USkeletalMesh* SourceSkeletalMesh, int32 SourceLODIndex, USkeletalMesh* TargetSkeletalMesh, int32 TargetLODIndex)
+// WIP:
+// Extract Skeletal Mesh LOD to FDynamicMesh3 with skin weights attached
+bool ExtractSkeletalMeshLODToDynamicMesh(const USkeletalMesh* SkeletalMesh, int32 LODIndex, UE::Geometry::FDynamicMesh3& OutMesh)
 {
+    FMeshDescription MeshDescription;
+    SkeletalMesh->GetMeshDescription(LODIndex, MeshDescription);
 
+    if (MeshDescription.IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No MeshDescription found on SkeletalMesh!"));
+        return false;
+    }
+
+    // Register vertex/normals/UV attributes if not already
+    FStaticMeshAttributes Attributes(MeshDescription);
+    Attributes.Register();
+
+    // Convert MeshDescription → DynamicMesh
+    FMeshDescriptionToDynamicMesh Converter;
+    Converter.Convert(&MeshDescription, OutMesh);
+    
+    return true;
 }
+
+// WIP: 
+bool EditorTransferSkinWeightsBarycentric(USkeletalMesh* SourceSkeletalMesh, int32 SourceLODIndex, USkeletalMesh* TargetSkeletalMesh, int32 TargetLODIndex)
+{
+    // using namespace UE::Geometry;
+ 
+    UE::Geometry::FDynamicMesh3 SourceDynamicMesh, TargetDynamicMesh;
+    SourceDynamicMesh = UE::Geometry::FDynamicMesh3();
+    TargetDynamicMesh = UE::Geometry::FDynamicMesh3();
+    
+    if (!ExtractSkeletalMeshLODToDynamicMesh(SourceSkeletalMesh, SourceLODIndex, SourceDynamicMesh)
+        || !ExtractSkeletalMeshLODToDynamicMesh(TargetSkeletalMesh, TargetLODIndex, TargetDynamicMesh))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to extract meshes from skeletal mesh LODs"));
+        return false;
+    }
+    
+    // if (!TargetDynamicMesh.Attributes()->HasSkinWeights())
+    // {
+    //     TargetDynamicMesh.Attributes()->AttachSkinWeightsAttribute("SkinWeights");
+    // }
+    
+    UE::Geometry::FTransferBoneWeights TransferOp(&SourceDynamicMesh, "SkinWeights");
+
+    // TransferOp.TransferMethod = ETransferBoneWeightsMethod::ClosestPointOnSurface;
+    
+    bool bStatus = TransferOp.TransferWeightsToMesh(TargetDynamicMesh, "SkinWeights");
+
+    if (!bStatus)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Barycentric skin weight transfer Failed."));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Log, TEXT("Barycentric skin weight transfer completed using manual extraction."));
+    }
+
+    // TargetSkeletalMesh->MarkPackageDirty();
+    
+    return bStatus;
+}
+
+bool USkeletalMeshWeightTools::CopySkinWeights(USkeletalMesh* SourceSkeletalMesh, USkeletalMesh* DestinationSkeletalMesh)
+{
+    EditorTransferSkinWeightsBarycentric(SourceSkeletalMesh,0, DestinationSkeletalMesh, 0);
+
+    return true;
+}
+
+bool USkeletalMeshWeightTools::FloodWeightsToRoot(USkeletalMesh* SourceSkeletalMesh)
+{
+    SetAllWeightsToRoot(SourceSkeletalMesh);
+    return true;
+};
 
 bool USkeletalMeshWeightTools::ImportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& LoadPath)
 {
-    SetAllWeightsToRoot(SkeletalMesh);
 //     TSharedPtr<FSkinIOJsonData> WeightData = ImportSkinWeights(LoadPath);
 //
 //     if (!WeightData)

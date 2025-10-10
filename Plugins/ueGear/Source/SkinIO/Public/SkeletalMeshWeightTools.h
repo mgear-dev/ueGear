@@ -30,6 +30,15 @@ public:
 	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
 	static bool ImportSkinWeights(USkeletalMesh* SkeletalMesh, const FString& LoadPath);
 
+
+
+	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
+	static bool FloodWeightsToRoot(USkeletalMesh* SourceSkeletalMesh);
+
+
+	UFUNCTION(CallInEditor, BlueprintCallable, Category="SkeletalMesh Weights")
+	static bool CopySkinWeights(USkeletalMesh* SourceSkeletalMesh, USkeletalMesh* DestinationSkeletalMesh);
+	
 	/** Import vertex skin weights from JSON */
 	static TSharedPtr<FSkinIOJsonData> ImportSkinWeights( const FString& LoadPath);
 	

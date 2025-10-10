@@ -24,7 +24,12 @@ public class SkinIO : ModuleRules
                 "Kismet",
                 "Json", 
                 "SkeletalMeshModifiers", 
-                "GeometryScriptingCore"
+                "GeometryScriptingCore",
+                "GeometryCore",
+                "DynamicMesh",
+                "MeshDescription",
+                "StaticMeshDescription",
+                "MeshConversion"
             }
         );
     }
