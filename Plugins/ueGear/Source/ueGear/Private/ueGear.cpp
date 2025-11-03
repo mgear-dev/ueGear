@@ -3,6 +3,7 @@
 #include "ueGear.h"
 
 #include "LevelEditor.h"
+#include "ToolMenus.h"
 #include "UeGearCommands.h"
 
 #define LOCTEXT_NAMESPACE "FueGearModule"
@@ -11,30 +12,33 @@ DEFINE_LOG_CATEGORY(ueGearLog)
 
 void FueGearModule::StartupModule()
 {
-	UE_LOG(ueGearLog, Log, TEXT("Creating ueGear Menus"));
-	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule> ("LevelEditor");
-	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-	MenuExtender->AddMenuBarExtension(
-		"Help",
-		EExtensionHook::Before,
-		nullptr,
-		FMenuBarExtensionDelegate::CreateRaw(this, &FueGearModule::AddMenuEntry));
-	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
+	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FueGearModule::RegisterMenu));
 }
 
 void FueGearModule::ShutdownModule()
 {
-	IModuleInterface::ShutdownModule();
+	UToolMenus::UnRegisterStartupCallback(this);
+	UToolMenus::UnregisterOwner(this);
 }
 
-void FueGearModule::AddMenuEntry(FMenuBarBuilder& MenuBarBuilder)
+void FueGearModule::RegisterMenu()
 {
-	MenuBarBuilder.AddPullDownMenu(
-		LOCTEXT("MenuLocKey", "ueGear"),
-		LOCTEXT("MenuTooltipKey", "Opens ueGear Menu"),
-		FNewMenuDelegate::CreateRaw(this, &FueGearModule::FillMenu),
-		FName(TEXT("ueGear")),
-		FName(TEXT("ueGear")));
+	UE_LOG(ueGearLog, Log, TEXT("Creating ueGear Menus"));
+
+	FToolMenuOwnerScoped OwnerScoped(this);
+	{
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Tools");
+		FToolMenuSection& Section = Menu->FindOrAddSection("Rigging", LOCTEXT("MenuSectKey", "Rigging"));
+		Section.AddSubMenu(
+			FName(TEXT("ueGear")),
+			LOCTEXT("MenuLocKey", "ueGear"),
+			LOCTEXT("MenuTooltipKey", "Opens ueGear Menu"),
+			FNewMenuDelegate::CreateRaw(this, &FueGearModule::FillMenu),
+			false,
+			FSlateIcon(),
+			false,
+			FName(TEXT("ueGear")));
+	}
 }
 
 void FueGearModule::FillMenu(FMenuBuilder& MenuBuilder)

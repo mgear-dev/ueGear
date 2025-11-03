@@ -41,6 +41,7 @@ public class ueGear : ModuleRules
 				"PythonScriptPlugin",
 				"RemoteControl",
 				"UnrealEd",
+				"ToolMenus",
 			}
 			);
 		

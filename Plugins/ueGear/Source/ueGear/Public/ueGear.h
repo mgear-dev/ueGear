@@ -16,7 +16,7 @@ public:
 
 private:
 	
-	void AddMenuEntry(FMenuBarBuilder& MenuBarBuilder);
+	void RegisterMenu();
 	void FillMenu(FMenuBuilder& MenuBuilder);
 	
 	void GenerateUegearUiCallback();
